@@ -1,0 +1,14 @@
+{
+  "gradle.nestedProjects": false,
+  "json.schemaDownload.enable": false,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/android/app/build/**": true,
+    "**/android/.gradle/**": true
+  },
+  "files.exclude": {
+    "**/google-services.json": true,
+    "**/*firebase-service-account*.json": true
+  }
+}

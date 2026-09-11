@@ -1,0 +1,47 @@
+# Node & Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo & Metro
+.expo/
+dist/
+web-build/
+
+# Android Native Builds
+android/.gradle/
+android/build/
+android/app/build/
+*.keystore
+!android/app/debug.keystore
+
+# macOS & System
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+*.env
+*.env.local
+!.env.example
+
+# Firebase & Sensitive Secrets
+google-services.json
+*google-services.json
+firebase-service-account.json
+*firebase-service-account*.json
+*.jks
+*.p12
+*.pem
+*.key
+credentials.json
+
+# APK Builds
+*.apk
+frontend/android/app/build/
+frontend/android/.gradle/
+

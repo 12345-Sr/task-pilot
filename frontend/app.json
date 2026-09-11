@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Task Pilot",
+    "slug": "task-pilot",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#EDF2F4",
+    "android": {
+      "package": "com.taskpilot.app",
+      "versionCode": 2,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#EDF2F4"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.taskpilot.app",
+      "supportsTablet": false
+    },
+    "extra": {},
+    "plugins": [
+      "expo-status-bar",
+      "expo-notifications"
+    ]
+  }
+}

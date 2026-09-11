@@ -1,0 +1,318 @@
+import { QueryClient, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  tasksRepository,
+  progressRepository,
+  subscriptionRepository,
+  userRepository,
+  apiClient,
+  USE_MOCK_API,
+} from '../api';
+import { CreateTaskInput, UpdateTaskInput, Priority } from '../types';
+import { useAppStore } from '../store';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 2, // 2 minutes
+    },
+  },
+});
+
+export const QUERY_KEYS = {
+  TODAY_TASKS: ['tasks', 'today'],
+  ALL_TASKS: ['tasks', 'all'],
+  TASK: (id: string) => ['tasks', id],
+  PROGRESS: ['progress', 'summary'],
+  TODAY_PROGRESS: ['progress', 'today'],
+  STREAK: ['progress', 'streak'],
+  SUBSCRIPTION: ['subscription', 'status'],
+  USER: ['user', 'me'],
+};
+
+// -------------------------------------------------------------
+// TASKS HOOKS
+// -------------------------------------------------------------
+export function useTodayTasks() {
+  return useQuery({
+    queryKey: QUERY_KEYS.TODAY_TASKS,
+    queryFn: () => tasksRepository.getAll(),
+  });
+}
+
+export function useTask(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.TASK(id),
+    queryFn: () => tasksRepository.getById(id),
+    enabled: !!id,
+  });
+}
+
+export function useCreateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: any) => {
+      const priorityMap: Record<string, any> = {
+        high: 'URGENT',
+        medium: 'MEDIUM',
+        low: 'NORMAL',
+        URGENT: 'URGENT',
+        MEDIUM: 'MEDIUM',
+        NORMAL: 'NORMAL',
+        ZAROORI: 'URGENT',
+        zaroori: 'URGENT',
+        important: 'URGENT',
+        IMPORTANT: 'URGENT',
+      };
+
+      const getLocalToday = () => {
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+      };
+      const getLocalTomorrow = () => {
+        const n = new Date();
+        n.setDate(n.getDate() + 1);
+        return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+      };
+
+      let dateVal = input.date;
+      if (!dateVal || !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        if (input.targetDate === 'kal' || input.targetDate === 'tomorrow') {
+          dateVal = getLocalTomorrow();
+        } else if (input.targetDate && /^\d{4}-\d{2}-\d{2}$/.test(input.targetDate)) {
+          dateVal = input.targetDate;
+        } else {
+          dateVal = getLocalToday();
+        }
+      }
+
+      const payload: CreateTaskInput = {
+        title: input.title,
+        description: input.description,
+        date: dateVal,
+        targetDate: dateVal,
+        time: input.reminderTime || input.time || '10:00 AM',
+        priority: priorityMap[input.priority] || 'MEDIUM',
+        reminderMinutes: 30,
+      };
+      return tasksRepository.create(payload);
+    },
+    onSuccess: (created: any) => {
+      useAppStore.getState().recordTaskCreation(created?.targetDate || created?.date);
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
+    },
+  });
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { id: string; input?: UpdateTaskInput } & Partial<UpdateTaskInput>) => {
+      const { id, input, ...rest } = args;
+      const payload: UpdateTaskInput = input || (rest as UpdateTaskInput);
+      return tasksRepository.update(id, payload);
+    },
+    onSuccess: (_, args) => {
+      const id = typeof args === 'string' ? args : args.id;
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+    },
+  });
+}
+
+export function useCompleteTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: string | { id: string; completed?: boolean; status?: 'COMPLETED' | 'MISSED' }) => {
+      const id = typeof args === 'string' ? args : args.id;
+      const completed = typeof args === 'object' ? args.completed : undefined;
+      const status = typeof args === 'object' ? args.status : undefined;
+      return tasksRepository.complete(id, completed, status);
+    },
+    onSuccess: (_, args) => {
+      const id = typeof args === 'string' ? args : args.id;
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.STREAK });
+    },
+  });
+}
+
+export function useDeleteTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tasksRepository.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+    },
+  });
+}
+
+export function useRepeatTaskMonthly() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tasksRepository.repeatMonthly(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
+    },
+  });
+}
+
+// -------------------------------------------------------------
+// PROGRESS HOOKS
+// -------------------------------------------------------------
+export function useWeeklyProgress() {
+  return useQuery({
+    queryKey: QUERY_KEYS.PROGRESS,
+    queryFn: async () => {
+      const p: any = await progressRepository.getProgress();
+      return {
+        streak: p.streak ?? 0,
+        bestStreak: p.bestStreak ?? p.streak ?? 0,
+        completionRate: p.completionRate ?? 0,
+        totalCompleted: p.totalCompleted ?? p.completedTasks ?? 0,
+        pendingTasks: p.pendingTasks ?? 0,
+        bestDay: p.bestDay ?? null,
+        weeklyDays: p.weeklyDays ?? p.weekDays ?? [
+          { day: 'M', completed: 0, total: 0 },
+          { day: 'T', completed: 0, total: 0 },
+          { day: 'W', completed: 0, total: 0 },
+          { day: 'T', completed: 0, total: 0 },
+          { day: 'F', completed: 0, total: 0 },
+          { day: 'S', completed: 0, total: 0 },
+          { day: 'S', completed: 0, total: 0 },
+        ],
+      };
+    },
+  });
+}
+
+export function useTodayProgress() {
+  return useQuery({
+    queryKey: QUERY_KEYS.TODAY_PROGRESS,
+    queryFn: () => progressRepository.getToday(),
+  });
+}
+
+export function useStreak() {
+  return useQuery({
+    queryKey: QUERY_KEYS.STREAK,
+    queryFn: () => progressRepository.getStreak(),
+  });
+}
+
+// -------------------------------------------------------------
+// USER & AUTH HOOKS
+// -------------------------------------------------------------
+export function useUserProfile() {
+  return useQuery({
+    queryKey: QUERY_KEYS.USER,
+    queryFn: () => userRepository.getMe(),
+  });
+}
+
+export function useLogin() {
+  const { setToken, setUser, setLanguage } = useAppStore();
+  return useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const res: any = await apiClient.post('/auth/login', credentials);
+      const { token, user } = res?.data || res;
+      setToken(token);
+      setUser(user);
+      if (user?.language) {
+        setLanguage(user.language as any);
+      }
+      return { user, token };
+    },
+  });
+}
+
+export function useSendRegisterOtp() {
+  return useMutation({
+    mutationFn: async (data: { email: string }) => {
+      const res: any = await apiClient.post('/auth/send-register-otp', data);
+      return res?.data || res;
+    },
+  });
+}
+
+export function useVerifyRegisterOtp() {
+  return useMutation({
+    mutationFn: async (data: { email: string; otp: string }) => {
+      const res: any = await apiClient.post('/auth/verify-register-otp', data);
+      return res?.data || res;
+    },
+  });
+}
+
+export function useRegister() {
+  const { setToken, setUser, language } = useAppStore();
+  return useMutation({
+    mutationFn: async (data: { name: string; email: string; password: string; otp?: string; language?: string }) => {
+      const res: any = await apiClient.post('/auth/register', {
+        ...data,
+        language: data.language || language || 'hi',
+      });
+      const { token, user } = res?.data || res;
+      setToken(token);
+      setUser(user);
+      return { user, token };
+    },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: async (data: { email: string }) => {
+      const res: any = await apiClient.post('/auth/forgot-password', data);
+      return res?.data || res;
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (data: { email: string; otp: string; newPassword: string }) => {
+      const res: any = await apiClient.post('/auth/reset-password', data);
+      return res?.data || res;
+    },
+  });
+}
+
+// -------------------------------------------------------------
+// SUBSCRIPTION HOOKS
+// -------------------------------------------------------------
+export function useSubscription() {
+  return useQuery({
+    queryKey: QUERY_KEYS.SUBSCRIPTION,
+    queryFn: () => subscriptionRepository.getStatus(),
+  });
+}
+
+export function useSubscribe() {
+  const qc = useQueryClient();
+  const { setIsPremium } = useAppStore();
+  return useMutation({
+    mutationFn: async (plan: string) => {
+      const res = await subscriptionRepository.subscribe(plan);
+      setIsPremium(true);
+      return res;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.SUBSCRIPTION });
+    },
+  });
+}
+
+export const useUpgradeSubscription = useSubscribe;
