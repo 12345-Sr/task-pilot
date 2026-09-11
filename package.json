@@ -1,0 +1,11 @@
+{
+  "name": "task-pilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Task Pilot - Root Workspace",
+  "scripts": {
+    "start": "npm --prefix frontend start",
+    "frontend": "npm --prefix frontend run clean",
+    "backend": "npm --prefix backend run dev"
+  }
+}
