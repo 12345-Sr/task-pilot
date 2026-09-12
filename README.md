@@ -13,7 +13,7 @@ The app supports **8 Regional Languages** (Hindi, English, Marathi, Bengali, Tam
 - **File**: `database/schema.sql`
 - Production PostgreSQL schema featuring:
   - `users`: accounts, language preference (8 languages), push tokens, trial start/end timestamps.
-  - `subscriptions`: ₹499/month subscription records, status (`active`, `expired`, `cancelled`).
+  - `subscriptions`: ₹399/month subscription records, status (`active`, `expired`, `cancelled`).
   - `tasks`: tasks with deadline times, priority (`ZAROORI` / `MEDIUM`), alert dispatch flags (`morning_alert_sent`, `two_hour_alert_sent`, `one_hour_alert_sent`), and evening confirmation status (`COMPLETED` ✓ / `MISSED` ✗).
   - `notification_logs`: audit trail for dispatched reminders.
   - `daily_progress`: streak tracking, completion percentage.
@@ -30,7 +30,7 @@ The app supports **8 Regional Languages** (Hindi, English, Marathi, Bengali, Tam
     - ⏰ **2 Hours Before**: Proactive reminder when deadline is ~120 minutes away.
     - ⚡ **1 Hour Before**: Urgent reminder when deadline is ~60 minutes away.
     - 🌙 **08:00 PM**: Shaam ka confirmation prompt.
-  - **Subscriptions**: Status check, subscribe (₹499/month), cancel.
+  - **Subscriptions**: Status check, subscribe (₹399/month), cancel.
 
 ### 3. `admin-panel/` — Website-Based Dashboard (Single HTML File)
 - **File**: `admin-panel/index.html`
@@ -48,7 +48,7 @@ The app supports **8 Regional Languages** (Hindi, English, Marathi, Bengali, Tam
   - **Alert Timeline Card**: Each task displays its 3-point alert path: `🌅 Subah Briefing` → `⏰ 2 Ghante Pehle` → `⚡ 1 Ghanta Pehle`.
   - **Shaam Ka Confirmation**: Dedicated screen where users confirm accomplishments in one tap with **✓ (Hua)** or **✗ (Nahi Hua)** buttons.
   - **Progress & Streak**: 7-day visual performance bar chart, daily flame streak indicator, and completion stats.
-  - **₹499/Month Paywall Screen**: Triggered on free-tier limit or 402 API response with 3-day trial highlight and UPI payment badges.
+  - **₹399/Month Paywall Screen**: Triggered on free-tier limit or 402 API response with 3-day trial highlight and UPI payment badges.
 
 ---
 

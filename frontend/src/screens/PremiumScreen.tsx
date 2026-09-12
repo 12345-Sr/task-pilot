@@ -126,10 +126,10 @@ export const PremiumScreen: React.FC = () => {
             <View style={styles.planCardBody}>
               <View>
                 <Text style={styles.planName}>{t(language, 'yearly_plan')}</Text>
-                <Text style={styles.planSub}>₹33 / mo</Text>
+                <Text style={styles.planSub}>₹333 / mo</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.planPrice}>₹399</Text>
+                <Text style={styles.planPrice}>₹3,999</Text>
                 <Text style={styles.planDuration}>{t(language, 'per_year')}</Text>
               </View>
             </View>
@@ -150,7 +150,7 @@ export const PremiumScreen: React.FC = () => {
                 <Text style={styles.planSub}>Flexible</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.planPrice}>₹499</Text>
+                <Text style={styles.planPrice}>₹399</Text>
                 <Text style={styles.planDuration}>{t(language, 'per_month')}</Text>
               </View>
             </View>

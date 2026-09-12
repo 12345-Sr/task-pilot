@@ -1,7 +1,7 @@
 // Task Pilot — translation strings for all 8 supported languages.
 // Reused verbatim (copy) from the approved web demo so tone/voice stays consistent.
 export const FREE_DAILY_LIMIT = 3;
-export const PRICE = 499; // ₹499/month per product spec
+export const PRICE = 399; // ₹399/month per product spec
 
 export const LANGUAGES = [
   { code: 'hi', label: 'हिंदी' },
@@ -20,7 +20,7 @@ export const T = {
     navAdd: '+ Naya Kaam', navToday: 'Aaj Ke Kaam', navEvening: 'Shaam Check', navProgress: 'Progress',
     lblTitle: 'Kaam ka naam', titlePh: 'Jaise: Client ko report bhejna', lblDate: 'Tareekh', lblTime: 'Samay (deadline)',
     lblPriority: 'Priority', important: '🔴 Zaroori', medium: '🟡 Medium', addBtn: 'Kaam Jodo',
-    notice: 'Free Zone: ek din mein sirf 3 reminders add kar sakte hain. Premium (₹499/mahina) mein reminders unlimited hain, streak/progress tracking unlock hoti hai, aur sabhi features poori tarah khul jaate hain.',
+    notice: 'Free Zone: ek din mein sirf 3 reminders add kar sakte hain. Premium (₹399/mahina) mein reminders unlimited hain, streak/progress tracking unlock hoti hai, aur sabhi features poori tarah khul jaate hain.',
     lblTotal: 'Kul kaam', lblImp: 'Zaroori', lblDone: 'Pura hua',
     eveHead: 'Shaam ka Confirmation', eveSub: 'Deadline khatam hone ke baad, yahan tick ✓ ya cross ✗ maarein.',
     empty: 'Koi kaam nahi joda gaya. "+ Naya Kaam" tab se shuru karein.',
@@ -48,7 +48,7 @@ export const T = {
     navAdd: '+ New Task', navToday: "Today's Tasks", navEvening: 'Evening Check', navProgress: 'Progress',
     lblTitle: 'Task name', titlePh: 'e.g. Send report to client', lblDate: 'Date', lblTime: 'Deadline time',
     lblPriority: 'Priority', important: '🔴 Important', medium: '🟡 Medium', addBtn: 'Add Task',
-    notice: 'Free Zone: you can add up to 3 reminders per day. Premium (₹499/month) unlocks unlimited reminders, streak & progress tracking, and every feature.',
+    notice: 'Free Zone: you can add up to 3 reminders per day. Premium (₹399/month) unlocks unlimited reminders, streak & progress tracking, and every feature.',
     lblTotal: 'Total tasks', lblImp: 'Important', lblDone: 'Completed',
     eveHead: 'Evening Confirmation', eveSub: 'After the deadline passes, mark each task ✓ or ✗ here.',
     empty: 'No tasks added yet. Start from the "+ New Task" tab.',
@@ -76,7 +76,7 @@ export const T = {
     navAdd: '+ नवीन काम', navToday: 'आजची कामे', navEvening: 'संध्याकाळ तपासणी', navProgress: 'प्रगती',
     lblTitle: 'कामाचे नाव', titlePh: 'उदा. क्लायंटला रिपोर्ट पाठवा', lblDate: 'तारीख', lblTime: 'वेळ (डेडलाइन)',
     lblPriority: 'प्राधान्य', important: '🔴 महत्त्वाचे', medium: '🟡 मध्यम', addBtn: 'काम जोडा',
-    notice: 'फ्री झोन: दिवसाला फक्त 3 reminders जोडता येतील. प्रीमियम (₹499/महिना) मध्ये reminders unlimited, streak/progress unlock, आणि सर्व features पूर्ण खुले.',
+    notice: 'फ्री झोन: दिवसाला फक्त 3 reminders जोडता येतील. प्रीमियम (₹399/महिना) मध्ये reminders unlimited, streak/progress unlock, आणि सर्व features पूर्ण खुले.',
     lblTotal: 'एकूण कामे', lblImp: 'महत्त्वाचे', lblDone: 'पूर्ण झाले',
     eveHead: 'संध्याकाळ पुष्टीकरण', eveSub: 'डेडलाइन संपल्यावर, इथे ✓ किंवा ✗ करा.',
     empty: 'अजून काम जोडलेले नाही. "+ नवीन काम" वरून सुरू करा.',
@@ -104,7 +104,7 @@ export const T = {
     navAdd: '+ নতুন কাজ', navToday: 'আজকের কাজ', navEvening: 'সন্ধ্যার চেক', navProgress: 'অগ্রগতি',
     lblTitle: 'কাজের নাম', titlePh: 'যেমন: ক্লায়েন্টকে রিপোর্ট পাঠানো', lblDate: 'তারিখ', lblTime: 'সময় (ডেডলাইন)',
     lblPriority: 'অগ্রাধিকার', important: '🔴 জরুরি', medium: '🟡 মাঝারি', addBtn: 'কাজ যোগ করুন',
-    notice: 'ফ্রি জোন: দিনে মাত্র ৩টি reminder যোগ করা যাবে। প্রিমিয়াম (₹৪৯৯/মাস)-এ reminders unlimited, streak/progress unlock, এবং সব features সম্পূর্ণ খোলা।',
+    notice: 'ফ্রি জোন: দিনে মাত্র ৩টি reminder যোগ করা যাবে। প্রিমিয়াম (₹৩৯৯/মাস)-এ reminders unlimited, streak/progress unlock, এবং সব features সম্পূর্ণ খোলা।',
     lblTotal: 'মোট কাজ', lblImp: 'জরুরি', lblDone: 'সম্পন্ন',
     eveHead: 'সন্ধ্যার নিশ্চিতকরণ', eveSub: 'ডেডলাইন শেষ হলে, এখানে ✓ বা ✗ চিহ্নিত করুন।',
     empty: 'এখনো কোনো কাজ যোগ হয়নি। "+ নতুন কাজ" থেকে শুরু করুন।',
@@ -132,7 +132,7 @@ export const T = {
     navAdd: '+ புதிய பணி', navToday: 'இன்றைய பணிகள்', navEvening: 'மாலை சரிபார்ப்பு', navProgress: 'முன்னேற்றம்',
     lblTitle: 'பணியின் பெயர்', titlePh: 'உதா: வாடிக்கையாளருக்கு அறிக்கை அனுப்பவும்', lblDate: 'தேதி', lblTime: 'நேரம் (கடைசி நேரம்)',
     lblPriority: 'முன்னுரிமை', important: '🔴 முக்கியம்', medium: '🟡 நடுத்தரம்', addBtn: 'பணி சேர்க்க',
-    notice: 'ஃப்ரீ ஸோன்: ஒரு நாளைக்கு 3 reminders மட்டும். பிரீமியம் (₹499/மாதம்) இல் unlimited reminders, streak/progress unlock, மற்றும் அனைத்து features திறந்திருக்கும்.',
+    notice: 'ஃப்ரீ ஸோன்: ஒரு நாளைக்கு 3 reminders மட்டும். பிரீமியம் (₹399/மாதம்) இல் unlimited reminders, streak/progress unlock, மற்றும் அனைத்து features திறந்திருக்கும்.',
     lblTotal: 'மொத்த பணிகள்', lblImp: 'முக்கியம்', lblDone: 'முடிந்தது',
     eveHead: 'மாலை உறுதிப்படுத்தல்', eveSub: 'கடைசி நேரம் முடிந்த பிறகு, இங்கே ✓ அல்லது ✗ குறிக்கவும்.',
     empty: 'இன்னும் பணி சேர்க்கப்படவில்லை. "+ புதிய பணி" இலிருந்து தொடங்கவும்.',
@@ -160,7 +160,7 @@ export const T = {
     navAdd: '+ కొత్త పని', navToday: 'ఈరోజు పనులు', navEvening: 'సాయంత్రం చెక్', navProgress: 'పురోగతి',
     lblTitle: 'పని పేరు', titlePh: 'ఉదా: క్లయింట్‌కు రిపోర్ట్ పంపండి', lblDate: 'తేదీ', lblTime: 'సమయం (గడువు)',
     lblPriority: 'ప్రాధాన్యత', important: '🔴 ముఖ్యమైనది', medium: '🟡 మధ్యస్థం', addBtn: 'పని జోడించు',
-    notice: 'ఫ్రీ జోన్: రోజుకు కేవలం 3 reminders మాత్రమే. ప్రీమియం (₹499/నెల)లో unlimited reminders, streak/progress unlock, మరియు అన్ని features పూర్తిగా open.',
+    notice: 'ఫ్రీ జోన్: రోజుకు కేవలం 3 reminders మాత్రమే. ప్రీమియం (₹399/నెల)లో unlimited reminders, streak/progress unlock, మరియు అన్ని features పూర్తిగా open.',
     lblTotal: 'మొత్తం పనులు', lblImp: 'ముఖ్యమైనది', lblDone: 'పూర్తయింది',
     eveHead: 'సాయంత్రం నిర్ధారణ', eveSub: 'గడువు ముగిసిన తర్వాత, ఇక్కడ ✓ లేదా ✗ గుర్తించండి.',
     empty: 'ఇంకా పని జోడించలేదు. "+ కొత్త పని" నుండి ప్రారంభించండి.',
@@ -188,7 +188,7 @@ export const T = {
     navAdd: '+ નવું કામ', navToday: 'આજના કામ', navEvening: 'સાંજ ચેક', navProgress: 'પ્રગતિ',
     lblTitle: 'કામનું નામ', titlePh: 'દા.ત. ક્લાયન્ટને રિપોર્ટ મોકલો', lblDate: 'તારીખ', lblTime: 'સમય (ડેડલાઇન)',
     lblPriority: 'પ્રાથમિકતા', important: '🔴 જરૂરી', medium: '🟡 મધ્યમ', addBtn: 'કામ ઉમેરો',
-    notice: 'ફ્રી ઝોન: દિવસમાં ફક્ત 3 reminders. પ્રીમિયમ (₹499/મહિનો) માં unlimited reminders, streak/progress unlock, અને બધા features પૂરેપૂરા ખુલ્લા.',
+    notice: 'ફ્રી ઝોન: દિવસમાં ફક્ત 3 reminders. પ્રીમિયમ (₹399/મહિનો) માં unlimited reminders, streak/progress unlock, અને બધા features પૂરેપૂરા ખુલ્લા.',
     lblTotal: 'કુલ કામ', lblImp: 'જરૂરી', lblDone: 'પૂર્ણ',
     eveHead: 'સાંજની પુષ્ટિ', eveSub: 'ડેડલાઇન પૂરી થયા પછી, અહીં ✓ કે ✗ કરો.',
     empty: 'હજુ કોઈ કામ ઉમેર્યું નથી. "+ નવું કામ" થી શરૂ કરો.',
@@ -216,7 +216,7 @@ export const T = {
     navAdd: '+ ਨਵਾਂ ਕੰਮ', navToday: 'ਅੱਜ ਦੇ ਕੰਮ', navEvening: 'ਸ਼ਾਮ ਚੈੱਕ', navProgress: 'ਤਰੱਕੀ',
     lblTitle: 'ਕੰਮ ਦਾ ਨਾਮ', titlePh: 'ਜਿਵੇਂ: ਗਾਹਕ ਨੂੰ ਰਿਪੋਰਟ ਭੇਜੋ', lblDate: 'ਤਾਰੀਖ', lblTime: 'ਸਮਾਂ (ਡੈੱਡਲਾਈਨ)',
     lblPriority: 'ਤਰਜੀਹ', important: '🔴 ਜ਼ਰੂਰੀ', medium: '🟡 ਮੱਧਮ', addBtn: 'ਕੰਮ ਜੋੜੋ',
-    notice: 'ਫ੍ਰੀ ਜ਼ੋਨ: ਦਿਨ ਵਿੱਚ ਸਿਰਫ਼ 3 reminders. ਪ੍ਰੀਮੀਅਮ (₹499/ਮਹੀਨਾ) ਵਿੱਚ unlimited reminders, streak/progress unlock, ਅਤੇ ਸਾਰੇ features ਪੂਰੀ ਤਰ੍ਹਾਂ ਖੁੱਲ੍ਹੇ।',
+    notice: 'ਫ੍ਰੀ ਜ਼ੋਨ: ਦਿਨ ਵਿੱਚ ਸਿਰਫ਼ 3 reminders. ਪ੍ਰੀਮੀਅਮ (₹399/ਮਹੀਨਾ) ਵਿੱਚ unlimited reminders, streak/progress unlock, ਅਤੇ ਸਾਰੇ features ਪੂਰੀ ਤਰ੍ਹਾਂ ਖੁੱਲ੍ਹੇ।',
     lblTotal: 'ਕੁੱਲ ਕੰਮ', lblImp: 'ਜ਼ਰੂਰੀ', lblDone: 'ਪੂਰਾ ਹੋਇਆ',
     eveHead: 'ਸ਼ਾਮ ਦੀ ਪੁਸ਼ਟੀ', eveSub: 'ਡੈੱਡਲਾਈਨ ਖਤਮ ਹੋਣ ਤੋਂ ਬਾਅਦ, ਇੱਥੇ ✓ ਜਾਂ ✗ ਲਗਾਓ।',
     empty: 'ਅਜੇ ਕੋਈ ਕੰਮ ਨਹੀਂ ਜੋੜਿਆ। "+ ਨਵਾਂ ਕੰਮ" ਤੋਂ ਸ਼ੁਰੂ ਕਰੋ।',

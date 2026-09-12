@@ -15,7 +15,7 @@ let currentSubscription: Subscription = {
   id: 'sub_trial_001',
   plan: 'FREE',
   status: 'trial',
-  price: 499,
+  price: 399,
   currency: 'INR',
   startedAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 3 * 86400000).toISOString(),

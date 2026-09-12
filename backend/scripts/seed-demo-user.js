@@ -20,7 +20,7 @@ async function seed() {
 
   await db.query(
     `INSERT INTO subscriptions (user_id, status, plan_price)
-     VALUES ($1, 'free', 899)
+     VALUES ($1, 'free', 399)
      ON CONFLICT (user_id) DO NOTHING`,
     [user.id]
   );

@@ -23,7 +23,7 @@ async function initDatabase() {
         id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         status                  VARCHAR(20) NOT NULL DEFAULT 'free',
-        plan_price              NUMERIC(10,2) NOT NULL DEFAULT 899.00,
+        plan_price              NUMERIC(10,2) NOT NULL DEFAULT 399.00,
         currency                VARCHAR(5) NOT NULL DEFAULT 'INR',
         current_period_start    TIMESTAMPTZ,
         current_period_end      TIMESTAMPTZ,

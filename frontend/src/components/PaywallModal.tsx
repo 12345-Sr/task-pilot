@@ -97,7 +97,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
             {/* Price Row */}
             <View style={styles.priceRow}>
-              <Text style={styles.priceAmount}>₹499</Text>
+              <Text style={styles.priceAmount}>₹399</Text>
               <Text style={styles.pricePeriod}>{t(language, 'per_month')}</Text>
             </View>
 

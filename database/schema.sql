@@ -23,14 +23,14 @@ CREATE TABLE users (
 -- Freemium model: every user starts on 'free' (no trial). Free users are capped at
 -- FREE_DAILY_LIMIT (3) new task reminders per calendar day and don't get streak/progress
 -- tracking — that gating is enforced in backend/routes/tasks.js. 'active' means the
--- ₹899/month Premium Zone subscription is live, which removes the daily cap and unlocks
+-- ₹399/month Premium Zone subscription is live, which removes the daily cap and unlocks
 -- streak tracking.
 CREATE TABLE subscriptions (
   id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   status                  VARCHAR(20) NOT NULL DEFAULT 'free',
                           -- free | active | cancelled | past_due
-  plan_price              NUMERIC(10,2) NOT NULL DEFAULT 899.00,
+  plan_price              NUMERIC(10,2) NOT NULL DEFAULT 399.00,
   currency                VARCHAR(5) NOT NULL DEFAULT 'INR',
   current_period_start    TIMESTAMPTZ,
   current_period_end      TIMESTAMPTZ,

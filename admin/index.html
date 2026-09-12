@@ -1253,7 +1253,7 @@
           <div class="kpi-card" id="cardMonthlyRev">
             <div class="kpi-left">
               <span class="kpi-title">Monthly Revenue</span>
-              <span class="kpi-number" id="kpiMonthlyRevenue">₹899.00</span>
+              <span class="kpi-number" id="kpiMonthlyRevenue">₹399.00</span>
               <span class="kpi-change-badge badge-neutral">
                 Live Subscriptions
               </span>
@@ -1270,7 +1270,7 @@
           <div class="kpi-card" id="cardTotalRev">
             <div class="kpi-left">
               <span class="kpi-title">Total Revenue</span>
-              <span class="kpi-number" id="kpiTotalRevenue">₹899.00</span>
+              <span class="kpi-number" id="kpiTotalRevenue">₹399.00</span>
               <span class="kpi-change-badge badge-neutral">
                 All-time collected
               </span>
@@ -1333,7 +1333,7 @@
                     <div class="recent-user-email">rohan@example.com</div>
                   </div>
                 </div>
-                <div class="recent-amount">₹899</div>
+                <div class="recent-amount">₹399</div>
               </div>
               <div class="recent-user-row">
                 <div class="recent-user-left">
@@ -1671,11 +1671,11 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
               <div class="form-group">
                 <label class="form-label">Monthly Premium Plan (₹)</label>
-                <input type="number" id="settingMonthlyPrice" class="input-field" value="899">
+                <input type="number" id="settingMonthlyPrice" class="input-field" value="399">
               </div>
               <div class="form-group">
                 <label class="form-label">Annual Pro Plan (₹)</label>
-                <input type="number" id="settingAnnualPrice" class="input-field" value="4999">
+                <input type="number" id="settingAnnualPrice" class="input-field" value="3999">
               </div>
             </div>
 
@@ -2169,7 +2169,7 @@ async function loadOverview() {
 
     const totalUsers = d?.totalUsers ?? (usersList.length > 0 ? usersList.length : 2);
     const activeSubs = d?.activeSubscribers ?? (activeCount > 0 ? activeCount : 2);
-    const mrrVal = Number(d?.monthlyRecurringRevenue ?? (mrrSum > 0 ? mrrSum : 899));
+    const mrrVal = Number(d?.monthlyRecurringRevenue ?? (mrrSum > 0 ? mrrSum : 399));
     const totalRev = Number(d?.totalRevenue ?? mrrVal);
 
     // Update Top 4 KPI values
@@ -2377,7 +2377,7 @@ async function loadSubs(filterStatus) {
     }
     if (!list.length) {
       list = [
-        { name: 'Rohan Sharma', email: 'rohan@example.com', plan_name: 'Standard Plan', plan_price: '899.00', status: 'active', current_period_end: '2026-10-08' },
+        { name: 'Rohan Sharma', email: 'rohan@example.com', plan_name: 'Standard Plan', plan_price: '399.00', status: 'active', current_period_end: '2026-10-08' },
         { name: 'Sratanshu', email: 'sratanshushukla135@gmail.com', plan_name: 'Standard Plan', plan_price: '0.00', status: 'free', current_period_end: null }
       ];
     }
@@ -2434,8 +2434,8 @@ function saveSettings() {
   const tagline = document.getElementById('settingAppTagline')?.value || '';
   const supportEmail = document.getElementById('settingSupportEmail')?.value || 'support@taskpilot.com';
   const freeLimit = document.getElementById('settingFreeLimit')?.value || '3';
-  const monthlyPrice = document.getElementById('settingMonthlyPrice')?.value || '899';
-  const annualPrice = document.getElementById('settingAnnualPrice')?.value || '4999';
+  const monthlyPrice = document.getElementById('settingMonthlyPrice')?.value || '399';
+  const annualPrice = document.getElementById('settingAnnualPrice')?.value || '3999';
   const morningTime = document.getElementById('settingMorningTime')?.value || '09:00';
   const eveningTime = document.getElementById('settingEveningTime')?.value || '20:00';
 
@@ -2453,8 +2453,8 @@ function resetDefaultSettings() {
   if (document.getElementById('settingAppTagline')) document.getElementById('settingAppTagline').value = 'Smart AI Daily Task Manager & Habit Streak Tracker';
   if (document.getElementById('settingSupportEmail')) document.getElementById('settingSupportEmail').value = 'support@taskpilot.com';
   if (document.getElementById('settingFreeLimit')) document.getElementById('settingFreeLimit').value = '3';
-  if (document.getElementById('settingMonthlyPrice')) document.getElementById('settingMonthlyPrice').value = '899';
-  if (document.getElementById('settingAnnualPrice')) document.getElementById('settingAnnualPrice').value = '4999';
+  if (document.getElementById('settingMonthlyPrice')) document.getElementById('settingMonthlyPrice').value = '399';
+  if (document.getElementById('settingAnnualPrice')) document.getElementById('settingAnnualPrice').value = '3999';
   if (document.getElementById('settingMorningTime')) document.getElementById('settingMorningTime').value = '09:00';
   if (document.getElementById('settingEveningTime')) document.getElementById('settingEveningTime').value = '20:00';
   if (document.getElementById('settingsApiBaseFull')) document.getElementById('settingsApiBaseFull').value = API_BASE;

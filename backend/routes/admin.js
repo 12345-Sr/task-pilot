@@ -250,7 +250,7 @@ router.get('/subscriptions', requireAdmin, async (req, res) => {
     if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
       return res.json({
         subscriptions: [
-          { id: 'sub_1', name: 'Rohan Sharma', email: 'rohan@example.com', status: 'active', plan_price: 499 }
+          { id: 'sub_1', name: 'Rohan Sharma', email: 'rohan@example.com', status: 'active', plan_price: 399 }
         ]
       });
     }
