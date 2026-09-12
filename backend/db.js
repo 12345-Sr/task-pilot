@@ -19,7 +19,7 @@ function formatConnectionString(connStr) {
   try {
     const parsed = new URL(connStr);
     if (parsed.hostname && parsed.hostname.startsWith('dpg-') && !parsed.hostname.includes('.')) {
-      const region = process.env.DB_REGION || process.env.RENDER_REGION || 'oregon';
+      const region = process.env.DB_REGION || process.env.RENDER_REGION || 'singapore';
       const originalHost = parsed.hostname;
       parsed.hostname = `${originalHost}.${region}-postgres.render.com`;
       console.log(`[DATABASE] Normalized bare Render internal host '${originalHost}' -> '${parsed.hostname}'`);
