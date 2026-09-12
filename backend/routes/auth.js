@@ -39,17 +39,12 @@ function getMailTransporter() {
 
   if (host === 'smtp.gmail.com' || user.toLowerCase().endsWith('@gmail.com')) {
     return nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // STARTTLS
-      family: 4,     // Force IPv4 to prevent ENETUNREACH on cloud environments like Render
+      service: 'gmail',
       auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false
-      },
-      connectionTimeout: 3500,
-      greetingTimeout: 3500,
-      socketTimeout: 3500,
+      family: 4, // Force IPv4 so it dials Google IPv4 instead of unreachable IPv6
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
 
