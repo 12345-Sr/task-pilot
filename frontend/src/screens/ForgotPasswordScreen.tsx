@@ -181,7 +181,10 @@ export const ForgotPasswordScreen: React.FC = () => {
 
             <View style={styles.topBrandRow}>
               <BrandLogo size={28} showText={false} showSun={true} />
-              <Text style={styles.brandTitle}>Task Pilot</Text>
+              <Text style={styles.brandTitle}>
+                <Text style={{ color: '#0F172A' }}>Task</Text>
+                <Text style={{ color: '#EAB308' }}>Pilot</Text>
+              </Text>
             </View>
           </View>
 

@@ -103,7 +103,10 @@ export const TodayScreen: React.FC = () => {
         <View style={styles.topBrandBar}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <BrandLogo size={32} showText={false} />
-            <Text style={styles.brandBarTitle}>Task Pilot</Text>
+            <Text style={styles.brandBarTitle}>
+              <Text style={{ color: '#0F172A' }}>Task</Text>
+              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.settingsHeaderBtn}

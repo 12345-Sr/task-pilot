@@ -76,21 +76,28 @@
     margin-bottom: 24px;
   }
   .brand-icon-box {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    background: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #FFFFFF;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
   .brand-name {
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 800;
-    color: var(--text-primary);
     letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+  }
+  .brand-name .part-task, .sidebar-brand-text .part-task {
+    color: #0F172A;
+  }
+  .brand-name .part-pilot, .sidebar-brand-text .part-pilot {
+    color: #EAB308;
   }
   .login-title {
     font-size: 22px;
@@ -232,12 +239,13 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    background: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #FFFFFF;
     flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   }
   .sidebar-brand-text {
     font-size: 17px;
@@ -974,13 +982,15 @@
   <div class="login-card">
     <div class="brand-badge">
       <div class="brand-icon-box">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
+        <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+          <path d="M 22 18 L 44 19 L 29 38 Z" fill="#F59E0B" />
+          <path d="M 12 40 L 92 18 L 30 48 Z" fill="#16A34A" />
+          <path d="M 30 48 L 92 18 L 45 84 L 23 70 Z" fill="#15803D" />
+          <path d="M 23 70 L 30 48 L 38 78 Z" fill="#14532D" />
+          <line x1="28" y1="49" x2="92" y2="18" stroke="#FACC15" stroke-width="3.5" stroke-linecap="round" />
         </svg>
       </div>
-      <div class="brand-name">Task Pilot</div>
+      <div class="brand-name"><span class="part-task">Task</span><span class="part-pilot">Pilot</span></div>
     </div>
     <h1 class="login-title">Admin Dashboard</h1>
     <p class="login-sub">Sign in to manage platform operations & users</p>
@@ -1007,13 +1017,15 @@
     <div class="sidebar-header">
       <a href="#" class="sidebar-brand" onclick="switchNav('overview'); return false;">
         <div class="sidebar-brand-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+            <path d="M 22 18 L 44 19 L 29 38 Z" fill="#F59E0B" />
+            <path d="M 12 40 L 92 18 L 30 48 Z" fill="#16A34A" />
+            <path d="M 30 48 L 92 18 L 45 84 L 23 70 Z" fill="#15803D" />
+            <path d="M 23 70 L 30 48 L 38 78 Z" fill="#14532D" />
+            <line x1="28" y1="49" x2="92" y2="18" stroke="#FACC15" stroke-width="3.5" stroke-linecap="round" />
           </svg>
         </div>
-        <span class="sidebar-brand-text brand-name">Task Pilot</span>
+        <span class="sidebar-brand-text brand-name"><span class="part-task">Task</span><span class="part-pilot">Pilot</span></span>
       </a>
       <button class="icon-btn" id="sidebarToggleBtn" title="Toggle Sidebar" style="width:30px; height:30px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

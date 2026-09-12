@@ -327,7 +327,10 @@ export default function WelcomeScreen({ navigation }: any) {
               <BrandLogo size={70} showText={false} />
             </View>
           </View>
-          <Text style={styles.brandTitle}>Task Pilot</Text>
+          <Text style={styles.brandTitle}>
+            <Text style={{ color: '#0F172A' }}>Task</Text>
+            <Text style={{ color: '#EAB308' }}>Pilot</Text>
+          </Text>
           <View style={styles.taglineBadge}>
             <Text style={styles.brandTagline}>"{t(language, 'tagline')}"</Text>
           </View>

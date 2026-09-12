@@ -190,7 +190,10 @@ export const SignupScreen: React.FC = () => {
           {/* Top Brand Banner matching Panel 6 */}
           <View style={styles.topBrandRow}>
             <BrandLogo size={32} showSun={true} />
-            <Text style={styles.brandTitle}>Task Pilot</Text>
+            <Text style={styles.brandTitle}>
+              <Text style={{ color: '#0F172A' }}>Task</Text>
+              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+            </Text>
           </View>
 
           {/* Big Header */}

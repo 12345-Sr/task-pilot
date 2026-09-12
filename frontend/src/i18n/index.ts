@@ -66,7 +66,7 @@ export function formatLocalizedDate(date: Date, lang: string = 'hi'): string {
 
 export const translations: Record<string, Record<string, string>> = {
   hi: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'Kal ka kaam, aaj set karein.',
     subTagline: 'Subah briefing · Time se pehle alert · Shaam ko confirmation',
     tab_today: 'Aaj Ke Kaam',
@@ -270,7 +270,7 @@ export const translations: Record<string, Record<string, string>> = {
     scheduled_date_badge: 'तय तारीख (Date)',
   },
   en: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'Plan tomorrow, achieve today.',
     subTagline: 'Morning briefing · Alerts before deadline · Evening confirmation',
     tab_today: "Today's Tasks",
@@ -474,7 +474,7 @@ export const translations: Record<string, Record<string, string>> = {
     scheduled_date_badge: 'Scheduled Date',
   },
   mr: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'उद्याचे काम, आजच ठरवा.',
     subTagline: 'सकाळचा ब्रीफिंग · वेळेपूर्वी अलर्ट · संध्याकाळी पुष्टीकरण',
     tab_today: 'आजची कामे',
@@ -641,7 +641,7 @@ export const translations: Record<string, Record<string, string>> = {
     task_card_alert_set: 'अलर्ट सेट आहे',
   },
   bn: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'আগামীকালের কাজ, আজই ঠিক করুন।',
     subTagline: 'সকালের ব্রিফিং · সময়ের আগে অ্যালার্ট · সন্ধ্যায় নিশ্চিতকরণ',
     tab_today: 'আজকের কাজ',
@@ -808,7 +808,7 @@ export const translations: Record<string, Record<string, string>> = {
     task_card_alert_set: 'সতর্কতা সেট করা আছে',
   },
   ta: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'நாளைய வேலையை, இன்றே திட்டமிடுங்கள்.',
     subTagline: 'காலை சுருக்கம் · நேரத்திற்கு முன் அலர்ட் · மாலை உறுதிப்படுத்தல்',
     tab_today: 'இன்றைய பணிகள்',
@@ -975,7 +975,7 @@ export const translations: Record<string, Record<string, string>> = {
     task_card_alert_set: 'எச்சரிக்கை அமைக்கப்பட்டுள்ளது',
   },
   te: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'రేపటి పనిని, ఈరోజే నిర్ణయించండి.',
     subTagline: 'ఉదయం బ్రీఫింగ్ · సమయానికి ముందు అలర్ట్ · సాయంత్రం నిర్ధారణ',
     tab_today: 'ఈరోజు పనులు',
@@ -1142,7 +1142,7 @@ export const translations: Record<string, Record<string, string>> = {
     task_card_alert_set: 'హెచ్చరిక సెట్ చేయబడింది',
   },
   gu: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'આવતીકાલનું કામ, આજે જ નક્કી કરો.',
     subTagline: 'સવારની બ્રીફિંગ · સમય પહેલા અલર્ટ · સાંજે પુષ્ટિ',
     tab_today: 'આજના કામ',
@@ -1309,7 +1309,7 @@ export const translations: Record<string, Record<string, string>> = {
     task_card_alert_set: 'ચેતવણી સેટ કરેલ છે',
   },
   pa: {
-    appName: 'Task Pilot',
+    appName: 'TaskPilot',
     tagline: 'ਕੱਲ੍ਹ ਦਾ ਕੰਮ, ਅੱਜ ਹੀ ਤੈਅ ਕਰੋ।',
     subTagline: 'ਸਵੇਰ ਦੀ ਬ੍ਰੀਫਿੰਗ · ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਅਲਰਟ · ਸ਼ਾਮ ਦੀ ਪੁਸ਼ਟੀ',
     tab_today: 'ਅੱਜ ਦੇ ਕੰਮ',
