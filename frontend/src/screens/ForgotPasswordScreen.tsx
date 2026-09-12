@@ -16,7 +16,7 @@ import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import BrandLogo from '../components/BrandLogo';
-import { useForgotPassword, useResetPassword } from '../hooks';
+import { useForgotPassword, useVerifyResetOtp, useResetPassword } from '../hooks';
 
 export const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -25,10 +25,15 @@ export const ForgotPasswordScreen: React.FC = () => {
   const { language } = useAppStore();
 
   const forgotMutation = useForgotPassword();
+  const verifyMutation = useVerifyResetOtp();
   const resetMutation = useResetPassword();
 
-  // Screen flow steps: 1 = Enter Email, 2 = Enter OTP & New Password, 3 = Success
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Screen flow steps:
+  // 1 = Enter Email
+  // 2 = Enter & Verify OTP
+  // 3 = Enter New Password & Confirm Password
+  // 4 = Success Confirmation
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [email, setEmail] = useState(route.params?.email || '');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -54,7 +59,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           }
           setSuccessInfo(
             data?.devOtp
-              ? `Verification code: ${data.devOtp}. Enter code below to reset password.`
+              ? `Verification code: ${data.devOtp}. Enter code below to verify.`
               : (data?.message || 'Verification code sent to your email.')
           );
           setStep(2);
@@ -72,12 +77,43 @@ export const ForgotPasswordScreen: React.FC = () => {
     );
   };
 
-  const handleResetPassword = () => {
+  const handleVerifyCode = () => {
     setErrorMsg('');
     if (!otp.trim() || otp.trim().length < 4) {
       setErrorMsg(t(language, 'enter_otp_error'));
       return;
     }
+
+    verifyMutation.mutate(
+      {
+        email: email.trim().toLowerCase(),
+        otp: otp.trim(),
+      },
+      {
+        onSuccess: () => {
+          setErrorMsg('');
+          setSuccessInfo(
+            language === 'hi'
+              ? 'Code safalta se verify ho gaya! Ab apna naya password banayein.'
+              : 'Code verified successfully! Now create your new password.'
+          );
+          setStep(3);
+        },
+        onError: (err: any) => {
+          setErrorMsg(
+            err?.error ||
+            err?.message ||
+            err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            'Invalid verification code. Please check and try again.'
+          );
+        },
+      }
+    );
+  };
+
+  const handleResetPassword = () => {
+    setErrorMsg('');
     if (newPassword.length < 6) {
       setErrorMsg(t(language, 'password_length_error'));
       return;
@@ -95,7 +131,7 @@ export const ForgotPasswordScreen: React.FC = () => {
       },
       {
         onSuccess: () => {
-          setStep(3);
+          setStep(4);
         },
         onError: (err: any) => {
           setErrorMsg(
@@ -128,7 +164,10 @@ export const ForgotPasswordScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => {
-                if (step === 2) {
+                if (step === 3) {
+                  setStep(2);
+                  setErrorMsg('');
+                } else if (step === 2) {
                   setStep(1);
                   setErrorMsg('');
                 } else {
@@ -154,19 +193,25 @@ export const ForgotPasswordScreen: React.FC = () => {
                 ? t(language, 'reset_password_subtitle')
                 : step === 2
                 ? (language === 'hi' ? `Humne ${email} par 6-digit code bheja hai` : `Enter the code sent to ${email}`)
+                : step === 3
+                ? (language === 'hi' ? 'Apna naya password darj karein aur confirm karein.' : 'Enter your new password and confirm it.')
                 : t(language, 'password_reset_success')}
             </Text>
 
             {/* Step Progress Pill */}
-            {step !== 3 && (
+            {step !== 4 && (
               <View style={styles.stepBadge}>
                 <View style={[styles.stepDot, step >= 1 && styles.stepDotActive]} />
                 <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
                 <View style={[styles.stepDot, step >= 2 && styles.stepDotActive]} />
+                <View style={[styles.stepLine, step >= 3 && styles.stepLineActive]} />
+                <View style={[styles.stepDot, step >= 3 && styles.stepDotActive]} />
                 <Text style={styles.stepBadgeText}>
                   {step === 1
-                    ? (language === 'hi' ? 'Kadam 1/2: Email darj karein' : 'Step 1 of 2: Find Account')
-                    : (language === 'hi' ? 'Kadam 2/2: OTP aur Naya Password' : 'Step 2 of 2: Reset Password')}
+                    ? (language === 'hi' ? 'Kadam 1/3: Email darj karein' : 'Step 1 of 3: Find Account')
+                    : step === 2
+                    ? (language === 'hi' ? 'Kadam 2/3: OTP verify karein' : 'Step 2 of 3: Verify Code')
+                    : (language === 'hi' ? 'Kadam 3/3: Naya password' : 'Step 3 of 3: New Password')}
                 </Text>
               </View>
             )}
@@ -180,7 +225,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           ) : null}
 
           {/* Success Info Banner */}
-          {successInfo && step === 2 ? (
+          {successInfo && (step === 2 || step === 3) ? (
             <View style={styles.successAlertBox}>
               <Text style={styles.successAlertText}>✉️ {successInfo}</Text>
             </View>
@@ -236,12 +281,12 @@ export const ForgotPasswordScreen: React.FC = () => {
               </View>
             )}
 
-            {/* STEP 2: Enter OTP & New Password */}
+            {/* STEP 2: Enter & Verify OTP */}
             {step === 2 && (
               <View style={styles.form}>
                 <View style={styles.stepHeaderRow}>
                   <Text style={styles.cardHeading}>
-                    {language === 'hi' ? 'Code aur Naya Password' : 'Reset Your Password'}
+                    {language === 'hi' ? 'Verification Code Darj Karein' : 'Enter Verification Code'}
                   </Text>
                   <TouchableOpacity onPress={() => setStep(1)} activeOpacity={0.7}>
                     <Text style={styles.changeEmailText}>
@@ -264,6 +309,48 @@ export const ForgotPasswordScreen: React.FC = () => {
                       maxLength={6}
                     />
                   </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.primaryButton, verifyMutation.isPending && styles.buttonDisabled]}
+                  activeOpacity={0.88}
+                  onPress={handleVerifyCode}
+                  disabled={verifyMutation.isPending}
+                >
+                  {verifyMutation.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>
+                      {language === 'hi' ? 'Code Verify Karein' : 'Verify Code'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.resendRow}>
+                  <TouchableOpacity
+                    onPress={handleSendCode}
+                    disabled={forgotMutation.isPending}
+                  >
+                    <Text style={styles.resendText}>
+                      {language === 'hi' ? 'Code dobara bhejein' : 'Resend code'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* STEP 3: Enter New Password & Confirm Password */}
+            {step === 3 && (
+              <View style={styles.form}>
+                <View style={styles.stepHeaderRow}>
+                  <Text style={styles.cardHeading}>
+                    {language === 'hi' ? 'Naya Password Banayein' : 'Create New Password'}
+                  </Text>
+                  <TouchableOpacity onPress={() => setStep(2)} activeOpacity={0.7}>
+                    <Text style={styles.changeEmailText}>
+                      {language === 'hi' ? 'Wapas OTP' : 'Back to OTP'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* New Password Field */}
@@ -322,22 +409,11 @@ export const ForgotPasswordScreen: React.FC = () => {
                     <Text style={styles.primaryButtonText}>{t(language, 'submit_reset_btn')}</Text>
                   )}
                 </TouchableOpacity>
-
-                <View style={styles.resendRow}>
-                  <TouchableOpacity
-                    onPress={handleSendCode}
-                    disabled={forgotMutation.isPending}
-                  >
-                    <Text style={styles.resendText}>
-                      {language === 'hi' ? 'Code dobara bhejein' : 'Resend code'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             )}
 
-            {/* STEP 3: Success Screen */}
-            {step === 3 && (
+            {/* STEP 4: Success Screen */}
+            {step === 4 && (
               <View style={styles.successContainer}>
                 <View style={styles.successIconBox}>
                   <Text style={styles.successCheckIcon}>✓</Text>
@@ -360,7 +436,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           </View>
 
           {/* Footer Link */}
-          {step !== 3 && (
+          {step !== 4 && (
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>
                 {language === 'hi' ? 'Password yaad aa gaya?' : 'Remember your password?'}{' '}

@@ -351,6 +351,44 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// POST /api/auth/verify-reset-otp
+router.post('/verify-reset-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP verification code are required' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const cleanOtp = String(otp).trim();
+
+    const resetRes = await db.query(
+      `SELECT id, expires_at, used FROM password_resets
+       WHERE LOWER(email) = $1 AND otp = $2
+       ORDER BY created_at DESC LIMIT 1`,
+      [trimmedEmail, cleanOtp]
+    );
+
+    const record = resetRes.rows[0];
+    if (!record) {
+      return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+    }
+
+    if (record.used) {
+      return res.status(400).json({ error: 'This verification code has already been used. Please request a new one.' });
+    }
+
+    if (new Date(record.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
+    }
+
+    res.json({ ok: true, message: 'Code verified successfully.' });
+  } catch (err) {
+    console.error('Error in verify-reset-otp:', err);
+    res.status(500).json({ error: 'Failed to verify reset code' });
+  }
+});
+
 // POST /api/auth/reset-password
 router.post('/reset-password', async (req, res) => {
   try {

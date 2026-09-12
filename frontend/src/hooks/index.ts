@@ -288,6 +288,15 @@ export function useForgotPassword() {
   });
 }
 
+export function useVerifyResetOtp() {
+  return useMutation({
+    mutationFn: async (data: { email: string; otp: string }) => {
+      const res: any = await apiClient.post('/auth/verify-reset-otp', data);
+      return res?.data || res;
+    },
+  });
+}
+
 export function useResetPassword() {
   return useMutation({
     mutationFn: async (data: { email: string; otp: string; newPassword: string }) => {
