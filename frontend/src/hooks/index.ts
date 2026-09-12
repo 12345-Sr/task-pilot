@@ -310,13 +310,16 @@ export function useResetPassword() {
 // SUBSCRIPTION HOOKS
 // -------------------------------------------------------------
 export function useSubscription() {
-  const { setIsPremium } = useAppStore();
+  const { setIsPremium, setFreeLifetimeCreated } = useAppStore();
   return useQuery({
     queryKey: QUERY_KEYS.SUBSCRIPTION,
     queryFn: async () => {
       const sub = await subscriptionRepository.getStatus();
       const isPro = sub?.status === 'active' || (sub as any)?.isPremium === true;
       setIsPremium(isPro);
+      if (typeof (sub as any)?.dailyUsed === 'number') {
+        setFreeLifetimeCreated((sub as any).dailyUsed);
+      }
       return sub;
     },
     staleTime: 30000,

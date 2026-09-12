@@ -21,6 +21,8 @@ export interface AppState {
   setSelectedTaskId: (id: string | null) => void;
   setTaskDescription: (key: string, description: string) => void;
   freeUsageByDate: Record<string, number>;
+  freeLifetimeCreated: number;
+  setFreeLifetimeCreated: (count: number) => void;
   recordTaskCreation: (dateStr?: string) => void;
   recordTaskDeletion: (dateStr?: string) => void;
   getFreeUsage: (dateStr?: string, activeCount?: number) => { used: number; total: number; remaining: number };
@@ -37,6 +39,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedTaskId: null,
   taskDescriptions: {},
   freeUsageByDate: {},
+  freeLifetimeCreated: 0,
 
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   setToken: (token) => {
@@ -56,6 +59,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setIsPremium: (isPremium) => set({ isPremium }),
   setPaywallVisible: (paywallVisible) => set({ paywallVisible }),
   setSelectedTaskId: (selectedTaskId) => set({ selectedTaskId }),
+  setFreeLifetimeCreated: (count) =>
+    set({ freeLifetimeCreated: Math.min(3, Math.max(0, count)) }),
   setTaskDescription: (key, description) =>
     set((state) => ({
       taskDescriptions: {
@@ -68,44 +73,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const key = (dateStr || today).slice(0, 10);
     set((state) => ({
+      freeLifetimeCreated: Math.min(3, (state.freeLifetimeCreated || 0) + 1),
       freeUsageByDate: {
         ...state.freeUsageByDate,
         [key]: Math.min(3, (state.freeUsageByDate[key] || 0) + 1),
       },
     }));
   },
-  recordTaskDeletion: (dateStr) => {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const key = (dateStr || today).slice(0, 10);
-    set((state) => ({
-      freeUsageByDate: {
-        ...state.freeUsageByDate,
-        [key]: Math.max(0, (state.freeUsageByDate[key] || 1) - 1),
-      },
-    }));
+  recordTaskDeletion: (_dateStr) => {
+    // Free users receive only 3 lifetime tasks total.
+    // Deleting a created task does not restore the free creation quota.
   },
-  getFreeUsage: (dateStr, activeCount) => {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const key = (dateStr || today).slice(0, 10);
-    
-    let used: number;
-    if (typeof activeCount === 'number') {
-      used = Math.min(3, Math.max(0, activeCount));
-      const currentStored = get().freeUsageByDate[key];
-      if (currentStored !== used) {
-        set((state) => ({
-          freeUsageByDate: {
-            ...state.freeUsageByDate,
-            [key]: used,
-          },
-        }));
-      }
-    } else {
-      used = Math.min(3, Math.max(0, get().freeUsageByDate[key] || 0));
-    }
-
+  getFreeUsage: (_dateStr, activeCount) => {
+    const lifetimeCount = get().freeLifetimeCreated || 0;
+    const used = Math.min(3, Math.max(lifetimeCount, typeof activeCount === 'number' ? activeCount : 0));
     return {
       used,
       total: 3,

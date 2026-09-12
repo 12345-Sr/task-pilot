@@ -13,10 +13,10 @@ db.query(`
 
 const FREE_DAILY_LIMIT = 3;
 
-// Shared helper: can this user add another task for the given date?
+// Shared helper: can this user add another task?
 // Premium ('active') users are unlimited. Free-zone users are capped at
-// FREE_DAILY_LIMIT reminders per calendar day (checked per task_date, not per today).
-async function getAccessStatus(userId, taskDate) {
+// FREE_DAILY_LIMIT (3 tasks lifetime maximum unless subscribed).
+async function getAccessStatus(userId) {
   const r = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
   const sub = r.rows[0];
   if (!sub) return { allowed: false, reason: 'no_subscription' };
@@ -25,8 +25,8 @@ async function getAccessStatus(userId, taskDate) {
 
   if (sub.status === 'free') {
     const countR = await db.query(
-      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND task_date = $2 AND (deleted_at IS NULL)',
-      [userId, taskDate]
+      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
+      [userId]
     );
     const used = countR.rows[0].c;
     const allowed = used < FREE_DAILY_LIMIT;
@@ -121,10 +121,10 @@ router.post('/', requireUser, async (req, res, next) => {
     const pStr = String(priority || '').toUpperCase();
     const isImportant = priority === 'important' || pStr === 'URGENT' || pStr === 'ZAROORI' || pStr === 'HIGH' || pStr === 'IMPORTANT';
 
-    const access = await getAccessStatus(req.userId, task_date);
+    const access = await getAccessStatus(req.userId);
     if (!access.allowed) {
       return res.status(402).json({
-        error: 'Free Zone daily limit reached',
+        error: 'Free Zone limit reached (3 tasks lifetime maximum)',
         reason: access.reason,
         used: access.used,
         limit: access.limit,
@@ -473,10 +473,9 @@ router.get('/stats/progress', requireUser, async (req, res) => {
   });
 });
 
-// GET /api/tasks/quota/check?date=YYYY-MM-DD — how many free-zone daily reminders are used
+// GET /api/tasks/quota/check — how many free-zone reminders are used lifetime
 router.get('/quota/check', requireUser, async (req, res) => {
-  const date = req.query.date || new Date().toISOString().slice(0, 10);
-  const access = await getAccessStatus(req.userId, date);
+  const access = await getAccessStatus(req.userId);
   if (access.sub?.status === 'active') {
     return res.json({ unlimited: true });
   }
