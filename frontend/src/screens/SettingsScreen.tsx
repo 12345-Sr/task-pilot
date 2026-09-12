@@ -23,6 +23,7 @@ import { NotificationService } from '../services/notifications/notification.serv
 import { userRepository } from '../api';
 import { SupportedLanguage } from '../types';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
+import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
 
 interface SettingsLanguageOption {
@@ -57,6 +58,7 @@ export const SettingsScreen: React.FC = () => {
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [testingAlert, setTestingAlert] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
 
   const handleSelectLanguage = async (code: SupportedLanguage) => {
@@ -255,6 +257,24 @@ export const SettingsScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
+          {/* Terms & Conditions */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            activeOpacity={0.7}
+            onPress={() => setTermsModalVisible(true)}
+          >
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>📜</Text>
+              <View>
+                <Text style={styles.settingLabel}>Terms & Conditions</Text>
+                <Text style={styles.settingSubLabel}>Niyam aur shartein • Terms of Service</Text>
+              </View>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.chevron}>›</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Privacy Policy */}
           <TouchableOpacity
             style={styles.settingRow}
@@ -265,7 +285,7 @@ export const SettingsScreen: React.FC = () => {
               <Text style={styles.settingIcon}>🛡️</Text>
               <View>
                 <Text style={styles.settingLabel}>Privacy Policy</Text>
-                <Text style={styles.settingSubLabel}>Data suraksha aur niyam • Terms & Privacy</Text>
+                <Text style={styles.settingSubLabel}>Data suraksha aur niyam • Data & Privacy</Text>
               </View>
             </View>
             <View style={styles.settingRight}>
@@ -379,6 +399,12 @@ export const SettingsScreen: React.FC = () => {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Terms & Conditions Modal */}
+      <TermsAndConditionsModal
+        visible={termsModalVisible}
+        onClose={() => setTermsModalVisible(false)}
+      />
 
       {/* Privacy Policy Modal */}
       <PrivacyPolicyModal
