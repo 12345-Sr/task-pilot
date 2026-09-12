@@ -74,14 +74,14 @@ async function initDatabase(retries = 5, delayMs = 3000) {
         CREATE TABLE IF NOT EXISTS password_resets (
           id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           email       VARCHAR(180) NOT NULL,
-          token       VARCHAR(100) NOT NULL,
+          otp         VARCHAR(10) NOT NULL,
           expires_at  TIMESTAMPTZ NOT NULL,
           used        BOOLEAN NOT NULL DEFAULT FALSE,
           created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
         );
 
-        CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
         CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email);
+        CREATE INDEX IF NOT EXISTS idx_password_resets_otp ON password_resets(otp);
 
         CREATE TABLE IF NOT EXISTS admin_users (
           id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
