@@ -56,7 +56,6 @@ export const SettingsScreen: React.FC = () => {
   const [eveningNotification, setEveningNotification] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
-  const [testingAlert, setTestingAlert] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
@@ -71,17 +70,6 @@ export const SettingsScreen: React.FC = () => {
         console.warn('Failed to update language on backend', err);
       }
     }
-  };
-
-  const handleTestAlert = async () => {
-    setTestingAlert(true);
-    await NotificationService.triggerTestAlert(5);
-    Alert.alert(
-      '🔔 Test Alert Scheduled!',
-      '5 second mein aapke phone par loud alert, sound aur vibration bajega. Kripya dekhein!',
-      [{ text: 'Theek Hai' }]
-    );
-    setTimeout(() => setTestingAlert(false), 5000);
   };
 
   const handleLogout = () => {
@@ -215,24 +203,6 @@ export const SettingsScreen: React.FC = () => {
               thumbColor={colors.surface}
             />
           </View>
-
-          {/* Test Alert Button */}
-          <TouchableOpacity
-            style={styles.testAlertBtn}
-            activeOpacity={0.8}
-            onPress={handleTestAlert}
-          >
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>⚡</Text>
-              <View>
-                <Text style={styles.testAlertTitle}>🔔 Test Alert (5s Check)</Text>
-                <Text style={styles.settingSubLabel}>Check sound, vibration & banner on your phone</Text>
-              </View>
-            </View>
-            <View style={styles.testAlertBadge}>
-              <Text style={styles.testAlertBadgeText}>{testingAlert ? 'Setting...' : 'Test Karein'}</Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
         {/* Support & Legal Section */}
@@ -607,34 +577,6 @@ const styles = StyleSheet.create({
   logoutText: {
     ...typography.button,
     color: colors.urgentRed,
-  },
-  testAlertBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    backgroundColor: '#FFF9F0',
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    borderWidth: 1.5,
-    borderColor: '#FFE0C2',
-    marginTop: spacing.sm,
-  },
-  testAlertTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.darkOrange,
-  },
-  testAlertBadge: {
-    backgroundColor: colors.primaryOrange,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  testAlertBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
   },
   modalBackdrop: {
     flex: 1,

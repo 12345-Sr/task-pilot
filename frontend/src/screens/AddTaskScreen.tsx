@@ -325,18 +325,6 @@ export const AddTaskScreen: React.FC = () => {
                       : `2 alerts will sound for this task: 10 minutes before and at the exact scheduled time (${reminderTime}).`}
                   </Text>
                 </View>
-
-                {/* Quick Test Alert Action */}
-                <TouchableOpacity
-                  style={styles.quickTestAlertBtn}
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    await NotificationService.triggerTestAlert(5);
-                    Alert.alert('🔔 Test Alert Scheduled', '5 second mein aapka phone vibrate karega aur alert bajega!');
-                  }}
-                >
-                  <Text style={styles.quickTestAlertText}>⚡ Abhi Test Karein (5s Alert Check)</Text>
-                </TouchableOpacity>
               </>
             )}
           </View>
@@ -635,21 +623,6 @@ const styles = StyleSheet.create({
   boldTime: {
     fontWeight: '800',
     color: colors.primaryOrange,
-  },
-  quickTestAlertBtn: {
-    alignSelf: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#FFF4E5',
-    borderWidth: 1,
-    borderColor: '#FFE0C2',
-    marginTop: 6,
-  },
-  quickTestAlertText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.darkOrange,
   },
   saveButton: {
     backgroundColor: colors.primaryOrange,
