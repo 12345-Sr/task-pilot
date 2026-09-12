@@ -55,7 +55,7 @@ export const EveningScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -120,7 +120,7 @@ export const EveningScreen: React.FC = () => {
               return (
                 <View key={item.id} style={styles.confirmCard}>
                   <View style={styles.taskInfoRow}>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]}>
                         {item.title}
                       </Text>

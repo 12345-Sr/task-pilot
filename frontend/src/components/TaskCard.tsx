@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minWidth: 0,
   },
   title: {
     fontSize: 15,
@@ -222,6 +223,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   priorityWrap: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -245,15 +247,18 @@ const styles = StyleSheet.create({
     borderColor: '#FFE8D1',
   },
   alertBarLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flex: 1,
+    minWidth: 0,
   },
   alertBarIcon: {
+    flexShrink: 0,
     fontSize: 13,
   },
   alertBarText: {
+    flex: 1,
     fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
@@ -263,6 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   editPillBtn: {
+    flexShrink: 0,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 8,
     paddingVertical: 3,

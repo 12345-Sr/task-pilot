@@ -20,7 +20,7 @@ import BrandLogo from '../components/BrandLogo';
 import { useLogin } from '../hooks';
 
 const LANGUAGES = [
-  { code: 'hi', native: 'हिन्दी', label: 'Hindi' },
+  { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
   { code: 'en', native: 'English', label: 'English' },
   { code: 'mr', native: 'मराठी', label: 'Marathi' },
   { code: 'bn', native: 'বাংলা', label: 'Bengali' },

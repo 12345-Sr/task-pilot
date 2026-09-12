@@ -14,37 +14,29 @@ import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import { useUpgradeSubscription } from '../hooks';
+import { PaywallModal } from '../components/PaywallModal';
 
 export const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium } = useAppStore();
+  const { language, isPremium, setPaywallVisible } = useAppStore();
   const upgradeMutation = useUpgradeSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
   const handleSubscribe = () => {
-    upgradeMutation.mutate(selectedPlan, {
-      onSuccess: () => {
-        Alert.alert(
-          t(language, 'pro_active_title'),
-          t(language, 'pro_active_msg'),
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-      },
-      onError: () => {
-        Alert.alert('Error', t(language, 'login_failed'));
-      },
-    });
+    setPaywallVisible(true);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>{t(language, 'appName')} Premium</Text>
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          {t(language, 'appName')} Premium
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -188,6 +180,9 @@ export const PremiumScreen: React.FC = () => {
           {language === 'hi' ? 'Kabhi bhi cancel kar sakte hain.' : 'Cancel anytime with 1 tap.'}
         </Text>
       </ScrollView>
+
+      {/* Razorpay Payment Wall & UPI QR Modal */}
+      <PaywallModal />
     </SafeAreaView>
   );
 };
@@ -220,6 +215,9 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     ...typography.h3,
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'center',
     color: colors.textPrimary,
   },
   container: {

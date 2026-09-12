@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
   },
   otherDateTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   otherDateIcon: {
     fontSize: 22,
@@ -257,6 +258,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   chevronIcon: {
+    flexShrink: 0,
     fontSize: 11,
     fontWeight: '800',
     color: colors.primaryOrange,

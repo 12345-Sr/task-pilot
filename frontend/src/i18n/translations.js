@@ -4,7 +4,7 @@ export const FREE_DAILY_LIMIT = 3;
 export const PRICE = 399; // ₹399/month per product spec
 
 export const LANGUAGES = [
-  { code: 'hi', label: 'हिंदी' },
+  { code: 'hi', label: 'Hinglish' },
   { code: 'en', label: 'English' },
   { code: 'mr', label: 'मराठी' },
   { code: 'bn', label: 'বাংলা' },

@@ -49,8 +49,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 function MainTabs() {
   const { language } = useAppStore();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 10);
-  const tabBarHeight = 56 + bottomPadding;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 12);
+  const tabBarHeight = 58 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -85,12 +85,12 @@ function MainTabs() {
       <Tab.Screen
         name="TodayTab"
         component={TodayScreen}
-        options={{ title: language === 'hi' ? 'Aaj' : t(language, 'tab_today') }}
+        options={{ title: language === 'hi' ? 'Aaj Ke Kaam' : t(language, 'tab_today') }}
       />
       <Tab.Screen
         name="AddTaskTab"
         component={AddTaskScreen}
-        options={{ title: language === 'hi' ? 'Naya Kaam' : t(language, 'add_task_title') }}
+        options={{ title: language === 'hi' ? '+ Naya Kaam' : t(language, 'add_task_title') }}
       />
       <Tab.Screen
         name="EveningTab"

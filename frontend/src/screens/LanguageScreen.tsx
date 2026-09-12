@@ -35,13 +35,13 @@ interface LanguageItem {
 const LANGUAGE_LIST: LanguageItem[] = [
   {
     code: 'hi',
-    native: 'हिन्दी',
-    english: 'Hindi',
-    greeting: 'नमस्ते',
-    greetingScript: 'नमस्ते',
-    region: 'भारत • India',
-    tagline: 'कल का काम, आज सेट करें',
-    ctaText: 'हिन्दी में शुरू करें →',
+    native: 'Hinglish',
+    english: 'Hinglish',
+    greeting: 'Namaste',
+    greetingScript: 'Namaste',
+    region: 'India • Hinglish',
+    tagline: 'Kal ka kaam, aaj set karein',
+    ctaText: 'Hinglish mein shuru karein →',
     icon: '🇮🇳',
     badge: 'Popular',
   },
@@ -331,7 +331,7 @@ export const LanguageScreen: React.FC = () => {
 
           <Text style={styles.screenHeading}>Choose Your Language</Text>
           <Text style={styles.screenSubheading}>
-            अपनी पसंदीदा भाषा चुनें • Select preferred language
+            Apni pasandida bhasha chunein • Select preferred language
           </Text>
         </View>
 

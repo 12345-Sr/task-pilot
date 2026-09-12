@@ -326,6 +326,42 @@ export class NotificationService {
   }
 
   /**
+   * Fires a local notification with custom title and body.
+   */
+  static async sendLocalNotification(
+    title: string,
+    body: string,
+    delaySeconds: number = 1
+  ): Promise<boolean> {
+    try {
+      await this.init();
+      const trigger: any =
+        Platform.OS === 'web'
+          ? null
+          : {
+              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+              seconds: Math.max(1, delaySeconds),
+              ...(this.hasCustomChannel ? { channelId: 'task-alerts' } : {}),
+            };
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          badge: 1,
+        },
+        trigger,
+      });
+      return true;
+    } catch (err) {
+      console.warn('[NOTIF] sendLocalNotification failed:', err);
+      return false;
+    }
+  }
+
+  /**
    * Fires a test alert in N seconds (default 5s) so the user can verify sound, banner, and vibration!
    * Includes both system notification and an in-app alert backup.
    */

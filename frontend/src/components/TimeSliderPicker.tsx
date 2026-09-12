@@ -411,13 +411,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minWidth: 0,
   },
   timePreviewLabel: {
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
   },
   pastBadge: {
+    flexShrink: 0,
     backgroundColor: '#FEE2E2',
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -429,6 +432,7 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   timePreviewValue: {
+    flexShrink: 0,
     fontSize: 22,
     fontWeight: '900',
     color: colors.primary, // #C5A059 Champagne Camel Gold

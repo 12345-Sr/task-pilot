@@ -180,12 +180,12 @@ export const TaskDetailScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>
+        <Text style={styles.topBarTitle} numberOfLines={1}>
           {language === 'en' || language === 'hi' ? 'Reminder Detail' : language === 'mr' ? 'कामाचा तपशील' : language === 'bn' ? 'কাজের বিবরণ' : language === 'ta' ? 'பணி விவரங்கள்' : language === 'te' ? 'పని వివరాలు' : language === 'gu' ? 'કામની વિગતો' : language === 'pa' ? 'ਕੰਮ ਦਾ ਵੇਰਵਾ' : 'Reminder Detail'}
         </Text>
         <View style={styles.topBarActions}>
@@ -521,8 +521,12 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     ...typography.h3,
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'center',
     color: colors.textPrimary,
     fontWeight: '700',
+    paddingHorizontal: 8,
   },
   topBarActions: {
     flexDirection: 'row',

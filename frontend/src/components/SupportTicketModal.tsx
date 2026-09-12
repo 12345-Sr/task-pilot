@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
 import { apiClient } from '../api/client';
+import { useAppStore } from '../store';
 
 interface SupportTicketModalProps {
   visible: boolean;
@@ -35,16 +36,10 @@ interface SupportTicket {
   updated_at: string;
 }
 
-const CATEGORIES = [
-  { id: 'bug', label: '🐞 Bug / Problem' },
-  { id: 'notification', label: '🔔 Alert / Sound' },
-  { id: 'account', label: '👤 Account / Login' },
-  { id: 'subscription', label: '💳 Subscription / Pay' },
-  { id: 'feature', label: '💡 Feature Request' },
-  { id: 'other', label: '❓ Other' },
-];
-
 export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible, onClose }) => {
+  const { language } = useAppStore();
+  const isHindi = language === 'hi';
+
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [category, setCategory] = useState('bug');
   const [subject, setSubject] = useState('');
@@ -54,6 +49,24 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
   // Tickets list
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
+
+  const categories = isHindi
+    ? [
+        { id: 'bug', label: '🐞 Bug / Technical Issue' },
+        { id: 'notification', label: '🔔 Alert aur Sound Problem' },
+        { id: 'account', label: '👤 Account aur Login Issue' },
+        { id: 'subscription', label: '💳 Pro Subscription Issue' },
+        { id: 'feature', label: '💡 Naya Feature Suggestion' },
+        { id: 'other', label: '❓ Anya Sawaal' },
+      ]
+    : [
+        { id: 'bug', label: '🐞 Bug / Problem' },
+        { id: 'notification', label: '🔔 Alert & Sound' },
+        { id: 'account', label: '👤 Account & Login' },
+        { id: 'subscription', label: '💳 Pro Subscription' },
+        { id: 'feature', label: '💡 Feature Request' },
+        { id: 'other', label: '❓ Other Inquiry' },
+      ];
 
   useEffect(() => {
     if (visible) {
@@ -77,11 +90,17 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
 
   const handleSubmit = async () => {
     if (!subject.trim()) {
-      Alert.alert('Subject Required', 'Kripya samasya ka mukhya vishay likhein.');
+      Alert.alert(
+        isHindi ? 'Subject Zaroori Hai' : 'Subject Required',
+        isHindi ? 'Kripya problem ka main subject darj karein.' : 'Please enter a subject for your issue.'
+      );
       return;
     }
     if (!message.trim()) {
-      Alert.alert('Description Required', 'Kripya samasya ka poora vivaran (details) likhein.');
+      Alert.alert(
+        isHindi ? 'Details Zaroori Hain' : 'Details Required',
+        isHindi ? 'Kripya problem ka poora vivaran detail mein likhein.' : 'Please describe your issue in detail.'
+      );
       return;
     }
 
@@ -95,9 +114,11 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
 
       if (res?.ok) {
         Alert.alert(
-          '✅ Ticket Submitted!',
-          'Aapki ticket darj ho gayi hai. Hamari support team jald hi iska samadhan karegi.',
-          [{ text: 'Theek Hai' }]
+          isHindi ? '✅ Ticket Darj Ho Gayi!' : '✅ Ticket Submitted!',
+          isHindi
+            ? 'Aapki support ticket darj ho gayi hai. Hamari team jald hi check karegi.'
+            : 'Your support ticket has been submitted. Our team will review it shortly.',
+          [{ text: isHindi ? 'Theek Hai' : 'OK' }]
         );
         setSubject('');
         setMessage('');
@@ -109,8 +130,12 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
       }
     } catch (err: any) {
       Alert.alert(
-        'Submission Error',
-        err?.message || err?.error || 'Ticket submit karne mein problem aayi. Kripya punah prayas karein.'
+        isHindi ? 'Truti' : 'Submission Error',
+        err?.message ||
+          err?.error ||
+          (isHindi
+            ? 'Ticket submit karne mein problem aayi. Kripya dobara try karein.'
+            : 'Failed to submit ticket. Please try again.')
       );
     } finally {
       setSubmitting(false);
@@ -135,9 +160,11 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
               <View style={styles.header}>
                 <View style={styles.headerTitleContainer}>
                   <Text style={styles.headIcon}>🎫</Text>
-                  <View>
-                    <Text style={styles.title}>Help & Support</Text>
-                    <Text style={styles.subtitle}>Samasya darj karein • Raise an Issue</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.title} numberOfLines={1}>Help & Support</Text>
+                    <Text style={styles.subtitle} numberOfLines={2}>
+                      {isHindi ? 'Apni samasya ya issue darj karein' : 'Submit your issue or request assistance'}
+                    </Text>
                   </View>
                 </View>
                 <TouchableOpacity
@@ -157,7 +184,7 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.tabText, activeTab === 'create' && styles.activeTabText]}>
-                    + New Ticket
+                    {isHindi ? '+ Nayi Ticket' : '+ New Ticket'}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -169,7 +196,7 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.tabText, activeTab === 'list' && styles.activeTabText]}>
-                    My Tickets ({tickets.length})
+                    {isHindi ? `Meri Tickets (${tickets.length})` : `My Tickets (${tickets.length})`}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -181,9 +208,11 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                   contentContainerStyle={styles.scrollContent}
                   showsVerticalScrollIndicator={false}
                 >
-                  <Text style={styles.fieldLabel}>Select Category / Samasya ka Prakar</Text>
+                  <Text style={styles.fieldLabel}>
+                    {isHindi ? 'Problem ki category chunein' : 'Select Category'}
+                  </Text>
                   <View style={styles.categoriesGrid}>
-                    {CATEGORIES.map((cat) => {
+                    {categories.map((cat) => {
                       const isSelected = category === cat.id;
                       return (
                         <TouchableOpacity
@@ -200,20 +229,28 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                     })}
                   </View>
 
-                  <Text style={styles.fieldLabel}>Subject / Vishay</Text>
+                  <Text style={styles.fieldLabel}>{isHindi ? 'Vishay (Subject)' : 'Subject'}</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="e.g. Alarm nahi baja, OTP receive nahi hua"
+                    placeholder={
+                      isHindi
+                        ? 'Jaise: Alarm nahi baja, task save nahi hua'
+                        : 'e.g. Alarm did not ring, task did not save'
+                    }
                     placeholderTextColor="#94A3B8"
                     value={subject}
                     onChangeText={setSubject}
                     maxLength={150}
                   />
 
-                  <Text style={styles.fieldLabel}>Details / Vivaran</Text>
+                  <Text style={styles.fieldLabel}>{isHindi ? 'Poora Vivaran (Details)' : 'Details'}</Text>
                   <TextInput
                     style={[styles.input, styles.textArea]}
-                    placeholder="Apni pareshani vistaar se likhein taaki hum jaldi madad kar sakein..."
+                    placeholder={
+                      isHindi
+                        ? 'Apni problem detail me likhein taaki support team help kar sake...'
+                        : 'Describe your issue in detail so our support team can assist you...'
+                    }
                     placeholderTextColor="#94A3B8"
                     value={message}
                     onChangeText={setMessage}
@@ -231,7 +268,9 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                     {submitting ? (
                       <ActivityIndicator color="#FFFFFF" size="small" />
                     ) : (
-                      <Text style={styles.submitBtnText}>Submit Ticket • Darj Karein</Text>
+                      <Text style={styles.submitBtnText}>
+                        {isHindi ? 'Ticket Darj Karein' : 'Submit Ticket'}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </ScrollView>
@@ -245,23 +284,33 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                   showsVerticalScrollIndicator={false}
                 >
                   <View style={styles.refreshBar}>
-                    <Text style={styles.refreshBarTitle}>Your Raised Issues</Text>
+                    <Text style={styles.refreshBarTitle}>
+                      {isHindi ? 'Aapki darj ki gayi tickets' : 'Your Support Tickets'}
+                    </Text>
                     <TouchableOpacity onPress={fetchMyTickets} style={styles.refreshLink}>
-                      <Text style={styles.refreshLinkText}>🔄 Refresh</Text>
+                      <Text style={styles.refreshLinkText}>
+                        🔄 Refresh
+                      </Text>
                     </TouchableOpacity>
                   </View>
 
                   {loadingTickets ? (
                     <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                       <ActivityIndicator size="large" color={colors.primaryOrange} />
-                      <Text style={{ marginTop: 12, color: '#64748B', fontSize: 13 }}>Loading tickets...</Text>
+                      <Text style={{ marginTop: 12, color: '#64748B', fontSize: 13 }}>
+                        {isHindi ? 'Tickets load ho rahi hain...' : 'Loading tickets...'}
+                      </Text>
                     </View>
                   ) : tickets.length === 0 ? (
                     <View style={styles.emptyCard}>
                       <Text style={styles.emptyIcon}>🎉</Text>
-                      <Text style={styles.emptyTitle}>No active tickets</Text>
+                      <Text style={styles.emptyTitle}>
+                        {isHindi ? 'Koi active ticket nahi hai' : 'No active tickets'}
+                      </Text>
                       <Text style={styles.emptySubtitle}>
-                        Aapne abhi tak koi ticket darj nahi ki hai. Agar koi pareshani ho toh "+ New Ticket" se likhein!
+                        {isHindi
+                          ? 'Aapne abhi tak koi support ticket darj nahi ki hai. Agar koi problem ho toh upar "+ Nayi Ticket" par tap karein.'
+                          : 'You have not raised any support tickets yet. Tap "+ New Ticket" above if you need help.'}
                       </Text>
                     </View>
                   ) : (
@@ -274,6 +323,12 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                         hour: '2-digit',
                         minute: '2-digit',
                       });
+
+                      const statusText = isResolved
+                        ? isHindi ? '✓ Resolve Ho Gaya' : '✓ Resolved'
+                        : isInProgress
+                        ? isHindi ? '● Kaam Chal Raha Hai' : '● In Progress'
+                        : isHindi ? '● Open Hai' : '● Open';
 
                       return (
                         <View key={t.id} style={styles.ticketCard}>
@@ -295,20 +350,24 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                                   isInProgress && styles.statusTextInProgress,
                                 ]}
                               >
-                                {isResolved ? '✓ Resolved' : isInProgress ? '● In Progress' : '● Open'}
+                                {statusText}
                               </Text>
                             </View>
                           </View>
 
                           <Text style={styles.ticketSubject}>{t.subject}</Text>
                           <Text style={styles.ticketMessage}>{t.message}</Text>
-                          <Text style={styles.ticketDate}>Raised: {dateStr}</Text>
+                          <Text style={styles.ticketDate}>
+                            {isHindi ? `Darj tareekh: ${dateStr}` : `Raised: ${dateStr}`}
+                          </Text>
 
                           {/* Admin Reply Box */}
                           {t.admin_reply && (
                             <View style={styles.adminReplyBox}>
                               <View style={styles.adminReplyHeader}>
-                                <Text style={styles.adminReplyTitle}>👨‍💼 Support Team Reply</Text>
+                                <Text style={styles.adminReplyTitle}>
+                                  {isHindi ? '👨‍💼 Support Team Ka Reply' : '👨‍💼 Support Team Reply'}
+                                </Text>
                                 {t.admin_replied_at && (
                                   <Text style={styles.adminReplyDate}>
                                     {new Date(t.admin_replied_at).toLocaleDateString('en-IN', {
@@ -383,62 +442,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     marginTop: 2,
+    fontWeight: '500',
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    flexShrink: 0,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
     color: '#64748B',
+    fontWeight: '700',
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
-    padding: 6,
-    marginHorizontal: 22,
-    marginTop: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   tabBtn: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   activeTabBtn: {
-    backgroundColor: '#FFFFFF',
-    ...shadows.soft,
+    backgroundColor: colors.primaryOrange,
+    borderColor: colors.primaryOrange,
   },
   tabText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B',
   },
   activeTabText: {
-    color: colors.primaryOrange,
-    fontWeight: '800',
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 22,
-    paddingVertical: 18,
+    paddingTop: 16,
+    paddingBottom: 30,
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '700',
     color: '#1E293B',
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   categoriesGrid: {
     flexDirection: 'row',
@@ -447,21 +510,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   catChip: {
-    backgroundColor: '#F1F5F9',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: '#E2E8F0',
   },
   catChipActive: {
     backgroundColor: '#FFF7ED',
-    borderColor: '#FED7AA',
+    borderColor: colors.primaryOrange,
   },
   catChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 12.5,
     color: '#475569',
+    fontWeight: '600',
   },
   catChipTextActive: {
     color: colors.primaryOrange,
@@ -471,62 +534,64 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     fontSize: 14,
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   textArea: {
-    minHeight: 110,
-    lineHeight: 20,
+    height: 110,
+    paddingTop: 12,
   },
   submitBtn: {
     backgroundColor: colors.primaryOrange,
     borderRadius: 14,
-    paddingVertical: 15,
+    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-    ...shadows.soft,
+    marginTop: 18,
+    ...shadows.card,
   },
   submitBtnDisabled: {
     opacity: 0.6,
   },
   submitBtnText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   refreshBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   refreshBarTitle: {
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#334155',
   },
   refreshLink: {
-    padding: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   refreshLinkText: {
-    fontSize: 13,
+    fontSize: 12.5,
+    fontWeight: '700',
     color: colors.primaryOrange,
-    fontWeight: '600',
   },
   emptyCard: {
-    padding: 32,
     alignItems: 'center',
+    paddingVertical: 36,
+    paddingHorizontal: 20,
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginTop: 20,
+    marginTop: 10,
   },
   emptyIcon: {
     fontSize: 36,
@@ -534,7 +599,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0F172A',
     marginBottom: 6,
   },
@@ -542,16 +607,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 18,
   },
   ticketCard: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 14,
-    ...shadows.soft,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...shadows.card,
   },
   ticketCardHeader: {
     flexDirection: 'row',
@@ -562,21 +627,17 @@ const styles = StyleSheet.create({
   ticketCategory: {
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.5,
     color: '#64748B',
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    letterSpacing: 0.5,
   },
   statusBadge: {
-    backgroundColor: '#FEE2E2',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    backgroundColor: '#EFF6FF',
   },
   statusInProgress: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#FEF3C7',
   },
   statusResolved: {
     backgroundColor: '#DCFCE7',
@@ -584,29 +645,30 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#DC2626',
+    color: '#2563EB',
   },
   statusTextInProgress: {
-    color: '#1D4ED8',
+    color: '#D97706',
   },
   statusTextResolved: {
     color: '#16A34A',
   },
   ticketSubject: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14.5,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   ticketMessage: {
     fontSize: 13,
     color: '#475569',
-    lineHeight: 19,
-    marginBottom: 10,
+    lineHeight: 18,
+    marginBottom: 8,
   },
   ticketDate: {
     fontSize: 11,
     color: '#94A3B8',
+    fontWeight: '500',
   },
   adminReplyBox: {
     marginTop: 12,
@@ -619,11 +681,12 @@ const styles = StyleSheet.create({
   adminReplyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
+    marginBottom: 4,
   },
   adminReplyTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#166534',
   },
   adminReplyDate: {
@@ -631,8 +694,10 @@ const styles = StyleSheet.create({
     color: '#15803D',
   },
   adminReplyText: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#14532D',
     lineHeight: 18,
   },
 });
+
+export default SupportTicketModal;

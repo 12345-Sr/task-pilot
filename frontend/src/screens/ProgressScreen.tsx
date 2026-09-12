@@ -70,7 +70,7 @@ export const ProgressScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -162,7 +162,7 @@ export const ProgressScreen: React.FC = () => {
           >
             <View style={styles.upgradeBannerContent}>
               <Text style={styles.upgradeBannerEmoji}>👑</Text>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.upgradeBannerTitle}>{t(language, 'upgrade_pro_title')}</Text>
                 <Text style={styles.upgradeBannerSubtitle}>
                   {t(language, 'upgrade_pro_sub')}

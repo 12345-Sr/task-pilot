@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
 import { t, LANGUAGES } from '../i18n';
-import { useUserProfile } from '../hooks';
+import { useUserProfile, useSubscription } from '../hooks';
 import BrandLogo from '../components/BrandLogo';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { NotificationService } from '../services/notifications/notification.service';
@@ -25,6 +25,7 @@ import { SupportedLanguage } from '../types';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
+import { PaywallModal } from '../components/PaywallModal';
 
 interface SettingsLanguageOption {
   code: SupportedLanguage;
@@ -35,7 +36,7 @@ interface SettingsLanguageOption {
 }
 
 const SETTINGS_LANGUAGES: SettingsLanguageOption[] = [
-  { code: 'hi', label: 'Hindi', native: 'हिन्दी', flag: '🇮🇳', region: 'भारत • India' },
+  { code: 'hi', label: 'Hinglish', native: 'Hinglish', flag: '🇮🇳', region: 'India • Hinglish' },
   { code: 'en', label: 'English', native: 'English', flag: '🌐', region: 'Global' },
   { code: 'mr', label: 'Marathi', native: 'मराठी', flag: '🚩', region: 'महाराष्ट्र' },
   { code: 'bn', label: 'Bengali', native: 'বাংলা', flag: '🌸', region: 'পশ্চিমবঙ্গ' },
@@ -49,7 +50,9 @@ export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { language, setLanguage, isPremium, logout, setPaywallVisible, isAuthenticated } = useAppStore();
+  const isHindi = language === 'hi';
   const { data: user } = useUserProfile();
+  useSubscription();
 
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [morningNotification, setMorningNotification] = useState(true);
@@ -111,10 +114,21 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.name || 'User'}</Text>
             <Text style={styles.userEmail}>{user?.email || ''}</Text>
-            <View style={styles.planPill}>
-              <Text style={styles.planPillText}>
-                {isPremium ? t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <View style={[styles.planPill, isPremium && styles.planPillPro]}>
+                <Text style={[styles.planPillText, isPremium && styles.planPillProText]}>
+                  {isPremium ? '👑 ' + t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
+                </Text>
+              </View>
+              {!isPremium && (
+                <TouchableOpacity
+                  style={styles.miniUpgradeBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setPaywallVisible(true)}
+                >
+                  <Text style={styles.miniUpgradeBtnText}>👑 {isHindi ? 'Upgrade' : 'Upgrade'}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -123,18 +137,60 @@ export const SettingsScreen: React.FC = () => {
         {!isPremium && (
           <TouchableOpacity
             style={styles.proBanner}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
             onPress={() => setPaywallVisible(true)}
           >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.proBannerTitle}>{t(language, 'upgrade_banner_title')}</Text>
+            <View style={styles.proBannerCrownWrap}>
+              <Text style={{ fontSize: 24 }}>👑</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.proBannerTitle}>
+                {isHindi ? 'Task Pilot Pro Upgrade Karein' : 'Upgrade to Task Pilot Pro'}
+              </Text>
               <Text style={styles.proBannerSub}>
-                {t(language, 'upgrade_banner_sub')}
+                {isHindi
+                  ? '₹399/mahina • Unlimited daily reminders, sound alerts aur daily streak unlock karein.'
+                  : '₹399/month • Unlimited reminders, sound alarms & 30-day recurring tasks.'}
               </Text>
             </View>
-            <Text style={styles.proBannerArrow}>→</Text>
+            <View style={styles.proBannerBtn}>
+              <Text style={styles.proBannerBtnText}>{isHindi ? 'Pay ₹399 →' : 'Pay ₹399 →'}</Text>
+            </View>
           </TouchableOpacity>
         )}
+
+        {/* Subscription & Plan Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>{isHindi ? 'Subscription aur Plan' : 'Subscription & Plan'}</Text>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            activeOpacity={0.7}
+            onPress={() => setPaywallVisible(true)}
+          >
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>👑</Text>
+              <View>
+                <Text style={styles.settingLabel}>
+                  {isPremium ? (isHindi ? 'Pro Plan Active' : 'Pro Plan Active') : (isHindi ? 'Upgrade to Pro' : 'Upgrade to Pro')}
+                </Text>
+                <Text style={styles.settingSubLabel}>
+                  {isPremium
+                    ? (isHindi ? 'Unlimited task reminders active hain' : 'Unlimited task reminders active')
+                    : (isHindi ? '₹399/mahina • Pay via UPI QR Code' : '₹399/month • Pay via UPI QR Code')}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.settingRight}>
+              {!isPremium && (
+                <View style={styles.upgradeBadgePill}>
+                  <Text style={styles.upgradeBadgePillText}>{isHindi ? 'Upgrade' : 'Upgrade'}</Text>
+                </View>
+              )}
+              <Text style={styles.chevron}>›</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         {/* Preferences Section */}
         <View style={styles.section}>
@@ -207,7 +263,7 @@ export const SettingsScreen: React.FC = () => {
 
         {/* Support & Legal Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Support & Legal</Text>
+          <Text style={styles.sectionHeader}>{isHindi ? 'Support & Legal' : 'Support & Legal'}</Text>
 
           {/* Help & Support / Raise Ticket */}
           <TouchableOpacity
@@ -219,7 +275,9 @@ export const SettingsScreen: React.FC = () => {
               <Text style={styles.settingIcon}>🎫</Text>
               <View>
                 <Text style={styles.settingLabel}>Help & Support</Text>
-                <Text style={styles.settingSubLabel}>Samasya darj karein • Raise an Issue / Ticket</Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi ? 'Ticket darj karein ya help paayein' : 'Raise an issue or request assistance'}
+                </Text>
               </View>
             </View>
             <View style={styles.settingRight}>
@@ -237,7 +295,9 @@ export const SettingsScreen: React.FC = () => {
               <Text style={styles.settingIcon}>📜</Text>
               <View>
                 <Text style={styles.settingLabel}>Terms & Conditions</Text>
-                <Text style={styles.settingSubLabel}>Niyam aur shartein • Terms of Service</Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi ? 'Service ke niyam aur shartein' : 'Terms of service & agreements'}
+                </Text>
               </View>
             </View>
             <View style={styles.settingRight}>
@@ -255,7 +315,9 @@ export const SettingsScreen: React.FC = () => {
               <Text style={styles.settingIcon}>🛡️</Text>
               <View>
                 <Text style={styles.settingLabel}>Privacy Policy</Text>
-                <Text style={styles.settingSubLabel}>Data suraksha aur niyam • Data & Privacy</Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi ? 'Data security aur privacy policy' : 'Data protection & privacy policy'}
+                </Text>
               </View>
             </View>
             <View style={styles.settingRight}>
@@ -316,7 +378,7 @@ export const SettingsScreen: React.FC = () => {
             <View style={styles.modalHeader}>
               <View>
                 <Text style={styles.modalTitle}>{t(language, 'language_title')}</Text>
-                <Text style={styles.modalSubtitle}>Apni bhasha chunein • Choose language</Text>
+                <Text style={styles.modalSubtitle}>{t(language, 'language_subtitle')}</Text>
               </View>
               <TouchableOpacity
                 style={styles.modalCloseBtn}
@@ -390,6 +452,9 @@ export const SettingsScreen: React.FC = () => {
         visible={supportModalVisible}
         onClose={() => setSupportModalVisible(false)}
       />
+
+      {/* Razorpay Payment Wall & UPI QR Modal */}
+      <PaywallModal />
     </SafeAreaView>
   );
 };
@@ -463,30 +528,87 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  planPillPro: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  planPillProText: {
+    color: '#B45309',
+    fontWeight: '800',
+  },
+  miniUpgradeBtn: {
+    backgroundColor: '#EA580C',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  miniUpgradeBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
   proBanner: {
-    backgroundColor: '#FFF9ED',
+    backgroundColor: '#FFF7ED',
     borderWidth: 1.5,
-    borderColor: colors.primaryOrange,
-    borderRadius: radius.md,
-    padding: spacing.md,
+    borderColor: '#F97316',
+    borderRadius: radius.lg,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+    marginVertical: 4,
+  },
+  proBannerCrownWrap: {
+    flexShrink: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   proBannerTitle: {
-    ...typography.bodySmall,
-    fontWeight: '700',
-    color: colors.darkOrange,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#9A3412',
+    letterSpacing: -0.2,
   },
   proBannerSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
+    fontSize: 12,
+    color: '#7C2D12',
+    marginTop: 3,
+    lineHeight: 16,
   },
-  proBannerArrow: {
-    fontSize: 20,
-    color: colors.primaryOrange,
-    fontWeight: 'bold',
-    marginLeft: spacing.sm,
+  proBannerBtn: {
+    flexShrink: 0,
+    backgroundColor: '#EA580C',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proBannerBtnText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  upgradeBadgePill: {
+    flexShrink: 0,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#F97316',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  upgradeBadgePillText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#EA580C',
   },
   section: {
     gap: spacing.xs,
@@ -512,11 +634,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   settingLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    minWidth: 0,
   },
   settingIcon: {
+    flexShrink: 0,
     fontSize: 20,
   },
   settingLabel: {
@@ -529,6 +654,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   settingRight: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

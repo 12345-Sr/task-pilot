@@ -104,7 +104,7 @@ export const TodayScreen: React.FC = () => {
   const scheduledTabLabel = t(language, 'tab_scheduled_window').replace(/^[☀️📅\s]+/, '').trim();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.container}>
         {/* Top Branding Bar */}
         <View style={styles.topBrandBar}>
@@ -148,8 +148,8 @@ export const TodayScreen: React.FC = () => {
               >
                 <View style={styles.trialBannerLeft}>
                   <Text style={styles.trialBadge}>Free Plan</Text>
-                  <Text style={styles.trialText}>
-                    {freeUsed}/3 {language === 'hi' ? 'use hua' : 'used'} • {freeRemaining} {language === 'hi' ? 'bache hain free use ke liye' : 'left for free use'}
+                  <Text style={styles.trialText} numberOfLines={1} ellipsizeMode="tail">
+                    {freeUsed}/3 {language === 'hi' ? 'used' : 'used'} • {freeRemaining} {language === 'hi' ? 'bache hain' : 'left'}
                   </Text>
                 </View>
                 <View style={styles.upgradeBtnMini}>
@@ -283,7 +283,7 @@ export const TodayScreen: React.FC = () => {
                     title={t(language, 'empty_title')}
                     subtitle={
                       language === 'hi'
-                        ? `आज के लिए कोई पेंडिंग टास्क नहीं है। आपके पास आने वाले दिनों के ${scheduledTasks.length} शेड्यूल्ड टास्क हैं।`
+                        ? `Aaj ke liye koi pending task nahi hai. Aapke paas aane wale dino ke ${scheduledTasks.length} scheduled tasks hain.`
                         : `No pending tasks for today. You have ${scheduledTasks.length} upcoming scheduled tasks.`
                     }
                     actionLabel={`${t(language, 'tab_scheduled_window')} (${scheduledTasks.length})`}
@@ -403,19 +403,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: '#FEF08A',
-  },
-  trialBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
+  trialBannerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
   trialBadge: {
-    fontSize: 11,
+    flexShrink: 0,
+    fontSize: 10.5,
     fontWeight: '800',
     color: colors.primary,
     backgroundColor: '#FEF3C7',
@@ -424,15 +428,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   trialText: {
-    fontSize: 12,
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
   },
   upgradeBtnMini: {
+    flexShrink: 0,
     backgroundColor: colors.primary,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   upgradeBtnTextMini: {
     fontSize: 11,

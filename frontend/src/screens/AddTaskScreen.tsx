@@ -199,7 +199,7 @@ export const AddTaskScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -209,10 +209,10 @@ export const AddTaskScreen: React.FC = () => {
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
-            <Text style={styles.headerTitle}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
               {language === 'hi' ? 'Naya Kaam' : t(language, 'add_task_title')}
             </Text>
-            <Text style={styles.headerSub}>
+            <Text style={styles.headerSub} numberOfLines={1}>
               {language === 'hi' ? 'Kal ke liye ek kaam jodein' : t(language, 'tagline')}
             </Text>
           </View>
@@ -509,7 +509,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   headerTitleWrap: {
+    flex: 1,
+    minWidth: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     ...typography.h3,
