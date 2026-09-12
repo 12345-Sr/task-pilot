@@ -252,6 +252,41 @@ async function sendMorningBriefings() {
   }
 }
 
+// Checks for expired Pro subscriptions and downgrades them to free tier while alerting the user
+async function checkExpiredSubscriptions() {
+  try {
+    const { rows: expiredSubs } = await db.query(`
+      SELECT s.id, s.user_id, s.current_period_end, u.push_token, u.language
+      FROM subscriptions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.status = 'active'
+        AND s.current_period_end IS NOT NULL
+        AND s.current_period_end < now()
+    `);
+
+    for (const sub of expiredSubs) {
+      console.log(`[SUBSCRIPTION EXPIRED] Downgrading user ${sub.user_id} to free model`);
+      await db.query(
+        `UPDATE subscriptions
+         SET status = 'free', plan_price = 0.00, cancelled_at = now(), updated_at = now()
+         WHERE id = $1`,
+        [sub.id]
+      );
+
+      if (sub.push_token) {
+        const lang = sub.language || 'hi';
+        const title = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
+        const body = lang === 'hi'
+          ? 'Aapka Pro subscription expire ho gaya hai. Aap wapas Free tier par aa gaye hain. Naye tasks aur reminder alerts ke liye Pro upgrade karein.'
+          : 'Your Pro subscription has expired and returned to Free tier. Upgrade to Pro to continue creating tasks and receiving reminder alerts.';
+        await sendPush(sub.push_token, title, body, { type: 'SUBSCRIPTION_EXPIRED' });
+      }
+    }
+  } catch (err) {
+    console.error('Error checking expired subscriptions:', err.message);
+  }
+}
+
 function start() {
   // Every minute: check alerts
   cron.schedule('* * * * *', () => {
@@ -263,7 +298,15 @@ function start() {
     sendMorningBriefings().catch((e) => console.error('sendMorningBriefings failed', e));
   });
 
+  // Every 5 minutes: check expired subscriptions
+  cron.schedule('*/5 * * * *', () => {
+    checkExpiredSubscriptions().catch((e) => console.error('checkExpiredSubscriptions failed', e));
+  });
+
+  // Run on startup
+  checkExpiredSubscriptions().catch(() => {});
+
   console.log('Scheduler running: alerts checked every minute, morning briefing at 07:00 daily.');
 }
 
-module.exports = { start, sendPush, checkAlerts };
+module.exports = { start, sendPush, checkAlerts, checkExpiredSubscriptions };

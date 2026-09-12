@@ -7,8 +7,10 @@ import {
   apiClient,
   USE_MOCK_API,
 } from '../api';
+import { Alert } from 'react-native';
 import { CreateTaskInput, UpdateTaskInput, Priority } from '../types';
 import { useAppStore } from '../store';
+import { NotificationService } from '../services/notifications/notification.service';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -310,7 +312,7 @@ export function useResetPassword() {
 // SUBSCRIPTION HOOKS
 // -------------------------------------------------------------
 export function useSubscription() {
-  const { setIsPremium, setFreeLifetimeCreated } = useAppStore();
+  const { setIsPremium, setFreeLifetimeCreated, setPaywallVisible, language } = useAppStore();
   return useQuery({
     queryKey: QUERY_KEYS.SUBSCRIPTION,
     queryFn: async () => {
@@ -319,6 +321,27 @@ export function useSubscription() {
       setIsPremium(isPro);
       if (typeof (sub as any)?.dailyUsed === 'number') {
         setFreeLifetimeCreated((sub as any).dailyUsed);
+      }
+      if ((sub as any)?.expired === true) {
+        NotificationService.sendQuotaLimitNotification(
+          language === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired',
+          language === 'hi'
+            ? 'Aapka Pro subscription expire ho gaya hai. Aap wapas Free tier par aa gaye hain. Naye tasks aur reminder alerts pane ke liye Pro upgrade karein.'
+            : 'Your Pro plan has expired and returned to the Free tier. Upgrade to Pro to create new tasks and receive reminder alerts.'
+        );
+        Alert.alert(
+          language === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired',
+          language === 'hi'
+            ? 'Aapka Pro plan expire ho gaya hai. Aap wapas Free tier (3 tasks limit) par aa gaye hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
+            : 'Your Pro plan has expired and returned to the Free tier (3 tasks limit). Upgrade to Pro to continue creating tasks and receiving alerts.',
+          [
+            { text: language === 'hi' ? 'Baad me' : 'Later', style: 'cancel' },
+            {
+              text: language === 'hi' ? 'Abhi Upgrade Karein' : 'Upgrade to Pro',
+              onPress: () => setPaywallVisible(true),
+            },
+          ]
+        );
       }
       return sub;
     },

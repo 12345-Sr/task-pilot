@@ -20,8 +20,33 @@ const FREE_DAILY_LIMIT = 3;
 // Deleting a task does NOT restore or decrement the free creation quota.
 async function getAccessStatus(userId) {
   const r = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
-  const sub = r.rows[0];
+  let sub = r.rows[0];
   if (!sub) return { allowed: false, reason: 'no_subscription' };
+
+  // Check if Pro subscription has expired
+  if (sub.status === 'active' && sub.current_period_end && new Date(sub.current_period_end) < new Date()) {
+    const upd = await db.query(
+      `UPDATE subscriptions SET status = 'free', plan_price = 0.00, cancelled_at = now(), updated_at = now()
+       WHERE user_id = $1 RETURNING *`,
+      [userId]
+    );
+    sub = upd.rows[0] || { ...sub, status: 'free' };
+
+    // Fire expiration notification
+    db.query('SELECT push_token, language FROM users WHERE id = $1', [userId])
+      .then((uR) => {
+        const token = uR.rows[0]?.push_token;
+        const lang = uR.rows[0]?.language || 'hi';
+        if (token) {
+          const title = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
+          const body = lang === 'hi'
+            ? 'Aapka Pro subscription expire ho gaya hai. Naye tasks banane aur reminder alerts ke liye Pro upgrade karein.'
+            : 'Your Pro subscription has expired. Upgrade to Pro to continue creating tasks and receiving reminder alerts.';
+          sendPush(token, title, body, { type: 'SUBSCRIPTION_EXPIRED' }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
 
   if (sub.status === 'active') return { allowed: true, sub };
 

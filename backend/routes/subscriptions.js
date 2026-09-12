@@ -19,6 +19,35 @@ router.get('/status', requireUser, async (req, res) => {
     sub = created.rows[0] || { status: 'free', plan_price: 0.00 };
   }
 
+  // Check if active Pro subscription has passed its expiration date
+  let wasExpired = false;
+  if (sub.status === 'active' && sub.current_period_end && new Date(sub.current_period_end) < new Date()) {
+    wasExpired = true;
+    const upd = await db.query(
+      `UPDATE subscriptions
+       SET status = 'free', plan_price = 0.00, cancelled_at = now(), updated_at = now()
+       WHERE user_id = $1 RETURNING *`,
+      [req.userId]
+    );
+    sub = upd.rows[0] || { ...sub, status: 'free', plan_price: 0.00 };
+
+    // Send expiration alert notification to user device
+    db.query('SELECT push_token, language FROM users WHERE id = $1', [req.userId])
+      .then((uR) => {
+        const token = uR.rows[0]?.push_token;
+        const lang = uR.rows[0]?.language || 'hi';
+        if (token) {
+          const { sendPush } = require('../scheduler');
+          const notifTitle = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
+          const notifBody = lang === 'hi'
+            ? 'Aapka Pro plan expire ho gaya hai. Aap wapas Free tier par aa gaye hain. Naye tasks aur reminder alerts ke liye Pro upgrade karein.'
+            : 'Your Pro plan has expired and returned to Free tier. Upgrade to Pro to continue creating tasks and receiving reminder alerts.';
+          sendPush(token, notifTitle, notifBody, { type: 'SUBSCRIPTION_EXPIRED' }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
+
   let dailyUsed = null;
   if (sub.status === 'free') {
     const countR = await db.query(
@@ -37,7 +66,11 @@ router.get('/status', requireUser, async (req, res) => {
     dailyLimit: sub.status === 'free' ? FREE_DAILY_LIMIT : null,
     planPrice: sub.plan_price,
     currency: sub.currency,
-    currentPeriodEnd: sub.current_period_end
+    currentPeriodEnd: sub.current_period_end,
+    expired: wasExpired,
+    message: wasExpired
+      ? 'Your Pro plan has expired. Returned to free tier (3 tasks limit).'
+      : null,
   });
 });
 

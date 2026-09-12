@@ -350,7 +350,7 @@ export class RemoteUserRepository implements UserRepository {
 }
 
 export class RemoteSubscriptionRepository implements SubscriptionRepository {
-  async getStatus(): Promise<Subscription & { dailyUsed?: number; dailyLimit?: number }> {
+  async getStatus(): Promise<Subscription & { dailyUsed?: number; dailyLimit?: number; expired?: boolean }> {
     const res: any = await apiClient.get('/subscription/status').catch(() => ({}));
     const isPremium = res?.status === 'active' || res?.isPremium === true;
     useAppStore.getState().setIsPremium(isPremium);
@@ -366,6 +366,7 @@ export class RemoteSubscriptionRepository implements SubscriptionRepository {
       expiresAt: res?.currentPeriodEnd || new Date(Date.now() + 30 * 86400000).toISOString(),
       dailyUsed,
       dailyLimit: res?.dailyLimit ?? 3,
+      expired: Boolean(res?.expired),
     };
   }
 
