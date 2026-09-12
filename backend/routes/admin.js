@@ -402,5 +402,20 @@ router.patch('/tickets/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/tickets/:id — Permanently delete a support ticket
+router.delete('/tickets/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query('DELETE FROM support_tickets WHERE id = $1 RETURNING id', [id]);
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    res.json({ ok: true, message: 'Ticket deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting admin support ticket:', err);
+    res.status(500).json({ error: 'Failed to delete ticket' });
+  }
+});
+
 module.exports = router;
 

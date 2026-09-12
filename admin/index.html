@@ -2604,9 +2604,14 @@ async function loadTickets() {
           <td>${statusBadge}</td>
           <td style="font-size:12px; color:#64748B;">${dateStr}</td>
           <td>
-            <button class="btn-submit" style="width:auto; padding:6px 12px; font-size:12px; margin-top:0;" onclick="openTicketModal('${t.id}')">
-              View & Reply
-            </button>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn-submit" style="width:auto; padding:6px 12px; font-size:12px; margin-top:0;" onclick="openTicketModal('${t.id}')">
+                View & Reply
+              </button>
+              <button style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer;" onclick="deleteTicket('${t.id}')" title="Delete Ticket">
+                🗑️
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -2670,6 +2675,35 @@ async function saveTicketReply() {
     btn.textContent = 'Save & Update Ticket';
   }
 }
+
+async function deleteTicket(ticketId) {
+  if (!confirm('Are you sure you want to permanently delete this support ticket? This action cannot be undone.')) {
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/admin/tickets/${ticketId}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to delete ticket');
+    }
+    showToast('✓ Support ticket deleted successfully!');
+    if (activeModalTicket && activeModalTicket.id === ticketId) {
+      closeTicketModal();
+    }
+    loadTickets();
+  } catch (err) {
+    alert('Error deleting ticket: ' + err.message);
+  }
+}
+
+function deleteActiveModalTicket() {
+  if (!activeModalTicket) return;
+  deleteTicket(activeModalTicket.id);
+}
 </script>
 
 <!-- ================= TICKET DETAILS & REPLY MODAL ================= -->
@@ -2705,9 +2739,14 @@ async function saveTicketReply() {
       <textarea id="ticketModalReply" class="input-field" rows="4" placeholder="Enter your response or resolution notes here..." style="width:100%; resize:vertical;"></textarea>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; gap:12px;">
-      <button class="btn-secondary" onclick="closeTicketModal()">Cancel</button>
-      <button id="ticketModalSaveBtn" class="btn-submit" style="width:auto; padding:10px 24px; margin-top:0;" onclick="saveTicketReply()">Save & Update Ticket</button>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;" onclick="deleteActiveModalTicket()">
+        🗑️ Delete Ticket
+      </button>
+      <div style="display:flex; gap:12px;">
+        <button class="btn-secondary" onclick="closeTicketModal()">Cancel</button>
+        <button id="ticketModalSaveBtn" class="btn-submit" style="width:auto; padding:10px 24px; margin-top:0;" onclick="saveTicketReply()">Save & Update Ticket</button>
+      </div>
     </div>
   </div>
 </div>
