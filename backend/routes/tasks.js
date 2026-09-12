@@ -25,7 +25,7 @@ async function getAccessStatus(userId, taskDate) {
 
   if (sub.status === 'free') {
     const countR = await db.query(
-      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND task_date = $2',
+      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND task_date = $2 AND (deleted_at IS NULL)',
       [userId, taskDate]
     );
     const used = countR.rows[0].c;
@@ -213,7 +213,7 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
       });
     }
 
-    const taskR = await db.query('SELECT * FROM tasks WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
+    const taskR = await db.query('SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND (deleted_at IS NULL)', [req.params.id, req.userId]);
     if (!taskR.rows.length) return res.status(404).json({ error: 'Task not found' });
     const sourceTask = taskR.rows[0];
 
@@ -253,7 +253,7 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
 
 // GET /api/tasks/:id
 router.get('/:id', requireUser, async (req, res) => {
-  const result = await db.query('SELECT * FROM tasks WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
+  const result = await db.query('SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND (deleted_at IS NULL)', [req.params.id, req.userId]);
   if (!result.rows.length) return res.status(404).json({ error: 'Task not found' });
   res.json({ task: result.rows[0] });
 });
@@ -317,28 +317,38 @@ const handleTaskUpdate = async (req, res) => {
 router.patch('/:id', requireUser, handleTaskUpdate);
 router.put('/:id', requireUser, handleTaskUpdate);
 
-// DELETE /api/tasks/:id — marks task as deleted while retaining quota count
+// DELETE /api/tasks/:id — marks task as deleted while freeing up quota
 router.delete('/:id', requireUser, async (req, res) => {
+  const { id } = req.params;
+  if (!id || !/^[0-9a-fA-F-]{36}$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid task ID format' });
+  }
+
   try {
     const result = await db.query(
       'UPDATE tasks SET deleted_at = now() WHERE id = $1 AND user_id = $2 RETURNING id',
-      [req.params.id, req.userId]
+      [id, req.userId]
     );
     if (!result.rows.length) {
       const hardResult = await db.query(
         'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
-        [req.params.id, req.userId]
+        [id, req.userId]
       );
       if (!hardResult.rows.length) return res.status(404).json({ error: 'Task not found' });
     }
     res.json({ ok: true });
   } catch (err) {
-    const hardResult = await db.query(
-      'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
-      [req.params.id, req.userId]
-    );
-    if (!hardResult.rows.length) return res.status(404).json({ error: 'Task not found' });
-    res.json({ ok: true });
+    try {
+      const hardResult = await db.query(
+        'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
+        [id, req.userId]
+      );
+      if (!hardResult.rows.length) return res.status(404).json({ error: 'Task not found' });
+      res.json({ ok: true });
+    } catch (finalErr) {
+      console.error('Failed to delete task:', finalErr.message);
+      res.status(500).json({ error: 'Failed to delete task' });
+    }
   }
 });
 
@@ -357,16 +367,16 @@ router.get('/stats/progress', requireUser, async (req, res) => {
   const subR = await db.query('SELECT status FROM subscriptions WHERE user_id = $1', [req.userId]);
   const isPremium = subR.rows[0]?.status === 'active';
 
-  const totalR = await db.query('SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1', [req.userId]);
+  const totalR = await db.query('SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND (deleted_at IS NULL)', [req.userId]);
   const doneR = await db.query(
-    "SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND status = 'done'",
+    "SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND status = 'done' AND (deleted_at IS NULL)",
     [req.userId]
   );
 
   // Distinct dates where user completed at least one task
   const completedDatesR = await db.query(
     `SELECT DISTINCT task_date::text AS d FROM tasks
-     WHERE user_id = $1 AND status = 'done'
+     WHERE user_id = $1 AND status = 'done' AND (deleted_at IS NULL)
      ORDER BY d DESC`,
     [req.userId]
   );
@@ -434,7 +444,7 @@ router.get('/stats/progress', requireUser, async (req, res) => {
               COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE status = 'done')::int AS completed
        FROM tasks
-       WHERE user_id = $1 AND task_date >= $2 AND task_date <= $3
+       WHERE user_id = $1 AND task_date >= $2 AND task_date <= $3 AND (deleted_at IS NULL)
        GROUP BY task_date`,
       [req.userId, weekDays[0].date, weekDays[weekDays.length - 1].date]
     );

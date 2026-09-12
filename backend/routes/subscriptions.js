@@ -23,7 +23,7 @@ router.get('/status', requireUser, async (req, res) => {
   if (sub.status === 'free') {
     const today = new Date().toISOString().slice(0, 10);
     const countR = await db.query(
-      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND task_date = $2',
+      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1 AND task_date = $2 AND (deleted_at IS NULL)',
       [req.userId, today]
     );
     dailyUsed = countR.rows[0].c;

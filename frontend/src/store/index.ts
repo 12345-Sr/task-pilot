@@ -22,6 +22,7 @@ export interface AppState {
   setTaskDescription: (key: string, description: string) => void;
   freeUsageByDate: Record<string, number>;
   recordTaskCreation: (dateStr?: string) => void;
+  recordTaskDeletion: (dateStr?: string) => void;
   getFreeUsage: (dateStr?: string, activeCount?: number) => { used: number; total: number; remaining: number };
   logout: () => void;
 }
@@ -69,16 +70,42 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       freeUsageByDate: {
         ...state.freeUsageByDate,
-        [key]: (state.freeUsageByDate[key] || 0) + 1,
+        [key]: Math.min(3, (state.freeUsageByDate[key] || 0) + 1),
       },
     }));
   },
-  getFreeUsage: (dateStr, activeCount = 0) => {
+  recordTaskDeletion: (dateStr) => {
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const key = (dateStr || today).slice(0, 10);
-    const createdCount = get().freeUsageByDate[key] || 0;
-    const used = Math.min(3, Math.max(activeCount, createdCount));
+    set((state) => ({
+      freeUsageByDate: {
+        ...state.freeUsageByDate,
+        [key]: Math.max(0, (state.freeUsageByDate[key] || 1) - 1),
+      },
+    }));
+  },
+  getFreeUsage: (dateStr, activeCount) => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const key = (dateStr || today).slice(0, 10);
+    
+    let used: number;
+    if (typeof activeCount === 'number') {
+      used = Math.min(3, Math.max(0, activeCount));
+      const currentStored = get().freeUsageByDate[key];
+      if (currentStored !== used) {
+        set((state) => ({
+          freeUsageByDate: {
+            ...state.freeUsageByDate,
+            [key]: used,
+          },
+        }));
+      }
+    } else {
+      used = Math.min(3, Math.max(0, get().freeUsageByDate[key] || 0));
+    }
+
     return {
       used,
       total: 3,

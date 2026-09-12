@@ -153,8 +153,10 @@ export const TaskDetailScreen: React.FC = () => {
   };
 
   const handleDeleteConfirm = () => {
+    const taskDate = task.targetDate || task.date;
     deleteMutation.mutate(task.id, {
       onSuccess: () => {
+        useAppStore.getState().recordTaskDeletion(taskDate);
         setConfirmDeleteVisible(false);
         navigation.goBack();
       },

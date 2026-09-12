@@ -151,7 +151,11 @@ export function useDeleteTask() {
     mutationFn: (id: string) => tasksRepository.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.STREAK });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.SUBSCRIPTION });
     },
   });
 }
