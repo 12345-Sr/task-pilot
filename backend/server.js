@@ -65,8 +65,12 @@ app.use((err, req, res, next) => {
 const initDatabase = require('./init-db');
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Task Pilot API running on port ${PORT} (0.0.0.0)`);
-  initDatabase().catch(() => {});
+  try {
+    await initDatabase();
+  } catch (err) {
+    console.error('[DB INIT] Error initializing database:', err);
+  }
   scheduler.start();
 });
