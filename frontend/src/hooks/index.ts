@@ -223,17 +223,19 @@ export function useUserProfile() {
 }
 
 export function useLogin() {
-  const { setToken, setUser, setLanguage } = useAppStore();
+  const { setToken, setUser, setLanguage, setIsPremium } = useAppStore();
   return useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
       const res: any = await apiClient.post('/auth/login', credentials);
-      const { token, user } = res?.data || res;
+      const { token, user, isPremium, subscription } = res?.data || res;
       setToken(token);
       setUser(user);
+      const isPro = Boolean(isPremium || subscription?.status === 'active' || user?.isPremium);
+      setIsPremium(isPro);
       if (user?.language) {
         setLanguage(user.language as any);
       }
-      return { user, token };
+      return { user, token, isPremium: isPro };
     },
   });
 }
@@ -257,7 +259,7 @@ export function useVerifyRegisterOtp() {
 }
 
 export function useRegister() {
-  const { setToken, setUser, language } = useAppStore();
+  const { setToken, setUser, language, setIsPremium } = useAppStore();
   return useMutation({
     mutationFn: async (data: { name: string; email: string; password: string; otp?: string; language?: string }) => {
       const res: any = await apiClient.post('/auth/register', {
@@ -267,6 +269,7 @@ export function useRegister() {
       const { token, user } = res?.data || res;
       setToken(token);
       setUser(user);
+      setIsPremium(false);
       return { user, token };
     },
   });
@@ -294,9 +297,16 @@ export function useResetPassword() {
 // SUBSCRIPTION HOOKS
 // -------------------------------------------------------------
 export function useSubscription() {
+  const { setIsPremium } = useAppStore();
   return useQuery({
     queryKey: QUERY_KEYS.SUBSCRIPTION,
-    queryFn: () => subscriptionRepository.getStatus(),
+    queryFn: async () => {
+      const sub = await subscriptionRepository.getStatus();
+      const isPro = sub?.status === 'active' || (sub as any)?.isPremium === true;
+      setIsPremium(isPro);
+      return sub;
+    },
+    staleTime: 30000,
   });
 }
 

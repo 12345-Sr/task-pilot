@@ -48,10 +48,13 @@ CREATE TABLE tasks (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title         VARCHAR(300) NOT NULL,
+  description   TEXT,
+  notes         TEXT,
   task_date     DATE NOT NULL,
   task_time     TIME NOT NULL,
   priority      VARCHAR(10) NOT NULL DEFAULT 'medium',  -- important | medium
   status        VARCHAR(10),                            -- NULL = not confirmed yet | done | missed
+  deleted_at    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

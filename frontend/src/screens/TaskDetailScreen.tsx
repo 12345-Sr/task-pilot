@@ -142,8 +142,10 @@ export const TaskDetailScreen: React.FC = () => {
       onError: (err: any) => {
         setConfirmRepeatVisible(false);
         const msg =
-          err?.response?.data?.message ||
           err?.message ||
+          err?.error ||
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
           'Could not schedule monthly task.';
         Alert.alert('Notice', msg);
       },

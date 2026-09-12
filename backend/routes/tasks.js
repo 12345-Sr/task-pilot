@@ -88,6 +88,25 @@ function normalizeDate(d) {
   return String(d).slice(0, 10);
 }
 
+function getNextDateStr(baseDateStr, offsetDays) {
+  if (!baseDateStr) return normalizeDate();
+  const cleanStr = String(baseDateStr).slice(0, 10);
+  const parts = cleanStr.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    const dateObj = new Date(y, m - 1, d + offsetDays);
+    const ny = dateObj.getFullYear();
+    const nm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const nd = String(dateObj.getDate()).padStart(2, '0');
+    return `${ny}-${nm}-${nd}`;
+  }
+  const dateObj = new Date(baseDateStr);
+  dateObj.setDate(dateObj.getDate() + offsetDays);
+  return dateObj.toISOString().slice(0, 10);
+}
+
 // POST /api/tasks  { title, task_date, task_time, priority, description, notes }
 router.post('/', requireUser, async (req, res, next) => {
   try {
@@ -137,11 +156,9 @@ router.post('/', requireUser, async (req, res, next) => {
       const subR = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [req.userId]);
       const sub = subR.rows[0];
       if (sub && sub.status === 'active') {
-        const baseDate = new Date(task_date);
+        const baseDateStr = normalizeDate(task_date);
         for (let i = 1; i <= 29; i++) {
-          const nextDate = new Date(baseDate);
-          nextDate.setDate(baseDate.getDate() + i);
-          const dateStr = nextDate.toISOString().slice(0, 10);
+          const dateStr = getNextDateStr(baseDateStr, i);
           try {
             await db.query(
               `INSERT INTO tasks (user_id, title, task_date, task_time, priority, description, notes)
@@ -200,19 +217,25 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
     if (!taskR.rows.length) return res.status(404).json({ error: 'Task not found' });
     const sourceTask = taskR.rows[0];
 
-    const baseDate = new Date(sourceTask.task_date);
+    const baseDateStr = normalizeDate(sourceTask.task_date);
     const createdTasks = [];
 
     for (let i = 1; i <= 30; i++) {
-      const nextDate = new Date(baseDate);
-      nextDate.setDate(baseDate.getDate() + i);
-      const dateStr = nextDate.toISOString().slice(0, 10);
-
-      const r = await db.query(
-        `INSERT INTO tasks (user_id, title, task_date, task_time, priority)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [req.userId, sourceTask.title, dateStr, sourceTask.task_time, sourceTask.priority]
-      );
+      const dateStr = getNextDateStr(baseDateStr, i);
+      let r;
+      try {
+        r = await db.query(
+          `INSERT INTO tasks (user_id, title, task_date, task_time, priority, description, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+          [req.userId, sourceTask.title, dateStr, sourceTask.task_time, sourceTask.priority, sourceTask.description || null, sourceTask.notes || null]
+        );
+      } catch (e) {
+        r = await db.query(
+          `INSERT INTO tasks (user_id, title, task_date, task_time, priority)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [req.userId, sourceTask.title, dateStr, sourceTask.task_time, sourceTask.priority]
+        );
+      }
       createdTasks.push(r.rows[0]);
     }
 

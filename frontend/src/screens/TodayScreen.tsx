@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography, shadows } from '../theme';
 import { useAppStore } from '../store';
 import { t, formatLocalizedDate } from '../i18n';
-import { useTodayTasks, useCompleteTask, useUserProfile } from '../hooks';
+import { useTodayTasks, useCompleteTask, useUserProfile, useSubscription } from '../hooks';
 import TaskCard from '../components/TaskCard';
 import FreePlanCard from '../components/FreePlanCard';
 import EmptyState from '../components/EmptyState';
@@ -29,6 +29,7 @@ export const TodayScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { language, isPremium, paywallVisible, setPaywallVisible, getFreeUsage } = useAppStore();
   const { data: user } = useUserProfile();
+  useSubscription();
   const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
   const completeMutation = useCompleteTask();
 

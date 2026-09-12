@@ -244,8 +244,13 @@ export class RemoteTasksRepository implements TasksRepository {
   }
 
   async repeatMonthly(id: string): Promise<{ success: boolean; count: number }> {
-    const res: any = await apiClient.post(`/tasks/${id}/repeat-monthly`);
-    return res;
+    try {
+      const res: any = await apiClient.post(`/tasks/${id}/repeat-monthly`);
+      return res;
+    } catch (err: any) {
+      console.warn('[TASKS] repeatMonthly API error, falling back to local simulation:', err?.message || err);
+      return fallbackTasks.repeatMonthly(id);
+    }
   }
 }
 
@@ -311,6 +316,8 @@ export class RemoteUserRepository implements UserRepository {
   async getMe(): Promise<User> {
     const res: any = await apiClient.get('/auth/me');
     const u = res?.user || res?.data || res;
+    const isPremium = Boolean(res?.isPremium || res?.subscription?.status === 'active' || u?.isPremium);
+    useAppStore.getState().setIsPremium(isPremium);
     return {
       id: String(u.id || 'user_1'),
       name: u.name || 'User',
@@ -340,7 +347,8 @@ export class RemoteUserRepository implements UserRepository {
 export class RemoteSubscriptionRepository implements SubscriptionRepository {
   async getStatus(): Promise<Subscription> {
     const res: any = await apiClient.get('/subscription/status').catch(() => ({}));
-    const isPremium = res?.status === 'active';
+    const isPremium = res?.status === 'active' || res?.isPremium === true;
+    useAppStore.getState().setIsPremium(isPremium);
     return {
       id: 'sub_001',
       plan: isPremium ? 'PREMIUM' : 'FREE',
@@ -355,6 +363,7 @@ export class RemoteSubscriptionRepository implements SubscriptionRepository {
   async subscribe(plan: string): Promise<Subscription> {
     const res: any = await apiClient.post('/subscription/subscribe', { payment_provider: plan || 'manual' });
     const sub = res?.subscription || res?.data || res;
+    useAppStore.getState().setIsPremium(true);
     return {
       id: String(sub?.id || 'sub_premium_001'),
       plan: 'PREMIUM',

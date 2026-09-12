@@ -267,7 +267,12 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
     delete user.password_hash;
-    res.json({ token, user });
+
+    const subResult = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [user.id]);
+    const sub = subResult.rows[0];
+    const isPremium = sub?.status === 'active';
+
+    res.json({ token, user: { ...user, isPremium }, isPremium, subscription: sub || null });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Login failed' });
@@ -409,7 +414,10 @@ router.get('/me', requireUser, async (req, res) => {
     [req.userId]
   );
   if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
-  res.json({ user: result.rows[0] });
+  const subResult = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [req.userId]);
+  const sub = subResult.rows[0];
+  const isPremium = sub?.status === 'active';
+  res.json({ user: { ...result.rows[0], isPremium }, isPremium, subscription: sub || null });
 });
 
 // PATCH /api/auth/language  { language: 'hi' | 'en' | 'mr' | 'bn' | 'ta' | 'te' | 'gu' | 'pa' }

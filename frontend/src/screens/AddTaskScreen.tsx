@@ -114,7 +114,7 @@ export const AddTaskScreen: React.FC = () => {
         date: selectedDate,
         reminderTime: reminderEnabled ? reminderTime : undefined,
         time: reminderEnabled ? reminderTime : undefined,
-        repeatMonthly: isPremium && repeatMonthly,
+        repeatMonthly: Boolean(repeatMonthly),
       },
       {
         onSuccess: async (createdTask: any) => {
