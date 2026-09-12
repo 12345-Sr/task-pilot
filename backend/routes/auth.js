@@ -94,7 +94,12 @@ async function sendMailUnified({ to, subject, text, html }) {
   // 2. Brevo (Sendinblue) HTTP API (300 free emails/day over HTTPS port 443)
   const brevoKey = (process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '').trim();
   if (brevoKey) {
-    const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_FROM || 'support@taskpilot.com').replace(/.*<([^>]+)>.*/, '$1').trim();
+    const senderEmail = (
+      process.env.BREVO_SENDER_EMAIL ||
+      process.env.SMTP_USER ||
+      process.env.EMAIL_FROM ||
+      'sratanshushukla135@gmail.com'
+    ).replace(/.*<([^>]+)>.*/, '$1').trim();
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
