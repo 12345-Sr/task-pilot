@@ -46,6 +46,10 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: "Task Pilot <no-reply@taskpilot.com>"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
 
 databases:
   - name: task-pilot-db

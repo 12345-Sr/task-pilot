@@ -65,6 +65,71 @@ function getMailTransporter() {
   });
 }
 
+// Unified email dispatcher supporting HTTP APIs (Resend, Brevo) to bypass Render SMTP port blocks
+async function sendMailUnified({ to, subject, text, html }) {
+  // 1. Resend HTTP API (Fastest & recommended for cloud hosts like Render)
+  const resendKey = (process.env.RESEND_API_KEY || '').trim();
+  if (resendKey) {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || 'Task Pilot <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Resend API Error: ${err.message || res.statusText}`);
+    }
+    return { provider: 'resend' };
+  }
+
+  // 2. Brevo (Sendinblue) HTTP API (300 free emails/day over HTTPS port 443)
+  const brevoKey = (process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '').trim();
+  if (brevoKey) {
+    const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_FROM || 'support@taskpilot.com').replace(/.*<([^>]+)>.*/, '$1').trim();
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': brevoKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'Task Pilot', email: senderEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Brevo API Error: ${err.message || res.statusText}`);
+    }
+    return { provider: 'brevo' };
+  }
+
+  // 3. Fallback to Nodemailer SMTP
+  const transporter = getMailTransporter();
+  if (!transporter) {
+    throw new Error('No email provider configured (Add RESEND_API_KEY, BREVO_API_KEY, or SMTP_USER)');
+  }
+  const smtpUser = (process.env.SMTP_USER || '').trim();
+  let fromAddress = process.env.EMAIL_FROM;
+  if (!fromAddress || (smtpUser.toLowerCase().endsWith('@gmail.com') && !fromAddress.includes(smtpUser))) {
+    fromAddress = `"Task Pilot" <${smtpUser}>`;
+  }
+  await transporter.sendMail({ from: fromAddress, to, subject, html, text });
+  return { provider: 'smtp' };
+}
+
 // POST /api/auth/send-register-otp
 router.post('/send-register-otp', async (req, res) => {
   try {
@@ -105,25 +170,8 @@ router.post('/send-register-otp', async (req, res) => {
       [trimmedEmail, otp, expiresAt]
     );
 
-    const transporter = getMailTransporter();
-    if (!transporter) {
-      console.warn(`[AUTH] SMTP credentials missing. OTP for ${trimmedEmail} is: ${otp}`);
-      return res.json({
-        ok: true,
-        message: 'Verification code generated. Check server console or configure Gmail credentials.',
-        devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
-      });
-    }
-
-    const smtpUser = (process.env.SMTP_USER || '').trim();
-    let fromAddress = process.env.EMAIL_FROM;
-    if (!fromAddress || (smtpUser.toLowerCase().endsWith('@gmail.com') && !fromAddress.includes(smtpUser))) {
-      fromAddress = `"Task Pilot" <${smtpUser}>`;
-    }
-
     try {
-      await transporter.sendMail({
-        from: fromAddress,
+      const sendResult = await sendMailUnified({
         to: trimmedEmail,
         subject: 'Task Pilot — Your Email Verification Code',
         text: `Your Task Pilot email verification code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not create an account on Task Pilot, please ignore this email.`,
@@ -139,13 +187,13 @@ router.post('/send-register-otp', async (req, res) => {
       <p style="font-size: 13px; color: #64748B; line-height: 1.4;">This code is valid for <strong>10 minutes</strong>. Never share this OTP with anyone.</p>
         </div>`,
       });
-      console.log(`[AUTH] Registration OTP email successfully dispatched to ${trimmedEmail} (OTP: ${otp})`);
+      console.log(`[AUTH] Registration OTP email successfully dispatched to ${trimmedEmail} via ${sendResult.provider} (OTP: ${otp})`);
       return res.json({
         ok: true,
         message: 'Verification code has been sent to your Gmail inbox. Please check your emails.',
       });
     } catch (mailErr) {
-      console.warn(`[AUTH] SMTP delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
+      console.warn(`[AUTH] Email delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
       return res.json({
         ok: true,
         message: 'Verification code ready.',
@@ -308,25 +356,8 @@ router.post('/forgot-password', async (req, res) => {
       [trimmedEmail, otp, expiresAt]
     );
 
-    const transporter = getMailTransporter();
-    if (!transporter) {
-      console.error(
-        `[AUTH] SMTP transporter missing credentials! SMTP_USER=${process.env.SMTP_USER ? 'SET' : 'NOT SET'}, SMTP_PASS=${process.env.SMTP_PASS ? 'SET' : 'NOT SET'}, SMTP_HOST=${process.env.SMTP_HOST || 'NOT SET'}`
-      );
-      return res.status(500).json({
-        error: 'Email service is not configured on the server. Please add SMTP_USER and SMTP_PASS to Render environment variables.',
-      });
-    }
-
-    const smtpUser = (process.env.SMTP_USER || '').trim();
-    let fromAddress = process.env.EMAIL_FROM;
-    if (!fromAddress || (smtpUser.toLowerCase().endsWith('@gmail.com') && !fromAddress.includes(smtpUser))) {
-      fromAddress = `"Task Pilot" <${smtpUser}>`;
-    }
-
     try {
-      await transporter.sendMail({
-        from: fromAddress,
+      const sendResult = await sendMailUnified({
         to: trimmedEmail,
         subject: 'Task Pilot — Password Reset Code',
         text: `Your Task Pilot password reset code is: ${otp}\n\nThis code will expire in 15 minutes. If you did not request this, please ignore this email.`,
@@ -339,13 +370,13 @@ router.post('/forgot-password', async (req, res) => {
       <p style="font-size: 13px; color: #64748B;">This code expires in <strong>15 minutes</strong>. If you did not request this code, no action is needed.</p>
         </div>`,
       });
-      console.log(`[AUTH] Password reset email successfully dispatched to ${trimmedEmail}`);
+      console.log(`[AUTH] Password reset email successfully dispatched to ${trimmedEmail} via ${sendResult.provider}`);
       return res.json({
         ok: true,
         message: 'Password reset code has been sent to your email. Please check your inbox.',
       });
     } catch (mailErr) {
-      console.warn(`[AUTH] SMTP delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
+      console.warn(`[AUTH] Email delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
       return res.json({
         ok: true,
         message: 'Password reset code ready.',
