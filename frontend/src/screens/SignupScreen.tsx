@@ -141,8 +141,8 @@ export const SignupScreen: React.FC = () => {
     if (!isCaptchaVerified) {
       setErrorMsg(
         language === 'hi'
-          ? 'Kripya neeche "Main robot nahi hoon" security check pura karein'
-          : 'Please complete the "I am not a robot" security check below'
+          ? 'Kripya neeche suraksha code verify karein'
+          : 'Please complete the security verification code below'
       );
       return;
     }
@@ -397,11 +397,11 @@ export const SignupScreen: React.FC = () => {
               )}
             </View>
 
-            {/* Robot Captcha Security Check (Placed at the end like other standard apps) */}
+            {/* Security Verification Code Check */}
             <RobotCaptcha
               onVerify={(verified) => {
                 setIsCaptchaVerified(verified);
-                if (verified && errorMsg.includes('robot')) setErrorMsg('');
+                if (verified) setErrorMsg('');
               }}
               language={language}
             />

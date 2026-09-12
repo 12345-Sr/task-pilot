@@ -75,59 +75,35 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
 
   return (
     <View style={styles.container}>
-      {/* Checkbox Card */}
-      <TouchableOpacity
-        style={[
-          styles.card,
-          isVerified ? styles.cardVerified : showChallenge ? styles.cardActive : null,
-        ]}
-        onPress={handleCheckboxPress}
-        activeOpacity={0.8}
-      >
-        <View style={styles.leftRow}>
-          <View
-            style={[
-              styles.checkbox,
-              isVerified ? styles.checkboxVerified : showChallenge ? styles.checkboxActive : null,
-            ]}
-          >
-            {isVerified ? (
+      {isVerified ? (
+        <View style={styles.cardVerified}>
+          <View style={styles.leftRow}>
+            <View style={[styles.checkbox, styles.checkboxVerified]}>
               <Text style={styles.checkmark}>✓</Text>
-            ) : isChecking ? (
-              <ActivityIndicator size="small" color={colors.primaryOrange} />
-            ) : null}
+            </View>
+            <View>
+              <Text style={[styles.label, { color: '#16A34A' }]}>
+                {language === 'hi' ? '✓ Security Code Verified' : '✓ Security Verified'}
+              </Text>
+              <Text style={styles.subLabel}>
+                {language === 'hi' ? 'Suraksha jaanch safal rahi' : 'Human verification complete'}
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.label}>
-              {language === 'hi' ? 'Main robot nahi hoon' : "I'm not a robot"}
-            </Text>
-            <Text style={styles.subLabel}>
-              {isVerified
-                ? (language === 'hi' ? '✓ Human Verified' : '✓ Verified Human')
-                : (language === 'hi' ? 'Suraksha Jaanch (Security Check)' : 'Security reCAPTCHA Check')}
-            </Text>
-          </View>
+          <Text style={{ fontSize: 20 }}>🛡️</Text>
         </View>
-
-        <View style={styles.badgeContainer}>
-          <Text style={styles.badgeIcon}>🤖</Text>
-          <Text style={styles.badgeText}>reCAPTCHA</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Expandable Challenge Area */}
-      {showChallenge && !isVerified && (
+      ) : (
         <View style={styles.challengeBox}>
           <View style={styles.challengeHeader}>
             <Text style={styles.challengeTitle}>
-              {language === 'hi' ? 'Robot Suraksha Code Daalein' : 'Enter Security Verification Code'}
+              {language === 'hi' ? 'Suraksha Verification Code' : 'Security Verification Code'}
             </Text>
             <TouchableOpacity
               onPress={refreshCaptcha}
               style={styles.refreshBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.refreshText}>🔄 Naya Code</Text>
+              <Text style={styles.refreshText}>🔄 {language === 'hi' ? 'Naya Code' : 'New Code'}</Text>
             </TouchableOpacity>
           </View>
 
