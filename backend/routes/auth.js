@@ -39,11 +39,17 @@ function getMailTransporter() {
 
   if (host === 'smtp.gmail.com' || user.toLowerCase().endsWith('@gmail.com')) {
     return nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // STARTTLS
+      family: 4,     // Force IPv4 to prevent ENETUNREACH on cloud environments like Render
       auth: { user, pass },
-      connectionTimeout: 7000,
-      greetingTimeout: 7000,
-      socketTimeout: 7000,
+      tls: {
+        rejectUnauthorized: false
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
 
@@ -53,10 +59,14 @@ function getMailTransporter() {
     host,
     port,
     secure: port === 465,
+    family: 4, // Force IPv4
     auth: { user, pass },
-    connectionTimeout: 7000,
-    greetingTimeout: 7000,
-    socketTimeout: 7000,
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
 }
 
