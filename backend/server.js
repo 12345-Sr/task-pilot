@@ -49,7 +49,6 @@ app.get('/api', (req, res) => res.json({
 }));
 app.get('/api/health', (req, res) => res.json({ ok: true, status: 'Task Pilot API is running', time: new Date().toISOString() }));
 
-const dns = require('dns').promises;
 const db = require('./db');
 
 app.get('/api/db-status', async (req, res) => {
@@ -91,7 +90,7 @@ app.get('/api/db-status', async (req, res) => {
       const uniqueHosts = [...new Set(hostsToTest)];
       for (const h of uniqueHosts) {
         try {
-          const lookup = await dns.lookup(h);
+          const lookup = await dns.promises.lookup(h);
           result.dnsChecks[h] = { ok: true, address: lookup.address };
         } catch (e) {
           result.dnsChecks[h] = { ok: false, error: e.code || e.message };
