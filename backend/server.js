@@ -98,6 +98,40 @@ app.get('/api/db-status', async (req, res) => {
     }
   }
 
+  const { Client } = require('pg');
+  const regions = ['singapore', 'oregon', 'frankfurt', 'ohio', 'virginia'];
+  const probeResults = {};
+
+  if (rawUrl) {
+    try {
+      const u = new URL(rawUrl);
+      const bareHost = u.hostname.replace(/\..*$/, '');
+      for (const reg of regions) {
+        const testHost = `${bareHost}.${reg}-postgres.render.com`;
+        const testClient = new Client({
+          user: u.username,
+          password: u.password,
+          host: testHost,
+          port: u.port || 5432,
+          database: u.pathname.replace(/^\//, ''),
+          ssl: { rejectUnauthorized: false },
+          connectionTimeoutMillis: 4000,
+        });
+        try {
+          await testClient.connect();
+          const r = await testClient.query('SELECT 1 AS ok');
+          await testClient.end();
+          probeResults[reg] = { ok: true, host: testHost, result: r.rows };
+        } catch (err) {
+          probeResults[reg] = { ok: false, host: testHost, error: err.message };
+        }
+      }
+    } catch (e) {
+      probeResults.error = e.message;
+    }
+  }
+  result.probeResults = probeResults;
+
   try {
     const r = await db.query('SELECT 1 AS connected, current_database() AS db, current_user AS user');
     result.testQuery = { ok: true, rows: r.rows };
