@@ -2,7 +2,7 @@ services:
   - type: web
     name: task-pilot-api
     runtime: node
-    region: singapore
+    region: oregon
     plan: free
     buildCommand: npm install
     startCommand: node server.js
@@ -26,7 +26,7 @@ services:
           name: task-pilot-db
           property: connectionString
       - key: DB_REGION
-        value: singapore
+        value: oregon
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
@@ -50,5 +50,5 @@ databases:
   - name: task-pilot-db
     databaseName: taskpilot
     user: taskpilot_user
-    region: singapore
+    region: oregon
     plan: free
