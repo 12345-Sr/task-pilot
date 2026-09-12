@@ -45,6 +45,77 @@ app.get('/api', (req, res) => res.json({
 }));
 app.get('/api/health', (req, res) => res.json({ ok: true, status: 'Task Pilot API is running', time: new Date().toISOString() }));
 
+const dns = require('dns').promises;
+const db = require('./db');
+
+app.get('/api/db-status', async (req, res) => {
+  const result = {
+    time: new Date().toISOString(),
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      DB_REGION: process.env.DB_REGION,
+      RENDER: process.env.RENDER,
+      RENDER_REGION: process.env.RENDER_REGION,
+    },
+    dnsChecks: {},
+    poolStatus: null,
+    testQuery: null,
+  };
+
+  const rawUrl = process.env.DATABASE_URL || '';
+  if (rawUrl) {
+    try {
+      const u = new URL(rawUrl);
+      result.databaseConfig = {
+        protocol: u.protocol,
+        user: u.username,
+        host: u.hostname,
+        port: u.port || '5432',
+        database: u.pathname.replace(/^\//, ''),
+        hasPassword: Boolean(u.password),
+        passwordLength: u.password ? u.password.length : 0,
+      };
+
+      const bareHost = u.hostname.replace(/\..*$/, '');
+      const hostsToTest = [
+        u.hostname,
+        bareHost,
+        `${bareHost}.singapore-postgres.render.com`,
+        `${bareHost}.oregon-postgres.render.com`,
+        `${bareHost}.frankfurt-postgres.render.com`
+      ];
+      const uniqueHosts = [...new Set(hostsToTest)];
+      for (const h of uniqueHosts) {
+        try {
+          const lookup = await dns.lookup(h);
+          result.dnsChecks[h] = { ok: true, address: lookup.address };
+        } catch (e) {
+          result.dnsChecks[h] = { ok: false, error: e.code || e.message };
+        }
+      }
+    } catch (e) {
+      result.databaseConfig = { error: e.message };
+    }
+  }
+
+  try {
+    const r = await db.query('SELECT 1 AS connected, current_database() AS db, current_user AS user');
+    result.testQuery = { ok: true, rows: r.rows };
+    result.poolStatus = 'CONNECTED';
+    return res.json(result);
+  } catch (err) {
+    result.testQuery = {
+      ok: false,
+      message: err.message,
+      code: err.code,
+      syscall: err.syscall,
+      routine: err.routine
+    };
+    result.poolStatus = 'DISCONNECTED';
+    return res.status(500).json(result);
+  }
+});
+
 const adminDir = require('fs').existsSync(path.join(__dirname, '../admin'))
   ? path.join(__dirname, '../admin')
   : path.join(__dirname, '../admin-panel');
