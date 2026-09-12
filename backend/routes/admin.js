@@ -239,7 +239,17 @@ router.get('/subscriptions', requireAdmin, async (req, res) => {
   if (status) { params.push(status); where = 'WHERE s.status = $1'; }
   try {
     const result = await db.query(
-      `SELECT s.*, u.name, u.email FROM subscriptions s
+      `SELECT s.*, u.name, u.email,
+         CASE
+           WHEN s.status = 'active' THEN 'Pro Plan'
+           WHEN s.status = 'free' THEN 'Free Tier'
+           ELSE 'Pro Plan'
+         END AS plan_name,
+         CASE
+           WHEN s.status = 'free' THEN 0.00
+           ELSE COALESCE(s.plan_price, 399.00)
+         END AS plan_price
+       FROM subscriptions s
        LEFT JOIN users u ON u.id = s.user_id
        ${where}
        ORDER BY s.updated_at DESC LIMIT 200`,
@@ -249,9 +259,7 @@ router.get('/subscriptions', requireAdmin, async (req, res) => {
   } catch (err) {
     if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
       return res.json({
-        subscriptions: [
-          { id: 'sub_1', name: 'Rohan Sharma', email: 'rohan@example.com', status: 'active', plan_price: 399 }
-        ]
+        subscriptions: []
       });
     }
     res.status(500).json({ error: err.message });

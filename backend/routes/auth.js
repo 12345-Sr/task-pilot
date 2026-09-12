@@ -242,8 +242,8 @@ router.post('/register', async (req, res) => {
 
     // Every new user starts in the Free Zone: up to FREE_DAILY_LIMIT reminders/day
     await db.query(
-      `INSERT INTO subscriptions (user_id, status, plan_price) VALUES ($1, 'free', $2)`,
-      [user.id, process.env.SUBSCRIPTION_PRICE_PAISE ? process.env.SUBSCRIPTION_PRICE_PAISE / 100 : 399]
+      `INSERT INTO subscriptions (user_id, status, plan_price) VALUES ($1, 'free', 0.00)`,
+      [user.id]
     );
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });

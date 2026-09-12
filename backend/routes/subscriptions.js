@@ -12,11 +12,11 @@ router.get('/status', requireUser, async (req, res) => {
   let sub = r.rows[0];
   if (!sub) {
     const created = await db.query(
-      `INSERT INTO subscriptions (user_id, status, plan_price) VALUES ($1, 'free', $2)
+      `INSERT INTO subscriptions (user_id, status, plan_price) VALUES ($1, 'free', 0.00)
        ON CONFLICT (user_id) DO NOTHING RETURNING *`,
-      [req.userId, process.env.SUBSCRIPTION_PRICE_PAISE ? process.env.SUBSCRIPTION_PRICE_PAISE / 100 : 399]
+      [req.userId]
     );
-    sub = created.rows[0] || { status: 'free', plan_price: 399 };
+    sub = created.rows[0] || { status: 'free', plan_price: 0.00 };
   }
 
   let dailyUsed = null;
