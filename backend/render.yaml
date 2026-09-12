@@ -25,6 +25,8 @@ services:
         fromDatabase:
           name: task-pilot-db
           property: connectionString
+      - key: DB_REGION
+        value: singapore
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
