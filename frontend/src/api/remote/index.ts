@@ -181,6 +181,11 @@ export class RemoteTasksRepository implements TasksRepository {
       fallbackTasks.create({ ...task, date: task_date, targetDate: task_date, description: descValue }).catch(() => {});
       return created;
     } catch (err: any) {
+      const status = err?.response?.status || err?.status;
+      // Re-throw if rejected by server quota (402) or client error (400/403)
+      if (status === 402 || status === 403 || status === 400 || err?.response?.data?.reason === 'free_limit_reached') {
+        throw err;
+      }
       console.warn('[TASKS] API create fallback to local:', err?.message || err);
       const fallback = await fallbackTasks.create({ ...task, date: task_date, targetDate: task_date, description: descValue });
       if (fallback?.id && descValue) {
@@ -345,10 +350,12 @@ export class RemoteUserRepository implements UserRepository {
 }
 
 export class RemoteSubscriptionRepository implements SubscriptionRepository {
-  async getStatus(): Promise<Subscription> {
+  async getStatus(): Promise<Subscription & { dailyUsed?: number; dailyLimit?: number }> {
     const res: any = await apiClient.get('/subscription/status').catch(() => ({}));
     const isPremium = res?.status === 'active' || res?.isPremium === true;
     useAppStore.getState().setIsPremium(isPremium);
+    const dailyUsed = typeof res?.dailyUsed === 'number' ? res.dailyUsed : 0;
+    useAppStore.getState().setFreeLifetimeCreated(dailyUsed);
     return {
       id: 'sub_001',
       plan: isPremium ? 'PREMIUM' : 'FREE',
@@ -357,6 +364,8 @@ export class RemoteSubscriptionRepository implements SubscriptionRepository {
       currency: res?.currency || 'INR',
       startedAt: new Date().toISOString(),
       expiresAt: res?.currentPeriodEnd || new Date(Date.now() + 30 * 86400000).toISOString(),
+      dailyUsed,
+      dailyLimit: res?.dailyLimit ?? 3,
     };
   }
 

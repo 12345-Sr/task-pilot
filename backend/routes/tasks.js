@@ -5,17 +5,19 @@ const { sendPush } = require('../scheduler');
 
 const router = express.Router();
 
-// Safe auto-migration for description and notes columns
+// Safe auto-migration for description, notes and lifetime_tasks_created columns
 db.query(`
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS notes TEXT;
-`).catch((err) => console.log('[DB] tasks description column check:', err.message));
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS lifetime_tasks_created INT NOT NULL DEFAULT 0;
+`).catch((err) => console.log('[DB] tasks migration check:', err.message));
 
 const FREE_DAILY_LIMIT = 3;
 
 // Shared helper: can this user add another task?
 // Premium ('active') users are unlimited. Free-zone users are capped at
 // FREE_DAILY_LIMIT (3 tasks lifetime maximum unless subscribed).
+// Deleting a task does NOT restore or decrement the free creation quota.
 async function getAccessStatus(userId) {
   const r = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
   const sub = r.rows[0];
@@ -28,9 +30,17 @@ async function getAccessStatus(userId) {
       'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
       [userId]
     );
-    const used = countR.rows[0].c;
-    const allowed = used < FREE_DAILY_LIMIT;
-    return { allowed, sub, used, limit: FREE_DAILY_LIMIT, reason: allowed ? null : 'free_limit_reached' };
+    const dbTotal = countR.rows[0]?.c || 0;
+    const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
+    const allowed = lifetimeUsed < FREE_DAILY_LIMIT;
+    return {
+      allowed,
+      sub,
+      used: Math.min(FREE_DAILY_LIMIT, lifetimeUsed),
+      lifetimeUsed,
+      limit: FREE_DAILY_LIMIT,
+      reason: allowed ? null : 'free_limit_reached',
+    };
   }
 
   return { allowed: false, sub, reason: sub.status }; // cancelled / past_due
@@ -123,8 +133,24 @@ router.post('/', requireUser, async (req, res, next) => {
 
     const access = await getAccessStatus(req.userId);
     if (!access.allowed) {
+      // Notify free user immediately via push that their free tier is over
+      db.query('SELECT push_token, language FROM users WHERE id = $1', [req.userId])
+        .then((uR) => {
+          const token = uR.rows[0]?.push_token;
+          const lang = uR.rows[0]?.language || 'hi';
+          if (token) {
+            const notifTitle = lang === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached';
+            const notifBody = lang === 'hi'
+              ? 'Aapka free tier limit (3/3 kaam) pura ho chuka hai. Naye task banane aur reminder alerts ke liye Pro me upgrade karein.'
+              : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.';
+            sendPush(token, notifTitle, notifBody, { type: 'QUOTA_EXCEEDED' }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+
       return res.status(402).json({
-        error: 'Free Zone limit reached (3 tasks lifetime maximum)',
+        error: 'Free tier limit reached (3 tasks lifetime maximum)',
+        message: 'Your free tier is over. Upgrade to Pro to create new tasks and receive reminder alerts.',
         reason: access.reason,
         used: access.used,
         limit: access.limit,
@@ -150,6 +176,12 @@ router.post('/', requireUser, async (req, res, next) => {
         result.rows[0].notes = taskDesc;
       }
     }
+
+    // Safely increment lifetime_tasks_created count for this user
+    db.query(
+      `UPDATE subscriptions SET lifetime_tasks_created = GREATEST(COALESCE(lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)), updated_at = now() WHERE user_id = $1`,
+      [req.userId]
+    ).catch(() => {});
 
     let recurringCount = 0;
     if (req.body.repeat_monthly) {

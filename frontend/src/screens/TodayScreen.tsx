@@ -22,6 +22,7 @@ import PaywallModal from '../components/PaywallModal';
 import EditTaskModal from '../components/EditTaskModal';
 import BrandLogo from '../components/BrandLogo';
 import CalendarIcon from '../components/CalendarIcon';
+import { NotificationService } from '../services/notifications/notification.service';
 import { Task } from '../types';
 
 export const TodayScreen: React.FC = () => {
@@ -44,8 +45,14 @@ export const TodayScreen: React.FC = () => {
   };
 
   const handleAddTaskPress = () => {
-    const { used: currentFreeUsed } = getFreeUsage(undefined, (tasks || []).length);
+    const { used: currentFreeUsed } = getFreeUsage();
     if (!isPremium && currentFreeUsed >= 3) {
+      NotificationService.sendQuotaLimitNotification(
+        language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
+        language === 'hi'
+          ? 'Aapke 3 free tasks poore ho chuke hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
+          : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.'
+      );
       setPaywallVisible(true);
       return;
     }
@@ -132,7 +139,7 @@ export const TodayScreen: React.FC = () => {
 
           {/* Mini Subscription Status Pill */}
           {!isPremium ? (() => {
-            const { used: freeUsed, remaining: freeRemaining } = getFreeUsage(undefined, todayTasks.length);
+            const { used: freeUsed, remaining: freeRemaining } = getFreeUsage();
             return (
               <TouchableOpacity
                 style={styles.trialBannerMini}

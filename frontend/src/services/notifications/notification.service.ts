@@ -286,6 +286,46 @@ export class NotificationService {
   }
 
   /**
+   * Fires an immediate push notification alerting a free user that their
+   * 3-task free tier is exhausted and Pro is required for new tasks/reminders.
+   */
+  static async sendQuotaLimitNotification(
+    localizedTitle?: string,
+    localizedBody?: string
+  ): Promise<boolean> {
+    if (Platform.OS === 'web') return false;
+    try {
+      await this.init();
+
+      const title = localizedTitle || '⚠️ Free Tier Limit Reached';
+      const body =
+        localizedBody ||
+        'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts!';
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 300, 200, 300],
+          badge: 1,
+          data: {
+            type: 'QUOTA_EXCEEDED',
+          },
+        },
+        trigger: null,
+      });
+
+      console.log('[NOTIF] Quota limit notification delivered');
+      return true;
+    } catch (err) {
+      console.warn('[NOTIF] Error delivering quota limit notification:', err);
+      return false;
+    }
+  }
+
+  /**
    * Fires a test alert in N seconds (default 5s) so the user can verify sound, banner, and vibration!
    * Includes both system notification and an in-app alert backup.
    */

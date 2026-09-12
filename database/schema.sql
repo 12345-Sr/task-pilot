@@ -38,6 +38,7 @@ CREATE TABLE subscriptions (
   provider_customer_id    TEXT,
   provider_subscription_id TEXT,
   cancelled_at            TIMESTAMPTZ,
+  lifetime_tasks_created  INT NOT NULL DEFAULT 0,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(user_id)

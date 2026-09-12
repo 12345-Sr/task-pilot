@@ -84,8 +84,14 @@ export const AddTaskScreen: React.FC = () => {
       }
     }
 
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage(selectedDate, (existingTasks || []).length);
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
     if (!isPremium && freeUsed >= 3) {
+      NotificationService.sendQuotaLimitNotification(
+        language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
+        language === 'hi'
+          ? 'Aapke 3 free tasks poore ho chuke hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
+          : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.'
+      );
       setPaywallVisible(true);
       return;
     }
@@ -96,6 +102,18 @@ export const AddTaskScreen: React.FC = () => {
 
   const handleConfirmAndSave = () => {
     setIsConfirmModalVisible(false);
+
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
+    if (!isPremium && freeUsed >= 3) {
+      NotificationService.sendQuotaLimitNotification(
+        language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
+        language === 'hi'
+          ? 'Aapke 3 free tasks poore ho chuke hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
+          : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.'
+      );
+      setPaywallVisible(true);
+      return;
+    }
 
     const taskTitle = title.trim();
     const taskDesc = description.trim();
@@ -157,11 +175,22 @@ export const AddTaskScreen: React.FC = () => {
           );
         },
         onError: (err: any) => {
+          const status = err?.response?.status || err?.status;
+          const isQuota = status === 402 || err?.response?.data?.reason === 'free_limit_reached';
+          if (isQuota) {
+            useAppStore.getState().setFreeLifetimeCreated(3);
+            NotificationService.sendQuotaLimitNotification(
+              language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
+              language === 'hi'
+                ? 'Aapke 3 free tasks poore ho chuke hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
+                : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.'
+            );
+            setPaywallVisible(true);
+          }
           const msg =
-            err?.message ||
-            err?.error ||
             err?.response?.data?.message ||
             err?.response?.data?.error ||
+            err?.message ||
             'Error saving task. Please try again.';
           setErrorMsg(msg);
         },

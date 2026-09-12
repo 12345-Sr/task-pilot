@@ -25,7 +25,9 @@ router.get('/status', requireUser, async (req, res) => {
       'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
       [req.userId]
     );
-    dailyUsed = Math.min(FREE_DAILY_LIMIT, countR.rows[0].c);
+    const dbTotal = countR.rows[0]?.c || 0;
+    const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
+    dailyUsed = Math.min(FREE_DAILY_LIMIT, lifetimeUsed);
   }
 
   res.json({
