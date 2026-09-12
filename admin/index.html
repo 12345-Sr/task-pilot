@@ -1294,57 +1294,18 @@
               <a class="card-action-link" onclick="switchNav('users')">View all</a>
             </div>
             <div class="recent-list" id="recentUsersList">
-              <!-- Real registered users from PostgreSQL database -->
-              <div class="recent-user-row">
-                <div class="recent-user-left">
-                  <div class="recent-avatar avatar-purple">SS</div>
-                  <div>
-                    <div class="recent-user-name">Sratanshu</div>
-                    <div class="recent-user-email">sratanshushukla135@gmail.com</div>
-                  </div>
-                </div>
-                <div class="recent-date">Sep 8</div>
-              </div>
-              <div class="recent-user-row">
-                <div class="recent-user-left">
-                  <div class="recent-avatar avatar-indigo">RS</div>
-                  <div>
-                    <div class="recent-user-name">Rohan Sharma</div>
-                    <div class="recent-user-email">rohan@example.com</div>
-                  </div>
-                </div>
-                <div class="recent-date">Sep 8</div>
-              </div>
+              <div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Loading live users...</div>
             </div>
           </div>
 
-          <!-- Recent Payments Card (Showing User Name and Email) -->
+          <!-- Recent Payments Card -->
           <div class="content-card">
             <div class="card-header-row">
               <h2 class="card-title">Recent Payments</h2>
               <a class="card-action-link" onclick="switchNav('subs')">View all</a>
             </div>
             <div class="recent-list" id="recentPaymentsList">
-              <div class="recent-user-row">
-                <div class="recent-user-left">
-                  <div class="recent-avatar avatar-teal">RS</div>
-                  <div>
-                    <div class="recent-user-name">Rohan Sharma</div>
-                    <div class="recent-user-email">rohan@example.com</div>
-                  </div>
-                </div>
-                <div class="recent-amount">₹399</div>
-              </div>
-              <div class="recent-user-row">
-                <div class="recent-user-left">
-                  <div class="recent-avatar avatar-purple">SS</div>
-                  <div>
-                    <div class="recent-user-name">Sratanshu</div>
-                    <div class="recent-user-email">sratanshushukla135@gmail.com</div>
-                  </div>
-                </div>
-                <div class="recent-amount">₹0</div>
-              </div>
+              <div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Loading subscriptions...</div>
             </div>
           </div>
         </div>
@@ -2164,10 +2125,7 @@ async function fetchAllTasks() {
 }
 
 // Default known database users
-const DEFAULT_KNOWN_USERS = [
-  { id: 'ab4651fa-5636-4e45-9241-84380ceb6a8f', name: 'Sratanshu', email: 'sratanshushukla135@gmail.com', install_date: '2026-09-08T11:36:33.105Z' },
-  { id: '823c849d-1453-4a8c-8c0e-11ff3f7ff2cc', name: 'Rohan Sharma', email: 'rohan@example.com', install_date: '2026-09-08T11:26:24.866Z' }
-];
+const DEFAULT_KNOWN_USERS = [];
 
 // ----------------- LOAD OVERVIEW -----------------
 async function loadOverview() {
@@ -2193,22 +2151,17 @@ async function loadOverview() {
     const mrrSum = subsList.filter(s => s.status === 'active').reduce((acc, s) => acc + Number(s.plan_price || 0), 0);
 
     const liveTasks = await fetchAllTasks();
-    const liveTaskCount = liveTasks.length > 0 ? liveTasks.length : (d?.totalTasks ?? 4);
+    const liveTaskCount = liveTasks.length > 0 ? liveTasks.length : (d?.totalTasks ?? 0);
 
-    if (usersList.length > 0) {
-      cachedUsers = usersList;
-    } else {
-      usersList = cachedUsers.length > 0 ? cachedUsers : DEFAULT_KNOWN_USERS;
-      cachedUsers = usersList;
-    }
+    cachedUsers = usersList;
 
     // Build user dictionary for instant name and email lookups
     const userMap = {};
     cachedUsers.forEach(u => { if (u.id) userMap[u.id] = u; });
 
-    const totalUsers = d?.totalUsers ?? (usersList.length > 0 ? usersList.length : 2);
-    const activeSubs = d?.activeSubscribers ?? (activeCount > 0 ? activeCount : 2);
-    const mrrVal = Number(d?.monthlyRecurringRevenue ?? (mrrSum > 0 ? mrrSum : 399));
+    const totalUsers = d?.totalUsers ?? usersList.length;
+    const activeSubs = d?.activeSubscribers ?? activeCount;
+    const mrrVal = Number(d?.monthlyRecurringRevenue ?? mrrSum);
     const totalRev = Number(d?.totalRevenue ?? mrrVal);
 
     // Update Top 4 KPI values
@@ -2221,30 +2174,34 @@ async function loadOverview() {
     document.getElementById('lowerActiveUsers').textContent = totalUsers;
     document.getElementById('lowerTotalSubs').textContent = subsList.length > 0 ? subsList.length : activeSubs;
     document.getElementById('lowerTotalBookings').textContent = liveTaskCount;
-    document.getElementById('lowerConversionRate').textContent = totalUsers > 0 ? `${Math.min(100, Math.round((activeSubs / totalUsers) * 100))}%` : '100%';
+    document.getElementById('lowerConversionRate').textContent = totalUsers > 0 ? `${Math.min(100, Math.round((activeSubs / totalUsers) * 100))}%` : '0%';
 
     // Populate REAL RECENT USERS from the database!
     const recentUsersEl = document.getElementById('recentUsersList');
     if (recentUsersEl) {
-      const colors = ['avatar-purple', 'avatar-indigo', 'avatar-teal', 'avatar-orange'];
-      recentUsersEl.innerHTML = usersList.slice(0, 5).map((u, i) => {
-        const initials = (u.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
-        const dateStr = u.install_date 
-          ? new Date(u.install_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
-          : 'Sep 8';
-        return `
-          <div class="recent-user-row">
-            <div class="recent-user-left">
-              <div class="recent-avatar ${colors[i % colors.length]}">${initials}</div>
-              <div>
-                <div class="recent-user-name">${escapeHtml(u.name || 'Task Pilot User')}</div>
-                <div class="recent-user-email">${escapeHtml(u.email || 'user@taskpilot.com')}</div>
+      if (!usersList.length) {
+        recentUsersEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No registered users found.</div>';
+      } else {
+        const colors = ['avatar-purple', 'avatar-indigo', 'avatar-teal', 'avatar-orange'];
+        recentUsersEl.innerHTML = usersList.slice(0, 5).map((u, i) => {
+          const initials = (u.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+          const dateStr = u.install_date 
+            ? new Date(u.install_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+            : 'Recent';
+          return `
+            <div class="recent-user-row">
+              <div class="recent-user-left">
+                <div class="recent-avatar ${colors[i % colors.length]}">${initials}</div>
+                <div>
+                  <div class="recent-user-name">${escapeHtml(u.name || 'Task Pilot User')}</div>
+                  <div class="recent-user-email">${escapeHtml(u.email || '')}</div>
+                </div>
               </div>
+              <div class="recent-date">${dateStr}</div>
             </div>
-            <div class="recent-date">${dateStr}</div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+      }
     }
 
     // Populate Recent Payments from subscriptions with REAL USER NAME and EMAIL!
@@ -2270,6 +2227,8 @@ async function loadOverview() {
             </div>
           `;
         }).join('');
+      } else {
+        recentPaymentsEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No payments recorded yet.</div>';
       }
     }
   } catch (err) {
@@ -2288,10 +2247,10 @@ async function loadUsers() {
     if (res.ok) {
       data = await res.json();
     }
-    cachedUsers = (data.users && data.users.length > 0) ? data.users : DEFAULT_KNOWN_USERS;
+    cachedUsers = (data.users && data.users.length > 0) ? data.users : [];
     renderUsersTable(cachedUsers);
   } catch (e) {
-    cachedUsers = DEFAULT_KNOWN_USERS;
+    cachedUsers = [];
     renderUsersTable(cachedUsers);
   }
 }
@@ -2304,7 +2263,7 @@ function renderUsersTable(list) {
     return;
   }
   tbody.innerHTML = list.map(u => {
-    const dateStr = u.install_date ? new Date(u.install_date).toLocaleDateString() : 'Sep 8, 2026';
+    const dateStr = u.install_date ? new Date(u.install_date).toLocaleDateString() : 'N/A';
     const subStatus = u.subscription_status || 'free';
     const badgeClass = subStatus === 'active' ? 'active' : (subStatus === 'expired' ? 'expired' : 'free');
     return `
@@ -2362,13 +2321,12 @@ async function loadTasks() {
     cachedUsers.forEach(u => { if (u.id) userMap[u.id] = u; });
 
     const tasks = await fetchAllTasks();
-    const list = tasks.length > 0 ? tasks : [
-      { title: 'Morning Review Meeting', user_name: 'Sratanshu', user_email: 'sratanshushukla135@gmail.com', task_date: '2026-09-10', task_time: '09:00', status: 'done' },
-      { title: 'Prepare Client Brief', user_name: 'Sratanshu', user_email: 'sratanshushukla135@gmail.com', task_date: '2026-09-10', task_time: '14:30', status: 'pending' },
-      { title: 'Sync with Engineering', user_name: 'Rohan Sharma', user_email: 'rohan@example.com', task_date: '2026-09-10', task_time: '16:00', status: 'pending' },
-      { title: 'Weekly Sprint Retrospective', user_name: 'Rohan Sharma', user_email: 'rohan@example.com', task_date: '2026-09-10', task_time: '18:00', status: 'pending' }
-    ];
+    const list = tasks;
     document.getElementById('tasksTableCount').textContent = `${list.length} Tasks`;
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No tasks found in database.</td></tr>';
+      return;
+    }
     tbody.innerHTML = list.map(t => {
       const isDone = t.status === 'done';
       const userName = t.user_name || userMap[t.user_id]?.name || 'Task Pilot User';
@@ -2414,14 +2372,12 @@ async function loadSubs(filterStatus) {
       const d = await res.json();
       list = d.subscriptions || [];
     }
-    if (!list.length) {
-      list = [
-        { name: 'Rohan Sharma', email: 'rohan@example.com', plan_name: 'Standard Plan', plan_price: '399.00', status: 'active', current_period_end: '2026-10-08' },
-        { name: 'Sratanshu', email: 'sratanshushukla135@gmail.com', plan_name: 'Standard Plan', plan_price: '0.00', status: 'free', current_period_end: null }
-      ];
-    }
     if (filterStatus) {
       list = list.filter(s => s.status === filterStatus);
+    }
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No subscriptions found.</td></tr>';
+      return;
     }
     tbody.innerHTML = list.map(s => {
       const userName = s.name || s.user_name || userMap[s.user_id]?.name || 'Task Pilot User';

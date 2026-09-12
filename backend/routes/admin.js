@@ -202,19 +202,7 @@ router.get('/users', requireAdmin, async (req, res) => {
     );
     res.json({ users: result.rows, total: countResult.rows[0].c, page, pageSize });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
-      return res.json({
-        users: [
-          { id: '1', name: 'Rohan Sharma', email: 'rohan@example.com', language: 'hi', subscription_status: 'active' },
-          { id: '2', name: 'Priya Patel', email: 'priya@example.com', language: 'gu', subscription_status: 'free' },
-          { id: '3', name: 'Aarav Mehta', email: 'aarav@example.com', language: 'en', subscription_status: 'free' },
-        ],
-        total: 3,
-        page: 1,
-        pageSize: 20
-      });
-    }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, users: [], total: 0 });
   }
 });
 
@@ -247,14 +235,7 @@ router.get('/subscriptions', requireAdmin, async (req, res) => {
     );
     res.json({ subscriptions: result.rows });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
-      return res.json({
-        subscriptions: [
-          { id: 'sub_1', name: 'Rohan Sharma', email: 'rohan@example.com', status: 'active', plan_price: 399 }
-        ]
-      });
-    }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, subscriptions: [] });
   }
 });
 
