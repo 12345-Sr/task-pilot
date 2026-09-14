@@ -96,7 +96,7 @@ export const SettingsScreen: React.FC = () => {
         overScrollMode="never"
         contentContainerStyle={[
           styles.container,
-          { paddingBottom: Math.max(insets.bottom, 24) + 100 },
+          { paddingBottom: Math.max(insets.bottom, 24) + 120 },
         ]}
       >
         {/* Screen Title */}

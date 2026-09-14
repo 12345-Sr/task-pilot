@@ -204,21 +204,21 @@ router.get('/checkout', async (req, res) => {
   <title>Task Pilot Pro — Razorpay Checkout</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { background: #0B0F19; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-    .card { background: #161F30; border-radius: 24px; padding: 28px 22px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #283548; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
-    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: rgba(197, 160, 89, 0.15); color: #C5A059; padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 700; margin-bottom: 16px; }
-    h1 { font-size: 24px; font-weight: 800; color: #FFFFFF; margin-bottom: 6px; }
-    p.sub { font-size: 13px; color: #94A3B8; margin-bottom: 20px; }
-    .price-box { background: #0F172A; border-radius: 18px; padding: 16px; border: 1px solid #1E293B; margin-bottom: 20px; }
-    .price { font-size: 38px; font-weight: 900; color: #C5A059; }
-    .validity { font-size: 12px; color: #64748B; margin-top: 4px; }
-    .methods-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; text-align: left; }
-    .method-item { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 12px; border: 1px solid #1E293B; font-size: 13px; color: #E2E8F0; }
-    .method-item b { color: #FFFFFF; }
-    .btn-pay { background: linear-gradient(135deg, #C5A059 0%, #D4AF37 100%); color: #0B0F19; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 8px 20px rgba(197, 160, 89, 0.35); }
-    .btn-pay:active { transform: scale(0.98); }
-    .btn-pay:hover { opacity: 0.95; }
-    .security-note { margin-top: 18px; font-size: 11px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+    .card { background: #FFFFFF; border-radius: 20px; padding: 28px 22px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #E2E8F0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); }
+    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #B45309; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 16px; border: 1px solid #FDE68A; }
+    h1 { font-size: 22px; font-weight: 900; color: #0F172A; margin-bottom: 6px; }
+    p.sub { font-size: 13px; color: #64748B; margin-bottom: 18px; }
+    .price-box { background: #FFF9F0; border-radius: 16px; padding: 16px; border: 1.5px solid #FDE68A; margin-bottom: 18px; }
+    .price { font-size: 38px; font-weight: 900; color: #0F172A; }
+    .price span { color: #C5A059; }
+    .validity { font-size: 12px; color: #64748B; margin-top: 4px; font-weight: 600; }
+    .methods-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
+    .method-item { display: flex; align-items: center; gap: 10px; background: #F8FAFC; padding: 10px 12px; border-radius: 12px; border: 1px solid #E2E8F0; font-size: 12.5px; color: #334155; }
+    .method-item b { color: #0F172A; }
+    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.35); }
+    .btn-pay:hover { opacity: 0.94; }
+    .security-note { margin-top: 16px; font-size: 11px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; }
   </style>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
@@ -229,13 +229,13 @@ router.get('/checkout', async (req, res) => {
     <p class="sub">Sabhi payment methods accepted hain (All Payment Methods)</p>
 
     <div class="price-box">
-      <div class="price">₹399</div>
-      <div class="validity">One-time payment for 30 days full unlimited access</div>
+      <div class="price"><span>₹</span>399</div>
+      <div class="validity">30 dino ke liye unlimited tasks aur smart alerts access</div>
     </div>
 
     <div class="methods-list">
       <div class="method-item">💳 <span><b>Debit & Credit Cards</b> (Visa, Mastercard, RuPay)</span></div>
-      <div class="method-item">📱 <span><b>UPI & QR</b> (Google Pay, PhonePe, Paytm, BHIM, Any UPI)</span></div>
+      <div class="method-item">📱 <span><b>UPI & QR</b> (Google Pay, PhonePe, Paytm, Any UPI)</span></div>
       <div class="method-item">🏦 <span><b>Net Banking</b> (SBI, HDFC, ICICI, Axis & 50+ Banks)</span></div>
       <div class="method-item">👛 <span><b>Wallets & Pay Later</b> (Paytm, Mobikwik, ICICI PayLater)</span></div>
     </div>

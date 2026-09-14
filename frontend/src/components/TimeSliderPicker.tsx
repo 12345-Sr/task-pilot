@@ -375,9 +375,7 @@ export const TimeSliderPicker: React.FC<TimeSliderPickerProps> = ({
 
       {/* 4. Slide Hint */}
       <Text style={styles.slideHint}>
-        {language === 'hi'
-          ? '☝️ उंगली से ऊपर-नीचे स्लाइड करके या सीधे टैप करके समय और AM/PM बदलें'
-          : '☝️ Slide up/down or tap directly to change hours, minutes, and AM/PM'}
+        {t(language, 'slide_time_hint')}
       </Text>
     </View>
   );
@@ -614,7 +612,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#64748B',
     marginTop: 8,
+    marginBottom: 4,
     textAlign: 'center',
+    paddingHorizontal: 16,
+    lineHeight: 16,
   },
 });
 

@@ -74,7 +74,7 @@ export const ProgressScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+          { paddingBottom: Math.max(insets.bottom, 24) + 120 },
         ]}
         refreshControl={
           <RefreshControl

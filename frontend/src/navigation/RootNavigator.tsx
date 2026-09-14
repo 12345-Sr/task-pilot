@@ -80,6 +80,8 @@ function MainTabs() {
           );
         },
         tabBarLabelStyle: styles.tabLabel,
+        tabBarAllowFontScaling: false,
+        tabBarItemStyle: { paddingHorizontal: 2 },
       })}
     >
       <Tab.Screen
@@ -171,8 +173,9 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });
 

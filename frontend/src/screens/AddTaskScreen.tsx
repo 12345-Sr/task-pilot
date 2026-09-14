@@ -222,7 +222,7 @@ export const AddTaskScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingBottom: Math.max(insets.bottom, 24) + 120 },
+            { paddingBottom: Math.max(insets.bottom, 24) + 140 },
           ]}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
@@ -398,57 +398,64 @@ export const AddTaskScreen: React.FC = () => {
             </View>
 
             {/* Task Details Content */}
-            <View style={styles.previewBox}>
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>📝 {t(language, 'task_title_label')}:</Text>
-                <Text style={styles.previewValueTitle}>{title.trim()}</Text>
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              <View style={styles.previewBox}>
+                <View style={styles.previewRow}>
+                  <Text style={styles.previewLabel}>📝 {t(language, 'task_title_label')}:</Text>
+                  <Text style={styles.previewValueTitle}>{title.trim()}</Text>
+                </View>
+
+                <View style={styles.previewDivider} />
+
+                <View style={styles.previewRow}>
+                  <Text style={styles.previewLabel}>📅 {t(language, 'date_label')}:</Text>
+                  <Text style={styles.previewValue}>{selectedDate}</Text>
+                </View>
+
+                <View style={styles.previewDivider} />
+
+                <View style={styles.previewRow}>
+                  <Text style={styles.previewLabel}>⏰ {t(language, 'reminder_time_heading').replace(/^[^\w\s\u0900-\u0DFF]+/, '').trim()}:</Text>
+                  <Text style={styles.previewValue}>
+                    {reminderEnabled ? reminderTime : t(language, 'alert_off')}
+                  </Text>
+                </View>
+
+                <View style={styles.previewDivider} />
+
+                <View style={styles.previewRow}>
+                  <Text style={styles.previewLabel}>🎯 {t(language, 'priority_label')}:</Text>
+                  <PriorityChip priority={priority.toUpperCase() as any} size="sm" />
+                </View>
+
+                {repeatMonthly && (
+                  <>
+                    <View style={styles.previewDivider} />
+                    <View style={styles.previewRow}>
+                      <Text style={styles.previewLabel}>🔁 Repeat:</Text>
+                      <Text style={[styles.previewValue, { color: colors.primaryOrange, fontWeight: '700' }]}>
+                        Daily 30 Days 👑
+                      </Text>
+                    </View>
+                  </>
+                )}
+
+                {description.trim() ? (
+                  <>
+                    <View style={styles.previewDivider} />
+                    <View style={styles.previewRowCol}>
+                      <Text style={styles.previewLabel}>📄 {t(language, 'notes_label')}:</Text>
+                      <Text style={styles.previewDescText}>{description.trim()}</Text>
+                    </View>
+                  </>
+                ) : null}
               </View>
-
-              <View style={styles.previewDivider} />
-
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>📅 {t(language, 'date_label')}:</Text>
-                <Text style={styles.previewValue}>{selectedDate}</Text>
-              </View>
-
-              <View style={styles.previewDivider} />
-
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>⏰ {t(language, 'reminder_time_heading')}:</Text>
-                <Text style={styles.previewValue}>
-                  {reminderEnabled ? reminderTime : t(language, 'alert_off')}
-                </Text>
-              </View>
-
-              <View style={styles.previewDivider} />
-
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>🔴 {t(language, 'priority_label')}:</Text>
-                <PriorityChip priority={priority.toUpperCase() as any} size="sm" />
-              </View>
-
-              {repeatMonthly && (
-                <>
-                  <View style={styles.previewDivider} />
-                  <View style={styles.previewRow}>
-                    <Text style={styles.previewLabel}>🔁 Repeat:</Text>
-                    <Text style={[styles.previewValue, { color: colors.primaryOrange, fontWeight: '700' }]}>
-                      Daily 30 Days 👑
-                    </Text>
-                  </View>
-                </>
-              )}
-
-              {description.trim() ? (
-                <>
-                  <View style={styles.previewDivider} />
-                  <View style={styles.previewRowCol}>
-                    <Text style={styles.previewLabel}>📄 {t(language, 'notes_label')}:</Text>
-                    <Text style={styles.previewDescText}>{description.trim()}</Text>
-                  </View>
-                </>
-              ) : null}
-            </View>
+            </ScrollView>
 
             {/* Modal Action Buttons */}
             <View style={styles.modalActionRow}>
@@ -457,7 +464,7 @@ export const AddTaskScreen: React.FC = () => {
                 activeOpacity={0.7}
                 onPress={() => setIsConfirmModalVisible(false)}
               >
-                <Text style={styles.modalEditBtnText} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={styles.modalEditBtnText} numberOfLines={1}>
                   {t(language, 'edit_details_btn')}
                 </Text>
               </TouchableOpacity>
@@ -471,7 +478,7 @@ export const AddTaskScreen: React.FC = () => {
                 {createTaskMutation.isPending ? (
                   <ActivityIndicator color={colors.surface} size="small" />
                 ) : (
-                  <Text style={styles.modalSubmitBtnText} numberOfLines={1} adjustsFontSizeToFit>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>
                     {t(language, 'confirm_task_submit')}
                   </Text>
                 )}
@@ -652,44 +659,45 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 390,
+    maxHeight: '88%',
     backgroundColor: colors.surface,
     borderRadius: 20,
-    padding: spacing.lg,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
-    shadowRadius: 20,
+    shadowRadius: 16,
     elevation: 10,
-    gap: spacing.md,
   },
   modalHeader: {
     alignItems: 'center',
-    gap: 4,
+    marginBottom: 10,
   },
   modalIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
   modalIcon: {
-    fontSize: 24,
+    fontSize: 22,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
@@ -698,11 +706,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     textAlign: 'center',
+    marginTop: 2,
+    paddingHorizontal: 8,
+  },
+  modalScrollView: {
+    flexGrow: 0,
+    maxHeight: 320,
+  },
+  modalScrollContent: {
+    paddingVertical: 2,
   },
   previewBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
-    padding: spacing.md,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     gap: 8,
@@ -751,12 +768,14 @@ const styles = StyleSheet.create({
   },
   modalActionRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: 6,
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
   },
   modalEditBtn: {
     flex: 1,
-    paddingVertical: 13,
+    height: 46,
+    paddingHorizontal: 6,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
@@ -768,24 +787,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#475569',
+    textAlign: 'center',
   },
   modalSubmitBtn: {
-    flex: 1.4,
-    paddingVertical: 13,
+    flex: 1.3,
+    height: 46,
+    paddingHorizontal: 6,
     borderRadius: radius.md,
     backgroundColor: colors.primaryOrange,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primaryOrange,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 3,
   },
   modalSubmitBtnText: {
     fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   proFeatureCard: {
     backgroundColor: '#FFFDF7',

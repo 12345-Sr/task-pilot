@@ -17,12 +17,14 @@ import { apiClient } from '../api/client';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
+import { typography } from '../theme/typography';
+import { spacing } from '../theme/spacing';
 import { BrandLogo } from './BrandLogo';
 import { NotificationService } from '../services/notifications/notification.service';
 
 const RNImage = Image as any;
 
-type PaymentTab = 'all' | 'upi' | 'qr';
+type PaymentTab = 'gateway' | 'upi' | 'qr';
 
 interface PaywallModalProps {
   visible?: boolean;
@@ -50,7 +52,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   const isVisible = visible !== undefined ? visible : paywallVisible;
 
-  const [activeTab, setActiveTab] = useState<PaymentTab>('all');
+  const [activeTab, setActiveTab] = useState<PaymentTab>('gateway');
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -152,36 +154,26 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
   };
 
-  const handleOpenSpecificUpiApp = async (scheme: string, appName: string) => {
+  const handleOpenUpiApp = async (scheme?: string) => {
     if (!orderData?.upiUrl) return;
     try {
       const query = orderData.upiUrl.replace(/^upi:\/\/pay\?/, '');
-      let appUrl = orderData.upiUrl;
-      if (scheme === 'phonepe') {
-        appUrl = `phonepe://pay?${query}`;
-      } else if (scheme === 'gpay') {
-        appUrl = `tez://upi/pay?${query}`;
-      } else if (scheme === 'paytm') {
-        appUrl = `paytmmp://pay?${query}`;
-      }
+      let targetUrl = orderData.upiUrl;
+      if (scheme === 'phonepe') targetUrl = `phonepe://pay?${query}`;
+      if (scheme === 'gpay') targetUrl = `tez://upi/pay?${query}`;
+      if (scheme === 'paytm') targetUrl = `paytmmp://pay?${query}`;
 
-      const supported = await Linking.canOpenURL(appUrl);
+      const supported = await Linking.canOpenURL(targetUrl);
       if (supported) {
-        await Linking.openURL(appUrl);
+        await Linking.openURL(targetUrl);
       } else {
         await Linking.openURL(orderData.upiUrl);
       }
     } catch (err) {
-      // If direct deep link isn't supported, fall back to general UPI or Razorpay
       try {
         await Linking.openURL(orderData.upiUrl);
       } catch (e) {
-        Alert.alert(
-          `${appName} ${isHinglish ? 'Nahi Mila' : 'Not Found'}`,
-          isHinglish
-            ? `Aapke phone me ${appName} app nahi mila. Kripya Razorpay Gateway ya QR Code ka upyog karein.`
-            : `${appName} could not be opened. Please use the Razorpay Gateway or Scan QR option.`
-        );
+        handleOpenRazorpayCheckout();
       }
     }
   };
@@ -202,7 +194,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         throw new Error(res?.error || 'Verification failed');
       }
     } catch (err: any) {
-      // Check current live status from server
       try {
         const statusRes: any = await apiClient.get('/subscription/status');
         if (statusRes?.isPremium || statusRes?.status === 'active') {
@@ -212,10 +203,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       } catch (e) {}
 
       Alert.alert(
-        isHinglish ? 'Payment Status Check' : 'Payment Status',
+        isHinglish ? 'Payment Status' : 'Payment Status',
         isHinglish
           ? 'Agar aapne payment poora kar diya hai, toh kripya 5 second intezaar karke dobara tap karein. Bank confirmation milte hi Pro automatically unlock ho jayega.'
-          : 'If you have completed the payment, please wait a few seconds and tap verify again. Pro features will unlock automatically upon confirmation.'
+          : 'If you have completed payment, please wait a few seconds and tap verify again.'
       );
     } finally {
       setVerifying(false);
@@ -262,10 +253,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
           <View style={styles.headerBrand}>
-            <BrandLogo size={26} showText={false} />
+            <BrandLogo size={24} showText={false} />
             <Text style={styles.headerBrandTitle}>
-              <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+              <Text style={{ color: colors.textPrimary }}>Task</Text>
+              <Text style={{ color: colors.warning }}>Pilot</Text>
               <Text style={{ color: colors.primary, fontWeight: '900' }}> PRO</Text>
             </Text>
           </View>
@@ -282,7 +273,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Banner */}
+          {/* Hero Banner matching Task Pilot Theme */}
           <View style={styles.heroCard}>
             <View style={styles.crownBadge}>
               <Text style={styles.crownEmoji}>👑</Text>
@@ -292,8 +283,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </Text>
             <Text style={styles.heroSub}>
               {isHinglish
-                ? 'Unlimited task reminders, proactive advance alerts aur poora power paayein.'
-                : 'Unlimited task reminders, proactive sound alerts, and full productivity power.'}
+                ? 'Unlimited task reminders, proactive advance audio alerts aur poora power paayein.'
+                : 'Unlimited task reminders, proactive advance alerts, and complete productivity.'}
             </Text>
 
             {/* Price Tag */}
@@ -311,108 +302,109 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </View>
           </View>
 
-          {/* Interactive Payment Method Tabs */}
-          <View style={styles.tabBarContainer}>
+          {/* Payment Method Selector Tabs */}
+          <View style={styles.tabSelector}>
             <TouchableOpacity
-              style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
-              onPress={() => setActiveTab('all')}
+              style={[styles.tabButton, activeTab === 'gateway' && styles.tabButtonActive]}
+              onPress={() => setActiveTab('gateway')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabItemText, activeTab === 'all' && styles.tabItemTextActive]}>
+              <Text style={[styles.tabButtonText, activeTab === 'gateway' && styles.tabButtonTextActive]}>
                 💳 {isHinglish ? 'All Methods' : 'All Methods'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tabItem, activeTab === 'upi' && styles.tabItemActive]}
+              style={[styles.tabButton, activeTab === 'upi' && styles.tabButtonActive]}
               onPress={() => setActiveTab('upi')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabItemText, activeTab === 'upi' && styles.tabItemTextActive]}>
+              <Text style={[styles.tabButtonText, activeTab === 'upi' && styles.tabButtonTextActive]}>
                 📱 {isHinglish ? 'UPI Apps' : 'UPI Apps'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tabItem, activeTab === 'qr' && styles.tabItemActive]}
+              style={[styles.tabButton, activeTab === 'qr' && styles.tabButtonActive]}
               onPress={() => setActiveTab('qr')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabItemText, activeTab === 'qr' && styles.tabItemTextActive]}>
+              <Text style={[styles.tabButtonText, activeTab === 'qr' && styles.tabButtonTextActive]}>
                 ⚡ {isHinglish ? 'Scan QR' : 'Scan QR'}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* TAB 1: ALL METHODS (Official Razorpay Gateway) */}
-          {activeTab === 'all' && (
-            <View style={styles.rzpGatewayCard}>
-              <View style={styles.rzpCardHeader}>
-                <View style={styles.rzpBadge}>
-                  <Text style={styles.rzpBadgeText}>🛡️ OFFICIAL RAZORPAY GATEWAY</Text>
+          {activeTab === 'gateway' && (
+            <View style={styles.paymentCard}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.trustTag}>
+                  <Text style={styles.trustTagText}>🛡️ RAZORPAY VERIFIED GATEWAY</Text>
                 </View>
-                <Text style={styles.rzpCardTitle}>
-                  {isHinglish ? 'Sabhi Payment Tarike Accepted' : 'All Payment Methods Accepted'}
-                </Text>
-                <Text style={styles.rzpCardSub}>
-                  {isHinglish
-                    ? 'Debit/Credit Card, UPI, Net Banking ya Wallets se turant pay karein.'
-                    : 'Pay securely using any Card, UPI App, Net Banking, or Wallet.'}
-                </Text>
               </View>
 
-              {/* Methods Grid */}
+              <Text style={styles.cardTitle}>
+                {isHinglish ? 'Sabhi Payment Tarike Accepted Hain' : 'All Payment Methods Accepted'}
+              </Text>
+              <Text style={styles.cardSubtitle}>
+                {isHinglish
+                  ? 'Debit/Credit Card, UPI, Net Banking ya Wallets se turant pay karein.'
+                  : 'Pay securely using any Card, UPI App, Net Banking, or Wallet.'}
+              </Text>
+
+              {/* Methods 2x2 Grid */}
               <View style={styles.methodsGrid}>
-                <View style={styles.methodGridItem}>
-                  <Text style={styles.methodGridIcon}>💳</Text>
-                  <View style={styles.methodGridTextWrap}>
-                    <Text style={styles.methodGridTitle}>Cards</Text>
-                    <Text style={styles.methodGridDesc}>Visa, RuPay, Master</Text>
+                <View style={styles.methodBox}>
+                  <Text style={styles.methodIcon}>💳</Text>
+                  <View style={styles.methodTextWrap}>
+                    <Text style={styles.methodName}>Cards</Text>
+                    <Text style={styles.methodDetail}>Debit / Credit (Visa, RuPay, Master)</Text>
                   </View>
                 </View>
 
-                <View style={styles.methodGridItem}>
-                  <Text style={styles.methodGridIcon}>📱</Text>
-                  <View style={styles.methodGridTextWrap}>
-                    <Text style={styles.methodGridTitle}>UPI</Text>
-                    <Text style={styles.methodGridDesc}>GPay, PhonePe, Any UPI</Text>
+                <View style={styles.methodBox}>
+                  <Text style={styles.methodIcon}>📱</Text>
+                  <View style={styles.methodTextWrap}>
+                    <Text style={styles.methodName}>UPI</Text>
+                    <Text style={styles.methodDetail}>GPay, PhonePe, Paytm, Any UPI</Text>
                   </View>
                 </View>
 
-                <View style={styles.methodGridItem}>
-                  <Text style={styles.methodGridIcon}>🏦</Text>
-                  <View style={styles.methodGridTextWrap}>
-                    <Text style={styles.methodGridTitle}>Net Banking</Text>
-                    <Text style={styles.methodGridDesc}>50+ Indian Banks</Text>
+                <View style={styles.methodBox}>
+                  <Text style={styles.methodIcon}>🏦</Text>
+                  <View style={styles.methodTextWrap}>
+                    <Text style={styles.methodName}>Net Banking</Text>
+                    <Text style={styles.methodDetail}>SBI, HDFC, ICICI & 50+ Banks</Text>
                   </View>
                 </View>
 
-                <View style={styles.methodGridItem}>
-                  <Text style={styles.methodGridIcon}>👛</Text>
-                  <View style={styles.methodGridTextWrap}>
-                    <Text style={styles.methodGridTitle}>Wallets</Text>
-                    <Text style={styles.methodGridDesc}>Paytm, PayLater</Text>
+                <View style={styles.methodBox}>
+                  <Text style={styles.methodIcon}>👛</Text>
+                  <View style={styles.methodTextWrap}>
+                    <Text style={styles.methodName}>Wallets</Text>
+                    <Text style={styles.methodDetail}>Paytm, Mobikwik, PayLater</Text>
                   </View>
                 </View>
               </View>
 
-              {/* Primary CTA Button */}
+              {/* Primary Action Button */}
               <TouchableOpacity
-                style={[styles.payRazorpayBtn, launchingGateway && styles.btnDisabled]}
+                style={[styles.primaryPayBtn, launchingGateway && styles.btnDisabled]}
                 activeOpacity={0.88}
                 onPress={handleOpenRazorpayCheckout}
                 disabled={launchingGateway}
               >
                 {launchingGateway ? (
-                  <ActivityIndicator color="#0F172A" size="small" />
+                  <ActivityIndicator color={colors.surface} size="small" />
                 ) : (
                   <>
-                    <Text style={styles.payRazorpayBtnText}>
+                    <Text style={styles.primaryPayBtnText}>
                       💳 {isHinglish ? 'Pay ₹399 with Razorpay' : 'Pay ₹399 with Razorpay'}
                     </Text>
-                    <Text style={styles.payRazorpayBtnSubText}>
+                    <Text style={styles.primaryPayBtnSub}>
                       {isHinglish
-                        ? '⚡ Cards · UPI · Net Banking · Wallets'
+                        ? '⚡ Sabhi payment methods ke sath gateway kholein'
                         : '⚡ Open secure gateway with all payment options'}
                     </Text>
                   </>
@@ -423,166 +415,155 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
           {/* TAB 2: DIRECT UPI APPS */}
           {activeTab === 'upi' && (
-            <View style={styles.upiAppsCard}>
-              <Text style={styles.upiAppsTitle}>
+            <View style={styles.paymentCard}>
+              <Text style={styles.cardTitle}>
                 {isHinglish ? 'Direct Apne UPI App Se Pay Karein' : 'Pay Directly via Installed UPI App'}
               </Text>
-              <Text style={styles.upiAppsSub}>
+              <Text style={styles.cardSubtitle}>
                 {isHinglish
                   ? 'Neeche diye gaye kisi bhi app par tap karein aur turant payment poora karein:'
                   : 'Tap any app below to pay ₹399 directly:'}
               </Text>
 
-              {/* UPI App Buttons Grid */}
-              <View style={styles.upiBtnGrid}>
-                {/* PhonePe */}
+              {/* Quick UPI App Chips */}
+              <View style={styles.upiAppsContainer}>
                 <TouchableOpacity
-                  style={[styles.upiAppBtn, { borderColor: '#7C3AED' }]}
+                  style={styles.upiAppRow}
                   activeOpacity={0.8}
-                  onPress={() => handleOpenSpecificUpiApp('phonepe', 'PhonePe')}
+                  onPress={() => handleOpenUpiApp('phonepe')}
                 >
-                  <Text style={styles.upiAppIcon}>🟣</Text>
+                  <Text style={styles.upiEmoji}>🟣</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.upiAppName}>PhonePe</Text>
-                    <Text style={styles.upiAppDesc}>{isHinglish ? 'Direct Pay Karein' : 'Instant Pay'}</Text>
+                    <Text style={styles.upiTitle}>PhonePe</Text>
+                    <Text style={styles.upiSub}>{isHinglish ? 'Direct Pay Karein' : 'Instant Pay'}</Text>
                   </View>
-                  <Text style={styles.upiAppArrow}>→</Text>
+                  <Text style={styles.upiArrow}>→</Text>
                 </TouchableOpacity>
 
-                {/* Google Pay */}
                 <TouchableOpacity
-                  style={[styles.upiAppBtn, { borderColor: '#2563EB' }]}
+                  style={styles.upiAppRow}
                   activeOpacity={0.8}
-                  onPress={() => handleOpenSpecificUpiApp('gpay', 'Google Pay')}
+                  onPress={() => handleOpenUpiApp('gpay')}
                 >
-                  <Text style={styles.upiAppIcon}>🔵</Text>
+                  <Text style={styles.upiEmoji}>🔵</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.upiAppName}>Google Pay</Text>
-                    <Text style={styles.upiAppDesc}>{isHinglish ? 'GPay Me Kholein' : 'Open in GPay'}</Text>
+                    <Text style={styles.upiTitle}>Google Pay</Text>
+                    <Text style={styles.upiSub}>{isHinglish ? 'GPay Me Kholein' : 'Open in GPay'}</Text>
                   </View>
-                  <Text style={styles.upiAppArrow}>→</Text>
+                  <Text style={styles.upiArrow}>→</Text>
                 </TouchableOpacity>
 
-                {/* Paytm */}
                 <TouchableOpacity
-                  style={[styles.upiAppBtn, { borderColor: '#0284C7' }]}
+                  style={styles.upiAppRow}
                   activeOpacity={0.8}
-                  onPress={() => handleOpenSpecificUpiApp('paytm', 'Paytm')}
+                  onPress={() => handleOpenUpiApp('paytm')}
                 >
-                  <Text style={styles.upiAppIcon}>🔷</Text>
+                  <Text style={styles.upiEmoji}>🔷</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.upiAppName}>Paytm UPI</Text>
-                    <Text style={styles.upiAppDesc}>{isHinglish ? 'Paytm Me Kholein' : 'Open in Paytm'}</Text>
+                    <Text style={styles.upiTitle}>Paytm UPI</Text>
+                    <Text style={styles.upiSub}>{isHinglish ? 'Paytm Me Kholein' : 'Open in Paytm'}</Text>
                   </View>
-                  <Text style={styles.upiAppArrow}>→</Text>
+                  <Text style={styles.upiArrow}>→</Text>
                 </TouchableOpacity>
 
-                {/* BHIM / Other */}
                 <TouchableOpacity
-                  style={[styles.upiAppBtn, { borderColor: '#EA580C' }]}
+                  style={styles.upiAppRow}
                   activeOpacity={0.8}
-                  onPress={() => handleOpenSpecificUpiApp('upi', 'UPI App')}
+                  onPress={() => handleOpenUpiApp()}
                 >
-                  <Text style={styles.upiAppIcon}>🟠</Text>
+                  <Text style={styles.upiEmoji}>🟠</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.upiAppName}>{isHinglish ? 'Any UPI / BHIM' : 'Any UPI App'}</Text>
-                    <Text style={styles.upiAppDesc}>{isHinglish ? 'App Selector Kholein' : 'Choose Installed App'}</Text>
+                    <Text style={styles.upiTitle}>{isHinglish ? 'Any UPI / BHIM' : 'Any UPI App'}</Text>
+                    <Text style={styles.upiSub}>{isHinglish ? 'App Selector Kholein' : 'Choose Installed App'}</Text>
                   </View>
-                  <Text style={styles.upiAppArrow}>→</Text>
+                  <Text style={styles.upiArrow}>→</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Merchant Details Box */}
-              <View style={styles.merchantDetailBox}>
-                <Text style={styles.merchantDetailLabel}>
-                  {isHinglish ? 'Merchant:' : 'Merchant:'}{' '}
-                  <Text style={styles.merchantDetailValue}>Task Pilot Pro</Text>
-                </Text>
-                <Text style={styles.merchantDetailLabel}>
-                  {isHinglish ? 'UPI ID:' : 'UPI ID:'}{' '}
-                  <Text style={styles.merchantDetailValue}>
-                    {orderData?.merchantVpa || 'taskpilot.rzp@icici'}
-                  </Text>
-                </Text>
-                <Text style={styles.merchantDetailLabel}>
-                  {isHinglish ? 'Rakam:' : 'Amount:'}{' '}
-                  <Text style={[styles.merchantDetailValue, { color: '#C5A059' }]}>₹399.00</Text>
-                </Text>
+              <View style={styles.merchantBox}>
+                <View style={styles.merchantRow}>
+                  <Text style={styles.merchantLabel}>{isHinglish ? 'Merchant:' : 'Merchant:'}</Text>
+                  <Text style={styles.merchantVal}>Task Pilot Pro</Text>
+                </View>
+                <View style={styles.merchantRow}>
+                  <Text style={styles.merchantLabel}>{isHinglish ? 'UPI ID:' : 'UPI ID:'}</Text>
+                  <Text style={styles.merchantVal}>{orderData?.merchantVpa || 'taskpilot.rzp@icici'}</Text>
+                </View>
+                <View style={styles.merchantRow}>
+                  <Text style={styles.merchantLabel}>{isHinglish ? 'Amount:' : 'Amount:'}</Text>
+                  <Text style={[styles.merchantVal, { color: colors.primaryOrange }]}>₹399.00</Text>
+                </View>
               </View>
             </View>
           )}
 
           {/* TAB 3: SCAN QR CODE */}
           {activeTab === 'qr' && (
-            <View style={styles.qrSectionCard}>
-              <View style={styles.qrHeaderRow}>
-                <View style={styles.qrTitleWrap}>
-                  <Text style={styles.qrMainTitle}>
+            <View style={styles.paymentCard}>
+              <View style={styles.cardHeaderRow}>
+                <View>
+                  <Text style={styles.cardTitle}>
                     {isHinglish ? '📱 Scan & Pay via Any UPI' : '📱 Scan & Pay via Any UPI'}
                   </Text>
-                  <Text style={styles.qrSubTitle}>
+                  <Text style={styles.cardSubtitle}>
                     Google Pay • PhonePe • Paytm • BHIM • Cred
                   </Text>
                 </View>
-                <View style={styles.livePulseBadge}>
-                  <View style={styles.pulseDot} />
-                  <Text style={styles.pulseText}>LIVE QR</Text>
-                </View>
               </View>
 
-              {/* QR Image Container */}
-              <View style={styles.qrFrame}>
-                {loadingOrder ? (
-                  <View style={styles.qrLoadingBox}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.qrLoadingText}>
-                      {isHinglish ? 'Secure QR load ho raha hai...' : 'Loading Secure QR...'}
-                    </Text>
-                  </View>
-                ) : orderData?.qrImageUrl ? (
-                  <View style={styles.qrImageWrapper}>
-                    <RNImage
-                      source={{ uri: orderData.qrImageUrl }}
-                      style={styles.qrImage}
-                      resizeMode="contain"
-                    />
-                    <View style={styles.qrCenterLogoOverlay}>
-                      <Text style={{ fontSize: 16 }}>⚡</Text>
+              {/* QR Image Frame */}
+              <View style={styles.qrContainer}>
+                <View style={styles.qrBox}>
+                  {loadingOrder ? (
+                    <View style={styles.qrLoader}>
+                      <ActivityIndicator size="large" color={colors.primaryOrange} />
+                      <Text style={styles.qrLoaderText}>
+                        {isHinglish ? 'Secure QR load ho raha hai...' : 'Loading Secure QR...'}
+                      </Text>
                     </View>
-                  </View>
-                ) : (
-                  <View style={styles.qrLoadingBox}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                  </View>
-                )}
+                  ) : orderData?.qrImageUrl ? (
+                    <View style={styles.qrWrapper}>
+                      <RNImage
+                        source={{ uri: orderData.qrImageUrl }}
+                        style={styles.qrImg}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.qrCenterBadge}>
+                        <Text style={{ fontSize: 14 }}>⚡</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.qrLoader}>
+                      <ActivityIndicator size="large" color={colors.primaryOrange} />
+                    </View>
+                  )}
 
-                {/* Amount Pill */}
-                <View style={styles.amountPill}>
-                  <Text style={styles.amountPillText}>Total Amount: ₹399.00</Text>
+                  <View style={styles.qrAmountTag}>
+                    <Text style={styles.qrAmountText}>Total Amount: ₹399.00</Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Direct Mobile UPI App Button */}
               <TouchableOpacity
-                style={styles.payAppBtn}
+                style={styles.secondaryUpiBtn}
                 activeOpacity={0.85}
-                onPress={() => handleOpenSpecificUpiApp('upi', 'UPI App')}
+                onPress={() => handleOpenUpiApp()}
               >
-                <Text style={styles.payAppBtnIcon}>📱</Text>
-                <Text style={styles.payAppBtnText}>
-                  {isHinglish ? 'Direct PhonePe / GPay Me Kholein' : 'Open in PhonePe / GPay'}
+                <Text style={styles.secondaryUpiBtnText}>
+                  📱 {isHinglish ? 'Direct UPI App Me Kholein' : 'Open in Installed UPI App'}
                 </Text>
               </TouchableOpacity>
             </View>
           )}
 
           {/* Real-time Status Radar & Manual Verify Button */}
-          <View style={styles.verificationSection}>
-            <View style={styles.liveRadarRow}>
-              <View style={styles.radarPulseRing}>
-                <View style={styles.radarCenterDot} />
+          <View style={styles.statusSection}>
+            <View style={styles.radarCard}>
+              <View style={styles.radarDotPulse}>
+                <View style={styles.radarDotInner} />
               </View>
-              <Text style={styles.liveRadarText}>
+              <Text style={styles.radarText}>
                 {isHinglish
                   ? 'Auto-Detection Active: Payment detect hote hi Pro turant unlock ho jayega.'
                   : 'Auto-Detection Active: Pro unlocks automatically once payment is detected.'}
@@ -590,36 +571,34 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </View>
 
             <TouchableOpacity
-              style={[styles.verifyBtn, verifying && styles.verifyBtnDisabled]}
+              style={[styles.verifyButton, verifying && styles.btnDisabled]}
               activeOpacity={0.85}
               onPress={handleVerifyPayment}
               disabled={verifying}
             >
               {verifying ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={colors.surface} size="small" />
               ) : (
-                <Text style={styles.verifyBtnText}>
+                <Text style={styles.verifyButtonText}>
                   {isHinglish ? '🔄 Payment Status Check Karein (Verify)' : '🔄 Check Payment Status (Verify)'}
                 </Text>
               )}
             </TouchableOpacity>
           </View>
 
-          {/* Pro Benefits List */}
+          {/* Pro Benefits List matching PremiumScreen */}
           <View style={styles.benefitsCard}>
             <Text style={styles.benefitsHeading}>
               {isHinglish ? 'Pro Subscription Ke Fayde' : 'What You Get With Pro'}
             </Text>
 
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>🚀</Text>
-              </View>
-              <View style={styles.benefitTextWrap}>
-                <Text style={styles.benefitTitle}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureCheck}>✓</Text>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureTitle}>
                   {isHinglish ? 'Unlimited Daily Tasks' : 'Unlimited Daily Tasks'}
                 </Text>
-                <Text style={styles.benefitDesc}>
+                <Text style={styles.featureDesc}>
                   {isHinglish
                     ? 'Bina kisi 3-task limit ke har roz naye kaam banayein aur schedule karein.'
                     : 'Create and schedule unlimited tasks daily without any limits.'}
@@ -627,15 +606,13 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               </View>
             </View>
 
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>🔔</Text>
-              </View>
-              <View style={styles.benefitTextWrap}>
-                <Text style={styles.benefitTitle}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureCheck}>✓</Text>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureTitle}>
                   {isHinglish ? '2 Proactive Advance Audio Alerts' : '2 Proactive Advance Audio Alerts'}
                 </Text>
-                <Text style={styles.benefitDesc}>
+                <Text style={styles.featureDesc}>
                   {isHinglish
                     ? 'Har kaam ke 2 alerts: 10 minute pehle warning aur exact samay par notification.'
                     : '2 audio alerts for every task: 10 minutes prior warning and at deadline.'}
@@ -643,15 +620,13 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               </View>
             </View>
 
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>🔁</Text>
-              </View>
-              <View style={styles.benefitTextWrap}>
-                <Text style={styles.benefitTitle}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureCheck}>✓</Text>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureTitle}>
                   {isHinglish ? 'Repeat Tasks For Whole Month' : 'Repeat Tasks For Whole Month'}
                 </Text>
-                <Text style={styles.benefitDesc}>
+                <Text style={styles.featureDesc}>
                   {isHinglish
                     ? 'Ek tap me pure 30 dino ke liye recurring tasks schedule karein.'
                     : 'Schedule tasks once to automatically repeat daily for all 30 days.'}
@@ -659,15 +634,13 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               </View>
             </View>
 
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>📊</Text>
-              </View>
-              <View style={styles.benefitTextWrap}>
-                <Text style={styles.benefitTitle}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureCheck}>✓</Text>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureTitle}>
                   {isHinglish ? 'Daily Streak & Analytics' : 'Daily Streak & Analytics'}
                 </Text>
-                <Text style={styles.benefitDesc}>
+                <Text style={styles.featureDesc}>
                   {isHinglish
                     ? 'Apna daily discipline banayein aur progress track karein.'
                     : 'Build consistent habits and track your completion streaks.'}
@@ -681,7 +654,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <Text style={styles.trustIcon}>🔒</Text>
             <Text style={styles.trustText}>
               {isHinglish
-                ? 'Razorpay Certified 256-Bit SSL Secured Payment. Kisi bhi samay cancel karein.'
+                ? 'Razorpay Certified 256-Bit SSL Secured Payment. Kabhi bhi cancel karein.'
                 : 'Razorpay Certified 256-Bit SSL Secured Payment. Cancel anytime.'}
             </Text>
           </View>
@@ -700,44 +673,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
   closeBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.textSecondary,
   },
   headerBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   headerBrandTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...typography.h3,
     letterSpacing: -0.3,
   },
   shieldPill: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.softYellow,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: colors.mediumYellow,
   },
   shieldPillText: {
     fontSize: 11,
@@ -749,52 +721,51 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   heroCard: {
     backgroundColor: colors.headerWarm,
-    borderRadius: radius.xl || 20,
-    padding: 22,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#FDE68A',
-    marginBottom: 16,
+    marginBottom: spacing.md,
     ...shadows.card,
   },
   crownBadge: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.softYellow,
     borderWidth: 2,
-    borderColor: '#F59E0B',
+    borderColor: colors.mediumYellow,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: spacing.sm,
   },
   crownEmoji: {
     fontSize: 28,
   },
   heroHeading: {
-    fontSize: 22,
+    ...typography.h2,
     fontWeight: '900',
     color: colors.textPrimary,
     textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   heroSub: {
-    fontSize: 13,
+    ...typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 19,
-    marginBottom: 16,
-    paddingHorizontal: 10,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
   },
   priceContainer: {
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   priceRow: {
     flexDirection: 'row',
@@ -803,493 +774,406 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.primaryOrange,
   },
   priceNumber: {
-    fontSize: 40,
+    fontSize: 38,
     fontWeight: '900',
     color: colors.textPrimary,
     letterSpacing: -1,
   },
   pricePeriod: {
-    fontSize: 14,
+    ...typography.bodySecondary,
     color: colors.textSecondary,
     fontWeight: '600',
+    marginLeft: 4,
   },
   offerBadge: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.softRealRed,
     borderColor: '#FCA5A5',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
   offerBadgeText: {
-    fontSize: 11,
-    color: '#DC2626',
+    fontSize: 10.5,
+    color: colors.realRed,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  tabBarContainer: {
+  tabSelector: {
     flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.surface,
     padding: 4,
-    borderRadius: 14,
-    marginBottom: 16,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     gap: 4,
   },
-  tabItem: {
+  tabButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
+    borderRadius: radius.sm,
   },
-  tabItemActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+  tabButtonActive: {
+    backgroundColor: colors.primaryOrange,
+    shadowColor: colors.primaryOrange,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
-  tabItemText: {
+  tabButtonText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.textSecondary,
   },
-  tabItemTextActive: {
-    color: '#0F172A',
-    fontWeight: '900',
+  tabButtonTextActive: {
+    color: colors.surface,
+    fontWeight: '800',
   },
-  rzpGatewayCard: {
-    backgroundColor: '#0F172A',
-    borderRadius: radius.xl || 20,
-    padding: 20,
+  paymentCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     borderWidth: 1.5,
-    borderColor: '#C5A059',
-    marginBottom: 16,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
     ...shadows.card,
   },
-  rzpCardHeader: {
-    marginBottom: 16,
+  cardHeaderRow: {
+    marginBottom: spacing.xs,
   },
-  rzpBadge: {
+  trustTag: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(197, 160, 89, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: colors.goldSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#C5A059',
-    marginBottom: 8,
+    borderColor: '#FDE68A',
   },
-  rzpBadgeText: {
+  trustTagText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#EAB308',
+    color: '#92400E',
     letterSpacing: 0.5,
   },
-  rzpCardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  cardTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginTop: 4,
+    marginBottom: 2,
   },
-  rzpCardSub: {
-    fontSize: 12.5,
-    color: '#94A3B8',
-    lineHeight: 18,
+  cardSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 16,
+    marginBottom: spacing.md,
   },
   methodsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 18,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  methodGridItem: {
+  methodBox: {
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#1E293B',
-    padding: 10,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceSecondary,
+    padding: spacing.sm,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
   },
-  methodGridIcon: {
-    fontSize: 20,
-  },
-  methodGridTextWrap: {
-    flex: 1,
-  },
-  methodGridTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  methodGridDesc: {
-    fontSize: 10,
-    color: '#94A3B8',
-    marginTop: 1,
-  },
-  payRazorpayBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  payRazorpayBtnText: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: 0.2,
-  },
-  payRazorpayBtnSubText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#334155',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  upiAppsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.xl || 20,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    marginBottom: 16,
-    ...shadows.card,
-  },
-  upiAppsTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  upiAppsSub: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 17,
-    marginBottom: 14,
-  },
-  upiBtnGrid: {
-    gap: 10,
-    marginBottom: 14,
-  },
-  upiAppBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-  },
-  upiAppIcon: {
-    fontSize: 22,
-  },
-  upiAppName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  upiAppDesc: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  upiAppArrow: {
+  methodIcon: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#94A3B8',
   },
-  merchantDetailBox: {
-    backgroundColor: '#F1F5F9',
-    padding: 10,
-    borderRadius: 10,
-    gap: 4,
-  },
-  merchantDetailLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  merchantDetailValue: {
-    color: '#0F172A',
-    fontWeight: '800',
-  },
-  qrSectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl || 20,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#FEF08A',
-    marginBottom: 16,
-    alignItems: 'center',
-    ...shadows.card,
-  },
-  qrHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-  },
-  qrTitleWrap: {
+  methodTextWrap: {
     flex: 1,
   },
-  qrMainTitle: {
-    fontSize: 16,
+  methodName: {
+    fontSize: 12,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 2,
   },
-  qrSubTitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  livePulseBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FEF2F2',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
-  },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#DC2626',
-  },
-  pulseText: {
+  methodDetail: {
     fontSize: 9.5,
-    fontWeight: '800',
-    color: '#DC2626',
-    letterSpacing: 0.5,
-  },
-  qrFrame: {
-    width: 220,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
-    ...shadows.card,
-  },
-  qrLoadingBox: {
-    width: 196,
-    height: 196,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  qrLoadingText: {
-    fontSize: 11,
     color: colors.textSecondary,
-    textAlign: 'center',
+    marginTop: 1,
   },
-  qrImageWrapper: {
-    width: 196,
-    height: 196,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qrImage: {
-    width: '100%',
-    height: '100%',
-  },
-  qrCenterLogoOverlay: {
-    position: 'absolute',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  amountPill: {
-    marginTop: 8,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  amountPillText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#B45309',
-  },
-  payAppBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: '100%',
-    backgroundColor: '#4F46E5',
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  payAppBtnIcon: {
-    fontSize: 16,
-  },
-  payAppBtnText: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  verificationSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.xl || 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
-    gap: 12,
-    ...shadows.card,
-  },
-  liveRadarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#F0FDF4',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-  },
-  radarPulseRing: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#DCFCE7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radarCenterDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#16A34A',
-  },
-  liveRadarText: {
-    flex: 1,
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#166534',
-    lineHeight: 16,
-  },
-  verifyBtn: {
-    backgroundColor: '#10B981',
+  primaryPayBtn: {
+    backgroundColor: colors.primaryOrange,
     paddingVertical: 14,
-    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#10B981',
+    shadowColor: colors.primaryOrange,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
   },
-  verifyBtnDisabled: {
-    opacity: 0.6,
-  },
-  verifyBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
+  primaryPayBtnText: {
+    fontSize: 15.5,
+    fontWeight: '900',
+    color: colors.surface,
     letterSpacing: 0.2,
   },
-  benefitsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl || 20,
-    padding: 20,
+  primaryPayBtnSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFDF7',
+    marginTop: 2,
+  },
+  btnDisabled: {
+    opacity: 0.65,
+  },
+  upiAppsContainer: {
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  upiAppRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceSecondary,
+    padding: spacing.sm,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 16,
-    ...shadows.card,
   },
-  benefitsHeading: {
-    fontSize: 15.5,
+  upiEmoji: {
+    fontSize: 20,
+  },
+  upiTitle: {
+    fontSize: 13.5,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 16,
   },
-  benefitRow: {
+  upiSub: {
+    fontSize: 10.5,
+    color: colors.textSecondary,
+  },
+  upiArrow: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textSecondary,
+  },
+  merchantBox: {
+    backgroundColor: colors.surfaceSecondary,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 3,
+  },
+  merchantRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-    marginBottom: 14,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  benefitIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFF9F0',
+  merchantLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  merchantVal: {
+    fontSize: 11,
+    color: colors.textPrimary,
+    fontWeight: '800',
+  },
+  qrContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  qrBox: {
+    width: 210,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    ...shadows.card,
+  },
+  qrLoader: {
+    width: 180,
+    height: 180,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+  },
+  qrLoaderText: {
+    fontSize: 10.5,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  qrWrapper: {
+    width: 180,
+    height: 180,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrImg: {
+    width: '100%',
+    height: '100%',
+  },
+  qrCenterBadge: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrAmountTag: {
+    marginTop: 6,
+    backgroundColor: colors.goldSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
-  benefitIcon: {
-    fontSize: 18,
+  qrAmountText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#92400E',
   },
-  benefitTextWrap: {
+  secondaryUpiBtn: {
+    backgroundColor: colors.surfaceSecondary,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryUpiBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  statusSection: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+    ...shadows.card,
+  },
+  radarCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.softGreen,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  radarDotPulse: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#BBF7D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radarDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.successGreen,
+  },
+  radarText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#166534',
+    lineHeight: 15,
+  },
+  verifyButton: {
+    backgroundColor: colors.surfaceSecondary,
+    paddingVertical: 13,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.primaryOrange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifyButtonText: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: colors.primaryOrange,
+  },
+  benefitsCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+    ...shadows.card,
+  },
+  benefitsHeading: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  featureCheck: {
+    fontSize: 16,
+    color: colors.successGreen,
+    fontWeight: 'bold',
+    marginTop: 1,
+  },
+  featureInfo: {
     flex: 1,
   },
-  benefitTitle: {
-    fontSize: 13.5,
+  featureTitle: {
+    ...typography.bodyPrimary,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 2,
   },
-  benefitDesc: {
-    fontSize: 12,
+  featureDesc: {
+    ...typography.caption,
     color: colors.textSecondary,
-    lineHeight: 17,
+    marginTop: 2,
+    lineHeight: 16,
   },
   trustBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    gap: 6,
+    paddingVertical: spacing.sm,
   },
   trustIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   trustText: {
-    fontSize: 11.5,
+    ...typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 16,
   },
 });
 

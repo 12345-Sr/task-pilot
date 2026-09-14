@@ -202,7 +202,7 @@ export const TodayScreen: React.FC = () => {
             keyExtractor={(item: Task) => item.id}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: Math.max(insets.bottom, 16) + 24 },
+              { paddingBottom: Math.max(insets.bottom, 24) + 120 },
             ]}
             showsVerticalScrollIndicator={false}
             refreshControl={
