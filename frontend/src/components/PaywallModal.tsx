@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../store';
@@ -22,6 +21,8 @@ import { BrandLogo } from './BrandLogo';
 import { NotificationService } from '../services/notifications/notification.service';
 
 const RNImage = Image as any;
+
+type PaymentTab = 'all' | 'upi' | 'qr';
 
 interface PaywallModalProps {
   visible?: boolean;
@@ -49,11 +50,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   const isVisible = visible !== undefined ? visible : paywallVisible;
 
+  const [activeTab, setActiveTab] = useState<PaymentTab>('all');
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [verifying, setVerifying] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [showQrSection, setShowQrSection] = useState(false);
+  const [launchingGateway, setLaunchingGateway] = useState(false);
   const pollTimerRef = useRef<any>(null);
 
   const handleClose = () => {
@@ -70,7 +71,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   useEffect(() => {
     if (isVisible) {
-      setIsSuccess(false);
       createPaymentOrder();
     } else {
       if (pollTimerRef.current) {
@@ -92,14 +92,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       const res: any = await apiClient.post('/subscription/create-order');
       if (res?.ok && res?.orderId) {
         setOrderData(res);
-        // Start background polling to detect if user scanned & paid
         startPaymentPolling(res.orderId);
       } else {
         throw new Error(res?.error || 'Failed to initialize payment');
       }
     } catch (err: any) {
-      console.log('[PAYWALL] Backend order init note:', err?.message || err);
-      // Fallback order info with direct checkout link
+      console.log('[PAYWALL] Backend order note:', err?.message || err);
       const mockOrderId = `order_${Date.now()}`;
       const upiUrl = `upi://pay?pa=taskpilot.rzp@icici&pn=Task%20Pilot&tr=${mockOrderId}&am=399.00&cu=INR&tn=Task%20Pilot%20Pro%20Plan`;
       setOrderData({
@@ -137,6 +135,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handleOpenRazorpayCheckout = async () => {
+    setLaunchingGateway(true);
     const fallbackUrl = `https://task-pilot-api.onrender.com/api/subscription/checkout${orderData?.orderId ? `?order_id=${orderData.orderId}` : ''}`;
     const url = orderData?.checkoutUrl || fallbackUrl;
     try {
@@ -146,28 +145,44 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         isHinglish ? 'Checkout Nahi Khula' : 'Could Not Open Checkout',
         isHinglish
           ? 'Kripya apna browser check karein ya neeche diye gaye UPI option se pay karein.'
-          : 'Please check your browser or use the UPI option below.'
+          : 'Please check your browser or use the UPI payment option below.'
       );
+    } finally {
+      setTimeout(() => setLaunchingGateway(false), 1200);
     }
   };
 
-  const handleOpenUpiApp = async () => {
+  const handleOpenSpecificUpiApp = async (scheme: string, appName: string) => {
     if (!orderData?.upiUrl) return;
     try {
-      const supported = await Linking.canOpenURL(orderData.upiUrl);
+      const query = orderData.upiUrl.replace(/^upi:\/\/pay\?/, '');
+      let appUrl = orderData.upiUrl;
+      if (scheme === 'phonepe') {
+        appUrl = `phonepe://pay?${query}`;
+      } else if (scheme === 'gpay') {
+        appUrl = `tez://upi/pay?${query}`;
+      } else if (scheme === 'paytm') {
+        appUrl = `paytmmp://pay?${query}`;
+      }
+
+      const supported = await Linking.canOpenURL(appUrl);
       if (supported) {
-        await Linking.openURL(orderData.upiUrl);
+        await Linking.openURL(appUrl);
       } else {
-        // Fallback to directly attempting to open the URL
         await Linking.openURL(orderData.upiUrl);
       }
     } catch (err) {
-      Alert.alert(
-        isHinglish ? 'UPI App Open Nahi Hua' : 'Could Not Open UPI App',
-        isHinglish
-          ? 'Kripya screen par diye gaye QR Code ko kisi bhi UPI app (Google Pay, PhonePe, Paytm, BHIM) se scan karein.'
-          : 'Please scan the QR code displayed on screen using any UPI app like Google Pay, PhonePe, or Paytm.'
-      );
+      // If direct deep link isn't supported, fall back to general UPI or Razorpay
+      try {
+        await Linking.openURL(orderData.upiUrl);
+      } catch (e) {
+        Alert.alert(
+          `${appName} ${isHinglish ? 'Nahi Mila' : 'Not Found'}`,
+          isHinglish
+            ? `Aapke phone me ${appName} app nahi mila. Kripya Razorpay Gateway ya QR Code ka upyog karein.`
+            : `${appName} could not be opened. Please use the Razorpay Gateway or Scan QR option.`
+        );
+      }
     }
   };
 
@@ -187,11 +202,20 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         throw new Error(res?.error || 'Verification failed');
       }
     } catch (err: any) {
+      // Check current live status from server
+      try {
+        const statusRes: any = await apiClient.get('/subscription/status');
+        if (statusRes?.isPremium || statusRes?.status === 'active') {
+          handlePaymentSuccess();
+          return;
+        }
+      } catch (e) {}
+
       Alert.alert(
-        isHinglish ? 'Payment Verify Ho Raha Hai' : 'Payment Status',
+        isHinglish ? 'Payment Status Check' : 'Payment Status',
         isHinglish
-          ? 'Payment confirm hote hi Pro features automatically unlock ho jayenge. Agar aap pay kar chuke hain, toh kripya 10 second intezaar karke dobara tap karein.'
-          : 'If you have completed the payment via UPI, please wait a few seconds and tap verify again.'
+          ? 'Agar aapne payment poora kar diya hai, toh kripya 5 second intezaar karke dobara tap karein. Bank confirmation milte hi Pro automatically unlock ho jayega.'
+          : 'If you have completed the payment, please wait a few seconds and tap verify again. Pro features will unlock automatically upon confirmation.'
       );
     } finally {
       setVerifying(false);
@@ -199,7 +223,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handlePaymentSuccess = () => {
-    setIsSuccess(true);
     setIsPremium(true);
 
     NotificationService.sendLocalNotification(
@@ -229,7 +252,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       onRequestClose={handleClose}
     >
       <SafeAreaView style={styles.safeArea}>
-        {/* Top Sticky Bar */}
+        {/* Top Header Bar */}
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.closeBtn}
@@ -269,8 +292,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </Text>
             <Text style={styles.heroSub}>
               {isHinglish
-                ? 'Sirf ₹399/mahina mein unlimited task reminders, proactive advance alerts aur poora power paayein.'
-                : 'Unlimited task reminders, proactive sound alerts, and full productivity power for just ₹399/month.'}
+                ? 'Unlimited task reminders, proactive advance alerts aur poora power paayein.'
+                : 'Unlimited task reminders, proactive sound alerts, and full productivity power.'}
             </Text>
 
             {/* Price Tag */}
@@ -288,136 +311,284 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </View>
           </View>
 
-          {/* Primary: Full Razorpay Gateway Card (All Payment Methods Accepted) */}
-          <View style={styles.rzpGatewayCard}>
-            <View style={styles.rzpCardHeader}>
-              <View style={styles.rzpBadge}>
-                <Text style={styles.rzpBadgeText}>🛡️ ALL PAYMENT METHODS ACCEPTED</Text>
-              </View>
-              <Text style={styles.rzpCardTitle}>
-                {isHinglish ? 'Razorpay Secure Checkout' : 'Razorpay Secure Checkout'}
-              </Text>
-              <Text style={styles.rzpCardSub}>
-                {isHinglish
-                  ? 'Kisi bhi Card, UPI App, Net Banking ya Wallet se turant pay karein.'
-                  : 'Pay instantly using any Card, UPI App, Net Banking, or Wallet.'}
-              </Text>
-            </View>
-
-            {/* Methods Grid Display */}
-            <View style={styles.methodsGrid}>
-              <View style={styles.methodGridItem}>
-                <Text style={styles.methodGridIcon}>💳</Text>
-                <View style={styles.methodGridTextWrap}>
-                  <Text style={styles.methodGridTitle}>Cards</Text>
-                  <Text style={styles.methodGridDesc}>Debit / Credit (Visa, RuPay, Master)</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodGridItem}>
-                <Text style={styles.methodGridIcon}>📱</Text>
-                <View style={styles.methodGridTextWrap}>
-                  <Text style={styles.methodGridTitle}>UPI</Text>
-                  <Text style={styles.methodGridDesc}>GPay, PhonePe, Paytm, Any UPI</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodGridItem}>
-                <Text style={styles.methodGridIcon}>🏦</Text>
-                <View style={styles.methodGridTextWrap}>
-                  <Text style={styles.methodGridTitle}>Net Banking</Text>
-                  <Text style={styles.methodGridDesc}>SBI, HDFC, ICICI & 50+ Banks</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodGridItem}>
-                <Text style={styles.methodGridIcon}>👛</Text>
-                <View style={styles.methodGridTextWrap}>
-                  <Text style={styles.methodGridTitle}>Wallets</Text>
-                  <Text style={styles.methodGridDesc}>Paytm, Mobikwik & PayLater</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Big Primary CTA Button: Launch Razorpay Full Checkout */}
+          {/* Interactive Payment Method Tabs */}
+          <View style={styles.tabBarContainer}>
             <TouchableOpacity
-              style={styles.payRazorpayBtn}
-              activeOpacity={0.88}
-              onPress={handleOpenRazorpayCheckout}
+              style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
+              onPress={() => setActiveTab('all')}
+              activeOpacity={0.8}
             >
-              <Text style={styles.payRazorpayBtnText}>
-                💳 {isHinglish ? 'Pay ₹399 with Razorpay' : 'Pay ₹399 with Razorpay'}
+              <Text style={[styles.tabItemText, activeTab === 'all' && styles.tabItemTextActive]}>
+                💳 {isHinglish ? 'All Methods' : 'All Methods'}
               </Text>
-              <Text style={styles.payRazorpayBtnSubText}>
-                {isHinglish
-                  ? 'Sabhi payment options ke sath official gateway kholein'
-                  : 'Open official secure gateway with all payment options'}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'upi' && styles.tabItemActive]}
+              onPress={() => setActiveTab('upi')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabItemText, activeTab === 'upi' && styles.tabItemTextActive]}>
+                📱 {isHinglish ? 'UPI Apps' : 'UPI Apps'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'qr' && styles.tabItemActive]}
+              onPress={() => setActiveTab('qr')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabItemText, activeTab === 'qr' && styles.tabItemTextActive]}>
+                ⚡ {isHinglish ? 'Scan QR' : 'Scan QR'}
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Secondary: QR Code Payment Box */}
-          <View style={styles.qrSectionCard}>
-            <View style={styles.qrHeaderRow}>
-              <View style={styles.qrTitleWrap}>
-                <Text style={styles.qrMainTitle}>
-                  {isHinglish ? '📱 Ya Phir UPI QR Code Scan Karein' : '📱 Or Scan UPI QR Code'}
-                </Text>
-                <Text style={styles.qrSubTitle}>
-                  {isHinglish ? 'Google Pay • PhonePe • Paytm • BHIM • Cred' : 'Google Pay • PhonePe • Paytm • BHIM • Cred'}
-                </Text>
-              </View>
-              <View style={styles.livePulseBadge}>
-                <View style={styles.pulseDot} />
-                <Text style={styles.pulseText}>UPI QR</Text>
-              </View>
-            </View>
-
-            {/* QR Image Container */}
-            <View style={styles.qrFrame}>
-              {loadingOrder ? (
-                <View style={styles.qrLoadingBox}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={styles.qrLoadingText}>
-                    {isHinglish ? 'Secure QR load ho raha hai...' : 'Loading Secure QR...'}
-                  </Text>
+          {/* TAB 1: ALL METHODS (Official Razorpay Gateway) */}
+          {activeTab === 'all' && (
+            <View style={styles.rzpGatewayCard}>
+              <View style={styles.rzpCardHeader}>
+                <View style={styles.rzpBadge}>
+                  <Text style={styles.rzpBadgeText}>🛡️ OFFICIAL RAZORPAY GATEWAY</Text>
                 </View>
-              ) : orderData?.qrImageUrl ? (
-                <View style={styles.qrImageWrapper}>
-                  <RNImage
-                    source={{ uri: orderData.qrImageUrl }}
-                    style={styles.qrImage}
-                    resizeMode="contain"
-                  />
-                  <View style={styles.qrCenterLogoOverlay}>
-                    <Text style={{ fontSize: 16 }}>⚡</Text>
+                <Text style={styles.rzpCardTitle}>
+                  {isHinglish ? 'Sabhi Payment Tarike Accepted' : 'All Payment Methods Accepted'}
+                </Text>
+                <Text style={styles.rzpCardSub}>
+                  {isHinglish
+                    ? 'Debit/Credit Card, UPI, Net Banking ya Wallets se turant pay karein.'
+                    : 'Pay securely using any Card, UPI App, Net Banking, or Wallet.'}
+                </Text>
+              </View>
+
+              {/* Methods Grid */}
+              <View style={styles.methodsGrid}>
+                <View style={styles.methodGridItem}>
+                  <Text style={styles.methodGridIcon}>💳</Text>
+                  <View style={styles.methodGridTextWrap}>
+                    <Text style={styles.methodGridTitle}>Cards</Text>
+                    <Text style={styles.methodGridDesc}>Visa, RuPay, Master</Text>
                   </View>
                 </View>
-              ) : (
-                <View style={styles.qrLoadingBox}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                </View>
-              )}
 
-              {/* Amount Pill */}
-              <View style={styles.amountPill}>
-                <Text style={styles.amountPillText}>Total Amount: ₹399.00</Text>
+                <View style={styles.methodGridItem}>
+                  <Text style={styles.methodGridIcon}>📱</Text>
+                  <View style={styles.methodGridTextWrap}>
+                    <Text style={styles.methodGridTitle}>UPI</Text>
+                    <Text style={styles.methodGridDesc}>GPay, PhonePe, Any UPI</Text>
+                  </View>
+                </View>
+
+                <View style={styles.methodGridItem}>
+                  <Text style={styles.methodGridIcon}>🏦</Text>
+                  <View style={styles.methodGridTextWrap}>
+                    <Text style={styles.methodGridTitle}>Net Banking</Text>
+                    <Text style={styles.methodGridDesc}>50+ Indian Banks</Text>
+                  </View>
+                </View>
+
+                <View style={styles.methodGridItem}>
+                  <Text style={styles.methodGridIcon}>👛</Text>
+                  <View style={styles.methodGridTextWrap}>
+                    <Text style={styles.methodGridTitle}>Wallets</Text>
+                    <Text style={styles.methodGridDesc}>Paytm, PayLater</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Primary CTA Button */}
+              <TouchableOpacity
+                style={[styles.payRazorpayBtn, launchingGateway && styles.btnDisabled]}
+                activeOpacity={0.88}
+                onPress={handleOpenRazorpayCheckout}
+                disabled={launchingGateway}
+              >
+                {launchingGateway ? (
+                  <ActivityIndicator color="#0F172A" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.payRazorpayBtnText}>
+                      💳 {isHinglish ? 'Pay ₹399 with Razorpay' : 'Pay ₹399 with Razorpay'}
+                    </Text>
+                    <Text style={styles.payRazorpayBtnSubText}>
+                      {isHinglish
+                        ? '⚡ Cards · UPI · Net Banking · Wallets'
+                        : '⚡ Open secure gateway with all payment options'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* TAB 2: DIRECT UPI APPS */}
+          {activeTab === 'upi' && (
+            <View style={styles.upiAppsCard}>
+              <Text style={styles.upiAppsTitle}>
+                {isHinglish ? 'Direct Apne UPI App Se Pay Karein' : 'Pay Directly via Installed UPI App'}
+              </Text>
+              <Text style={styles.upiAppsSub}>
+                {isHinglish
+                  ? 'Neeche diye gaye kisi bhi app par tap karein aur turant payment poora karein:'
+                  : 'Tap any app below to pay ₹399 directly:'}
+              </Text>
+
+              {/* UPI App Buttons Grid */}
+              <View style={styles.upiBtnGrid}>
+                {/* PhonePe */}
+                <TouchableOpacity
+                  style={[styles.upiAppBtn, { borderColor: '#7C3AED' }]}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenSpecificUpiApp('phonepe', 'PhonePe')}
+                >
+                  <Text style={styles.upiAppIcon}>🟣</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upiAppName}>PhonePe</Text>
+                    <Text style={styles.upiAppDesc}>{isHinglish ? 'Direct Pay Karein' : 'Instant Pay'}</Text>
+                  </View>
+                  <Text style={styles.upiAppArrow}>→</Text>
+                </TouchableOpacity>
+
+                {/* Google Pay */}
+                <TouchableOpacity
+                  style={[styles.upiAppBtn, { borderColor: '#2563EB' }]}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenSpecificUpiApp('gpay', 'Google Pay')}
+                >
+                  <Text style={styles.upiAppIcon}>🔵</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upiAppName}>Google Pay</Text>
+                    <Text style={styles.upiAppDesc}>{isHinglish ? 'GPay Me Kholein' : 'Open in GPay'}</Text>
+                  </View>
+                  <Text style={styles.upiAppArrow}>→</Text>
+                </TouchableOpacity>
+
+                {/* Paytm */}
+                <TouchableOpacity
+                  style={[styles.upiAppBtn, { borderColor: '#0284C7' }]}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenSpecificUpiApp('paytm', 'Paytm')}
+                >
+                  <Text style={styles.upiAppIcon}>🔷</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upiAppName}>Paytm UPI</Text>
+                    <Text style={styles.upiAppDesc}>{isHinglish ? 'Paytm Me Kholein' : 'Open in Paytm'}</Text>
+                  </View>
+                  <Text style={styles.upiAppArrow}>→</Text>
+                </TouchableOpacity>
+
+                {/* BHIM / Other */}
+                <TouchableOpacity
+                  style={[styles.upiAppBtn, { borderColor: '#EA580C' }]}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenSpecificUpiApp('upi', 'UPI App')}
+                >
+                  <Text style={styles.upiAppIcon}>🟠</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upiAppName}>{isHinglish ? 'Any UPI / BHIM' : 'Any UPI App'}</Text>
+                    <Text style={styles.upiAppDesc}>{isHinglish ? 'App Selector Kholein' : 'Choose Installed App'}</Text>
+                  </View>
+                  <Text style={styles.upiAppArrow}>→</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Merchant Details Box */}
+              <View style={styles.merchantDetailBox}>
+                <Text style={styles.merchantDetailLabel}>
+                  {isHinglish ? 'Merchant:' : 'Merchant:'}{' '}
+                  <Text style={styles.merchantDetailValue}>Task Pilot Pro</Text>
+                </Text>
+                <Text style={styles.merchantDetailLabel}>
+                  {isHinglish ? 'UPI ID:' : 'UPI ID:'}{' '}
+                  <Text style={styles.merchantDetailValue}>
+                    {orderData?.merchantVpa || 'taskpilot.rzp@icici'}
+                  </Text>
+                </Text>
+                <Text style={styles.merchantDetailLabel}>
+                  {isHinglish ? 'Rakam:' : 'Amount:'}{' '}
+                  <Text style={[styles.merchantDetailValue, { color: '#C5A059' }]}>₹399.00</Text>
+                </Text>
               </View>
             </View>
+          )}
 
-            {/* Action 1: Direct Mobile UPI App Button */}
-            <TouchableOpacity
-              style={styles.payAppBtn}
-              activeOpacity={0.85}
-              onPress={handleOpenUpiApp}
-            >
-              <Text style={styles.payAppBtnIcon}>📱</Text>
-              <Text style={styles.payAppBtnText}>
-                {isHinglish ? 'Direct UPI App Me Kholein (GPay / PhonePe)' : 'Pay Directly in UPI App'}
+          {/* TAB 3: SCAN QR CODE */}
+          {activeTab === 'qr' && (
+            <View style={styles.qrSectionCard}>
+              <View style={styles.qrHeaderRow}>
+                <View style={styles.qrTitleWrap}>
+                  <Text style={styles.qrMainTitle}>
+                    {isHinglish ? '📱 Scan & Pay via Any UPI' : '📱 Scan & Pay via Any UPI'}
+                  </Text>
+                  <Text style={styles.qrSubTitle}>
+                    Google Pay • PhonePe • Paytm • BHIM • Cred
+                  </Text>
+                </View>
+                <View style={styles.livePulseBadge}>
+                  <View style={styles.pulseDot} />
+                  <Text style={styles.pulseText}>LIVE QR</Text>
+                </View>
+              </View>
+
+              {/* QR Image Container */}
+              <View style={styles.qrFrame}>
+                {loadingOrder ? (
+                  <View style={styles.qrLoadingBox}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.qrLoadingText}>
+                      {isHinglish ? 'Secure QR load ho raha hai...' : 'Loading Secure QR...'}
+                    </Text>
+                  </View>
+                ) : orderData?.qrImageUrl ? (
+                  <View style={styles.qrImageWrapper}>
+                    <RNImage
+                      source={{ uri: orderData.qrImageUrl }}
+                      style={styles.qrImage}
+                      resizeMode="contain"
+                    />
+                    <View style={styles.qrCenterLogoOverlay}>
+                      <Text style={{ fontSize: 16 }}>⚡</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.qrLoadingBox}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  </View>
+                )}
+
+                {/* Amount Pill */}
+                <View style={styles.amountPill}>
+                  <Text style={styles.amountPillText}>Total Amount: ₹399.00</Text>
+                </View>
+              </View>
+
+              {/* Direct Mobile UPI App Button */}
+              <TouchableOpacity
+                style={styles.payAppBtn}
+                activeOpacity={0.85}
+                onPress={() => handleOpenSpecificUpiApp('upi', 'UPI App')}
+              >
+                <Text style={styles.payAppBtnIcon}>📱</Text>
+                <Text style={styles.payAppBtnText}>
+                  {isHinglish ? 'Direct PhonePe / GPay Me Kholein' : 'Open in PhonePe / GPay'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Real-time Status Radar & Manual Verify Button */}
+          <View style={styles.verificationSection}>
+            <View style={styles.liveRadarRow}>
+              <View style={styles.radarPulseRing}>
+                <View style={styles.radarCenterDot} />
+              </View>
+              <Text style={styles.liveRadarText}>
+                {isHinglish
+                  ? 'Auto-Detection Active: Payment detect hote hi Pro turant unlock ho jayega.'
+                  : 'Auto-Detection Active: Pro unlocks automatically once payment is detected.'}
               </Text>
-            </TouchableOpacity>
+            </View>
 
-            {/* Action 2: I Have Paid / Verify Button */}
             <TouchableOpacity
               style={[styles.verifyBtn, verifying && styles.verifyBtnDisabled]}
               activeOpacity={0.85}
@@ -428,17 +599,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Text style={styles.verifyBtnText}>
-                  {isHinglish ? '✅ Main Pay Kar Chuka Hoon (Verify Status)' : '✅ I Have Paid (Verify Status)'}
+                  {isHinglish ? '🔄 Payment Status Check Karein (Verify)' : '🔄 Check Payment Status (Verify)'}
                 </Text>
               )}
             </TouchableOpacity>
-
-            {/* Live Polling Note */}
-            <Text style={styles.pollingNotice}>
-              {isHinglish
-                ? '⏳ Payment karte hi app automatically detect karke Pro features unlock kar degi.'
-                : '⏳ The app automatically detects your payment and unlocks Pro features.'}
-            </Text>
           </View>
 
           {/* Pro Benefits List */}
@@ -457,40 +621,40 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 </Text>
                 <Text style={styles.benefitDesc}>
                   {isHinglish
-                    ? 'Free limit (3 tasks) khatam! Jitne chahein utne zaroori reminders banayein.'
-                    : 'No 3-task restriction. Create as many task reminders as you need.'}
+                    ? 'Bina kisi 3-task limit ke har roz naye kaam banayein aur schedule karein.'
+                    : 'Create and schedule unlimited tasks daily without any limits.'}
                 </Text>
               </View>
             </View>
 
             <View style={styles.benefitRow}>
               <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>⏰</Text>
+                <Text style={styles.benefitIcon}>🔔</Text>
               </View>
               <View style={styles.benefitTextWrap}>
                 <Text style={styles.benefitTitle}>
-                  {isHinglish ? 'Proactive Sound Alarms' : 'Proactive Sound Alarms'}
+                  {isHinglish ? '2 Proactive Advance Audio Alerts' : '2 Proactive Advance Audio Alerts'}
                 </Text>
                 <Text style={styles.benefitDesc}>
                   {isHinglish
-                    ? 'Har deadline se 2 ghante aur 1 ghanta pehle smart alert taaki kaam na chhoote.'
-                    : 'Smart notification chimes 2 hours and 1 hour before every task deadline.'}
+                    ? 'Har kaam ke 2 alerts: 10 minute pehle warning aur exact samay par notification.'
+                    : '2 audio alerts for every task: 10 minutes prior warning and at deadline.'}
                 </Text>
               </View>
             </View>
 
             <View style={styles.benefitRow}>
               <View style={styles.benefitIconWrap}>
-                <Text style={styles.benefitIcon}>📅</Text>
+                <Text style={styles.benefitIcon}>🔁</Text>
               </View>
               <View style={styles.benefitTextWrap}>
                 <Text style={styles.benefitTitle}>
-                  {isHinglish ? '30-Day Recurring Tasks' : '30-Day Recurring Tasks'}
+                  {isHinglish ? 'Repeat Tasks For Whole Month' : 'Repeat Tasks For Whole Month'}
                 </Text>
                 <Text style={styles.benefitDesc}>
                   {isHinglish
-                    ? 'Agle 30 dino tak ke tasks schedule aur manage karein.'
-                    : 'Plan and schedule repeating tasks for up to 30 days in advance.'}
+                    ? 'Ek tap me pure 30 dino ke liye recurring tasks schedule karein.'
+                    : 'Schedule tasks once to automatically repeat daily for all 30 days.'}
                 </Text>
               </View>
             </View>
@@ -554,8 +718,8 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 16,
-    color: colors.textSecondary,
     fontWeight: '700',
+    color: '#64748B',
   },
   headerBrand: {
     flexDirection: 'row',
@@ -563,9 +727,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerBrandTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    letterSpacing: 0.3,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   shieldPill: {
     backgroundColor: '#FEF3C7',
@@ -666,6 +830,38 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  tabBarContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    padding: 4,
+    borderRadius: 14,
+    marginBottom: 16,
+    gap: 4,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  tabItemActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabItemText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tabItemTextActive: {
+    color: '#0F172A',
+    fontWeight: '900',
+  },
   rzpGatewayCard: {
     backgroundColor: '#0F172A',
     borderRadius: radius.xl || 20,
@@ -739,7 +935,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   payRazorpayBtn: {
-    backgroundColor: colors.primary, // Camel gold / champagne
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 14,
@@ -750,6 +946,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
+  },
+  btnDisabled: {
+    opacity: 0.6,
   },
   payRazorpayBtnText: {
     fontSize: 16,
@@ -763,6 +962,72 @@ const styles = StyleSheet.create({
     color: '#334155',
     marginTop: 2,
     textAlign: 'center',
+  },
+  upiAppsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.xl || 20,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    marginBottom: 16,
+    ...shadows.card,
+  },
+  upiAppsTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  upiAppsSub: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  upiBtnGrid: {
+    gap: 10,
+    marginBottom: 14,
+  },
+  upiAppBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  upiAppIcon: {
+    fontSize: 22,
+  },
+  upiAppName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  upiAppDesc: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  upiAppArrow: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#94A3B8',
+  },
+  merchantDetailBox: {
+    backgroundColor: '#F1F5F9',
+    padding: 10,
+    borderRadius: 10,
+    gap: 4,
+  },
+  merchantDetailLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  merchantDetailValue: {
+    color: '#0F172A',
+    fontWeight: '800',
   },
   qrSectionCard: {
     backgroundColor: colors.surface,
@@ -788,71 +1053,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
+    marginBottom: 2,
   },
   qrSubTitle: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 2,
   },
   livePulseBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#FEF2F2',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: '#FCA5A5',
   },
   pulseDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#DC2626',
   },
   pulseText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
-    color: '#15803D',
+    color: '#DC2626',
+    letterSpacing: 0.5,
   },
   qrFrame: {
-    backgroundColor: '#FAF5EB',
-    borderRadius: 20,
-    padding: 16,
+    width: 220,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: 250,
-    height: 275,
     borderWidth: 1.5,
-    borderColor: '#FDE68A',
-    shadowColor: colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
+    borderColor: '#E2E8F0',
     marginBottom: 16,
+    ...shadows.card,
   },
   qrLoadingBox: {
+    width: 196,
+    height: 196,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 200,
+    gap: 12,
   },
   qrLoadingText: {
-    marginTop: 10,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     textAlign: 'center',
   },
   qrImageWrapper: {
+    width: 196,
+    height: 196,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 12,
+    width: '100%',
+    height: '100%',
   },
   qrCenterLogoOverlay: {
     position: 'absolute',
@@ -860,71 +1122,109 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   amountPill: {
-    marginTop: 10,
-    backgroundColor: '#FFFBEB',
+    marginTop: 8,
+    backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
   amountPillText: {
-    fontSize: 12.5,
+    fontSize: 11,
     fontWeight: '800',
-    color: colors.primary,
+    color: '#B45309',
   },
   payAppBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#0284C7',
-    borderRadius: 14,
-    paddingVertical: 13,
     width: '100%',
-    marginBottom: 10,
+    backgroundColor: '#4F46E5',
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   payAppBtnIcon: {
     fontSize: 16,
   },
   payAppBtnText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '800',
     color: '#FFFFFF',
   },
-  verifyBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingVertical: 14,
-    width: '100%',
+  verificationSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.xl || 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+    gap: 12,
+    ...shadows.card,
+  },
+  liveRadarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#F0FDF4',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  radarPulseRing: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#DCFCE7',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+  },
+  radarCenterDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  liveRadarText: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#166534',
+    lineHeight: 16,
+  },
+  verifyBtn: {
+    backgroundColor: '#10B981',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   verifyBtnDisabled: {
     opacity: 0.6,
   },
   verifyBtnText: {
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  pollingNotice: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    marginTop: 10,
-    textAlign: 'center',
+    letterSpacing: 0.2,
   },
   benefitsCard: {
     backgroundColor: colors.surface,
