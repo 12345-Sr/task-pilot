@@ -122,7 +122,7 @@ router.post('/create-order', requireUser, async (req, res) => {
   try {
     const planPriceInr = 399;
     const amountPaise = planPriceInr * 100;
-    const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 10)}_${Date.now()}`;
+    const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     let order = null;
     let isRealRzpOrder = false;
@@ -175,7 +175,7 @@ router.post('/create-order', requireUser, async (req, res) => {
 
     if (!order || !order.id) {
       order = {
-        id: `order_${Date.now()}`,
+        id: `order_${Date.now()}_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 6)}_${crypto.randomBytes(4).toString('hex')}`,
         amount: amountPaise,
         currency: 'INR',
       };
