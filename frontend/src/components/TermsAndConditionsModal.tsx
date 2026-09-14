@@ -38,10 +38,10 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                 <Text style={styles.scrollIcon}>📜</Text>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={styles.title} numberOfLines={1}>
-                    {isHindi ? 'Terms & Conditions' : 'Terms & Conditions'}
+                    Terms & Conditions
                   </Text>
                   <Text style={styles.subtitle} numberOfLines={1}>
-                    {isHindi ? 'अंतिम अपडेट: सितंबर 2026' : 'Last Updated: September 2026'}
+                    Last Updated: September 2026
                   </Text>
                 </View>
               </View>
@@ -64,345 +64,342 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Task Pilot में आपका स्वागत है। ये Terms & Conditions ("शर्तें") Task Pilot एप्लिकेशन और संबंधित सेवाओं ("Task Pilot", "हम", "हमें", या "हमारा") के आपके उपयोग को नियंत्रित करती हैं। अकाउंट बनाकर या Task Pilot का उपयोग करके, आप इन शर्तों का पालन करने के लिए सहमत होते हैं।
+                      Task Pilot mein aapka swagat hai. Yeh Terms & Conditions ("Terms") Task Pilot application aur related services ("Task Pilot", "hum", "humein", ya "hamara") ke access aur use ko govern karti hain. Account banakar ya Task Pilot use karke, aap in Terms ka palan karne ke liye agree karte hain. Agar aap in Terms se sahmat nahi hain, toh kripya Service ka use na karein.
                     </Text>
                   </View>
 
                   {/* Section 1 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>1. Task Pilot के बारे में</Text>
+                    <Text style={styles.sectionHeading}>1. Task Pilot Ke Baare Mein (About Task Pilot)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot एक टास्क-मैनेजमेंट और प्रोडक्टिविटी एप्लिकेशन है जिसे उपयोगकर्ताओं को कार्यों और रिमाइंडर्स को बनाने, व्यवस्थित करने, शेड्यूल करने और प्रबंधित करने में मदद करने के लिए डिज़ाइन किया गया है।
+                      Task Pilot ek task-management aur productivity application hai jo users ko tasks aur reminders create, organize, schedule aur manage karne mein help karne ke liye design kiya gaya hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot का उपयोग व्यक्तिगत और व्यावसायिक दोनों उद्देश्यों के लिए किया जा सकता है।
+                      Task Pilot ka use personal aur business dono purposes ke liye kiya ja sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot एक उत्पादकता टूल है और इसका उद्देश्य पेशेवर, आपातकालीन, चिकित्सा, कानूनी, वित्तीय या अन्य महत्वपूर्ण सेवाओं को प्रतिस्थापित करना नहीं है।
+                      Task Pilot ek productivity tool hai aur iska maksad professional, emergency, medical, legal, financial ya anya critical services ko replace karna nahi hai.
                     </Text>
                   </View>
 
                   {/* Section 2 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>2. यूज़र अकाउंट्स</Text>
+                    <Text style={styles.sectionHeading}>2. User Accounts</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot का उपयोग करने के लिए, आपको एक अकाउंट बनाना होगा। रजिस्ट्रेशन के दौरान, आपको प्रदान करना आवश्यक हो सकता है:
+                      Task Pilot use karne ke liye, aapko ek account create karna hoga. Registration ke dauraan, aapko yeh details provide karni ho sakti hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• आपका नाम</Text>
-                    <Text style={styles.bulletPoint}>• आपका ईमेल पता</Text>
-                    <Text style={styles.bulletPoint}>• एक पासवर्ड</Text>
+                    <Text style={styles.bulletPoint}>• Aapka naam</Text>
+                    <Text style={styles.bulletPoint}>• Aapka email address</Text>
+                    <Text style={styles.bulletPoint}>• Ek password</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot द्वारा प्रदान की गई वेरिफिकेशन प्रक्रिया का उपयोग करके आपका ईमेल पता सत्यापित होना चाहिए।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      आप सटीक जानकारी प्रदान करने और अपने लॉगिन क्रेडेंशियल्स की गोपनीयता बनाए रखने के लिए जिम्मेदार हैं।
+                      Aapka email address Task Pilot dwara provide kiye gaye verification process ke through verify hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आपका Task Pilot अकाउंट आपके लिए व्यक्तिगत है। आपको अपने लॉगिन क्रेडेंशियल्स दूसरों के साथ साझा नहीं करने चाहिए या अनधिकृत व्यक्तियों को अपने खाते तक पहुंचने की अनुमति नहीं देनी चाहिए।
+                      Sahi details provide karne aur apne login credentials ki confidentiality maintain karne ke liye aap khud zimmedar hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आप अपने अकाउंट के माध्यम से की जाने वाली गतिविधियों के लिए जिम्मेदार हैं और यदि आपको लगता है कि आपका खाता अनधिकृत रूप से एक्सेस किया गया है तो आपको हमें सूचित करना चाहिए।
+                      Aapka Task Pilot account personal hai. Aapko apne login credentials kisi aur ke sath share nahi karne chahiye aur na hi unauthorized persons ko account access karne dena chahiye.
+                    </Text>
+                    <Text style={styles.paragraph}>
+                      Apne account ke through hone wali sabhi activities ke liye aap responsible hain aur agar aapko lagta hai ki account unauthorized access hua hai, toh humein turant notify karein.
                     </Text>
                   </View>
 
                   {/* Section 3 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>3. टास्क और रिमाइंडर डेटा</Text>
+                    <Text style={styles.sectionHeading}>3. Task aur Reminder Data</Text>
                     <Text style={styles.paragraph}>
-                      उपयोगकर्ता Task Pilot के भीतर कार्यों और रिमाइंडर्स को बना, संपादित, शेड्यूल और हटा सकते हैं।
+                      Users Task Pilot ke andar tasks aur reminders create, edit, schedule aur delete kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आप अपने द्वारा बनाए गए और Task Pilot में सबमिट किए गए टास्क और अन्य सामग्री का स्वामित्व बनाए रखते हैं।
+                      Aap jo tasks aur content create aur submit karte hain, uska ownership aapke paas hi rehta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot आपकी टास्क जानकारी को प्रोसेस और स्टोर करता है ताकि सेवा अपनी टास्क-मैनेजमेंट और रिमाइंडर कार्यक्षमता प्रदान कर सके और आपको अपने अकाउंट का उपयोग करते समय अपनी जानकारी तक पहुंचने की अनुमति मिल सके।
+                      Task Pilot aapki task information ko process aur store karta hai taaki Service task-management aur reminder functionality provide kar sake aur aap apne account se apni details access kar sakein.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot आपके टास्क कंटेंट को बेचता नहीं है और न ही इसका उपयोग विज्ञापन उद्देश्यों के लिए करता है।
+                      Task Pilot aapke task content ko sell nahi karta aur na hi advertising ke liye use karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      टास्क की जानकारी सार्वजनिक रूप से प्रदर्शित नहीं की जाती है या सेवा के माध्यम से अन्य उपयोगकर्ताओं के साथ साझा नहीं की जाती है।
+                      Aapki task information publicly display nahi hoti aur na hi Service ke doosre users ke sath share ki jaati hai.
                     </Text>
                   </View>
 
                   {/* Section 4 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>4. Free प्लान</Text>
+                    <Text style={styles.sectionHeading}>4. Free Plan</Text>
                     <Text style={styles.paragraph}>
-                      फ्री प्लान एक उपयोगकर्ता को 3 टास्क तक बनाने की अनुमति देता है।
+                      Free Plan mein ek user maximum 3 tasks create kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      एक बार 3 टास्क की अधिकतम सीमा पूरी हो जाने के बाद, उपयोगकर्ता फ्री प्लान के तहत अतिरिक्त टास्क नहीं बना सकता है।
+                      Ek baar 3 tasks create karne ki limit puri ho jaane par, user Free Plan ke under additional tasks create nahi kar sakta.
                     </Text>
                     <Text style={styles.paragraph}>
-                      किसी मौजूदा टास्क को हटाने से उपयोगकर्ता का टास्क-क्रिएशन कोटा रीसेट या बढ़ता नहीं है।
+                      Kisi existing task ko delete karne se task-creation allowance reset ya increase nahi hota.
                     </Text>
                     <Text style={styles.paragraph}>
-                      अतिरिक्त टास्क-मैनेजमेंट कार्यक्षमता के लिए Pro सब्सक्रिप्शन की आवश्यकता हो सकती है।
+                      Additional task-management functionality ke liye Pro subscription required ho sakti hai.
                     </Text>
                   </View>
 
                   {/* Section 5 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>5. Pro सब्सक्रिप्शन</Text>
+                    <Text style={styles.sectionHeading}>5. Pro Subscription</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ₹399 में 30 दिनों के लिए Pro सब्सक्रिप्शन प्रदान करता है।
+                      Task Pilot ₹399 mein 30 days ke liye Pro subscription offer karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      एक Pro सब्सक्रिप्शन अतिरिक्त कार्यक्षमता प्रदान करता है, जिसमें शामिल हैं:
+                      Pro subscription additional features provide karta hai, jinmein shamil hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• अनलिमिटेड टास्क क्रिएशन (असीमित कार्य निर्माण)</Text>
-                    <Text style={styles.bulletPoint}>• उपलब्ध टाइमलाइन/रिपीट कार्यक्षमता का उपयोग करके चयनित तिथियों या अवधियों में पहले बनाए गए कार्यों को पुन: उपयोग या दोहराने की क्षमता</Text>
+                    <Text style={styles.bulletPoint}>• Unlimited task creation (unlimited kaam add karein)</Text>
+                    <Text style={styles.bulletPoint}>• Timeline/repeat feature ka use karke previously created tasks ko selected dates ya periods par reuse aur repeat karne ki ability</Text>
                     <Text style={styles.paragraph}>
-                      Pro एक्सेस लागू खरीद/सक्रियण अवधि से 30 दिनों के लिए उपलब्ध रहता है।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      Pro सब्सक्रिप्शन वर्तमान में अपने आप (automatically) रिन्यू नहीं होते हैं।
+                      Pro access purchase/activation date se 30 days tak available rehta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      30 दिनों की Pro अवधि समाप्त होने के बाद, उपयोगकर्ता को Pro सुविधाओं का उपयोग जारी रखने के लिए एक और खरीदारी करनी होगी।
+                      Pro subscriptions currently automatically renew nahi hote hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हम भविष्य में सब्सक्रिप्शन सुविधाओं को पेश, संशोधित, जोड़ या हटा सकते हैं।
+                      30 days ki Pro period expire hone ke baad, user ko Pro features continue rakhne ke liye dobara purchase karna hoga.
+                    </Text>
+                    <Text style={styles.paragraph}>
+                      Hum future mein subscription features ko introduce, modify, add ya remove kar sakte hain.
                     </Text>
                   </View>
 
                   {/* Section 6 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>6. पेमेंट्स</Text>
+                    <Text style={styles.sectionHeading}>6. Payments</Text>
                     <Text style={styles.paragraph}>
-                      Pro सब्सक्रिप्शन के भुगतान Razorpay या Task Pilot द्वारा उपलब्ध कराई गई अन्य भुगतान-प्रसंस्करण सेवाओं के माध्यम से संसाधित किए जाते हैं।
+                      Pro subscriptions ke payments Razorpay ya Task Pilot dwara provide kiye gaye payment-processing partners ke through process hote hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      खरीदारी करके, आप लागू भुगतान प्रदाता को उसके लागू नियमों और नीतियों के अनुसार लेनदेन को संसाधित करने के लिए अधिकृत करते हैं।
+                      Purchase karke, aap payment provider ko unki terms aur policies ke anusar transaction process karne ke liye authorize karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot अपने स्वयं के सर्वर पर आपके पूरे भुगतान-कार्ड विवरण संग्रहीत नहीं करता है जब तक कि स्पष्ट रूप से अन्यथा न कहा गया हो।
+                      Task Pilot aapke complete payment-card details apne servers par store nahi karta.
                     </Text>
                   </View>
 
                   {/* Section 7 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>7. रिफंड पॉलिसी</Text>
+                    <Text style={styles.sectionHeading}>7. Refund Policy</Text>
                     <Text style={styles.paragraph}>
-                      सभी Pro खरीदारी गैर-वापसी योग्य (non-refundable) हैं, सिवाय इसके कि जहां लागू कानून द्वारा रिफंड आवश्यक हो या जहां Task Pilot यह निर्धारित करता है कि तकनीकी भुगतान समस्या के लिए सुधारात्मक कार्रवाई की आवश्यकता है।
+                      Sabhi Pro purchases non-refundable hain, siwaye wahan jahan applicable law ke mutabiq refund mandatory ho ya jahan Task Pilot technical payment issue ke liye corrective action lena decide kare.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि आपका भुगतान सफलतापूर्वक काट लिया गया है लेकिन तकनीकी समस्या के कारण आपका Pro एक्सेस सक्रिय नहीं हुआ है, तो आप उपलब्ध समर्थन या टिकट प्रणाली के माध्यम से Task Pilot से संपर्क कर सकते हैं।
+                      Agar aapki payment successfully deduct ho gayi hai lekin technical issue ki wajah se Pro access activate nahi hua hai, toh aap in-app support ya ticket system ke through contact kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हम लेनदेन की जांच कर सकते हैं और, जहां उपयुक्त हो, खरीदी गई सेवा को सक्रिय करके या अन्य उचित सुधारात्मक कार्रवाई करके समस्या का समाधान कर सकते हैं।
+                      Hum transaction ko investigate karenge aur jahan zaroori ho, service activate karke ya appropriate action lekar issue solve karenge.
                     </Text>
                   </View>
 
                   {/* Section 8 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>8. नोटिफिकेशन्स और रिमाइंडर्स</Text>
+                    <Text style={styles.sectionHeading}>8. Notifications aur Reminders</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot निर्धारित कार्यों और रिमाइंडर्स से संबंधित सूचनाएं भेज सकता है।
+                      Task Pilot scheduled tasks aur reminders se related notifications send kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      टास्क सेटिंग्स के आधार पर, रिमाइंडर सूचनाएं भेजी जा सकती हैं:
+                      Task settings ke according, reminder notifications send ki ja sakti hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• निर्धारित कार्य से लगभग 10 मिनट पहले, और</Text>
-                    <Text style={styles.bulletPoint}>• निर्धारित कार्य के समय पर</Text>
+                    <Text style={styles.bulletPoint}>• Scheduled task se lagbhag 10 minutes pehle, aur</Text>
+                    <Text style={styles.bulletPoint}>• Scheduled task ke exact time par</Text>
                     <Text style={styles.paragraph}>
-                      नोटिफिकेशन डिलीवरी के लिए आपके डिवाइस पर उपयुक्त नोटिफिकेशन अनुमतियों की आवश्यकता होती है।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      Task Pilot यह गारंटी नहीं देता कि प्रत्येक सूचना हमेशा समय पर ही वितरित की जाएगी या बिल्कुल भी वितरित की जाएगी।
+                      Notification delivery ke liye aapke device par notification permissions enabled hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      तकनीकी समस्याओं, डिवाइस सेटिंग्स, ऑपरेटिंग-सिस्टम प्रतिबंधों, नेटवर्क स्थितियों, तृतीय-पक्ष सेवाओं, रखरखाव, या हमारे उचित नियंत्रण से परे अन्य परिस्थितियों के कारण सूचनाओं में देरी, रुकावट या चूक हो सकती है।
+                      Task Pilot yeh guarantee nahi deta ki har notification hamesha exact time par ya deliver hogi hi.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आप अपने कार्यों की निगरानी और प्रबंधन के लिए स्वयं जिम्मेदार हैं।
+                      Technical issues, device settings, OS restrictions, battery optimization, network issues ya 3rd-party service issues ke chalte notifications delay, interrupt ya miss ho sakti hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot का उपयोग आपातकालीन, चिकित्सा, जीवन-महत्वपूर्ण, खतरनाक, कानूनी या अन्य स्थितियों के लिए एकमात्र प्रणाली के रूप में नहीं किया जाना चाहिए जहां रिमाइंडर की विफलता से गंभीर नुकसान हो सकता है।
+                      Apne tasks ko monitor aur manage karne ke liye aap khud zimmedar hain.
+                    </Text>
+                    <Text style={styles.paragraph}>
+                      Task Pilot ko emergency, medical, life-critical, hazardous ya legal situations ke liye sole reminder system ki tarah use nahi kiya jana chahiye jahan reminder miss hone se bada loss ho sake.
                     </Text>
                   </View>
 
                   {/* Section 9 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>9. स्वीकार्य उपयोग (Acceptable Use)</Text>
+                    <Text style={styles.sectionHeading}>9. Acceptable Use (Sahi Upyog)</Text>
                     <Text style={styles.paragraph}>
-                      आप Task Pilot का उपयोग केवल वैध उद्देश्यों के लिए करने के लिए सहमत हैं। आपको निम्नलिखित नहीं करना चाहिए:
+                      Aap Task Pilot ko sirf lawful purposes ke liye use karne par agree karte hain. Aapko yeh sab bilkul nahi karna chahiye:
                     </Text>
-                    <Text style={styles.bulletPoint}>• अवैध गतिविधियों के लिए Task Pilot का उपयोग करना।</Text>
-                    <Text style={styles.bulletPoint}>• बिना अनुमति के किसी अन्य उपयोगकर्ता के खाते या जानकारी तक पहुंचने का प्रयास करना।</Text>
-                    <Text style={styles.bulletPoint}>• हमारे सिस्टम, सर्वर, डेटाबेस या बुनियादी ढांचे तक अनधिकृत पहुंच प्राप्त करने का प्रयास करना।</Text>
-                    <Text style={styles.bulletPoint}>• सेवा के स्रोत कोड को हैक करना, रिवर्स इंजीनियर करना, डीकंपाइल करना या निकालने का प्रयास करना।</Text>
-                    <Text style={styles.bulletPoint}>• एप्लिकेशन के अनधिकृत व्युत्पन्न संस्करणों को कॉपी, संशोधित, पुन: प्रस्तुत, वितरित या बनाना।</Text>
-                    <Text style={styles.bulletPoint}>• मैलवेयर, वायरस, दुर्भावनापूर्ण कोड, या अन्य हानिकारक सामग्री को पेश करना।</Text>
-                    <Text style={styles.bulletPoint}>• स्पैम, दुर्व्यवहार, उत्पीड़न या दुर्भावनापूर्ण गतिविधियों के लिए सेवा का उपयोग करना।</Text>
-                    <Text style={styles.bulletPoint}>• सेवा या इसके बुनियादी ढांचे को बाधित करने, नुकसान पहुंचाने, ओवरलोड करने या हस्तक्षेप करने का प्रयास करना।</Text>
-                    <Text style={styles.bulletPoint}>• सुरक्षा उपायों, उपयोग सीमाओं, या एक्सेस प्रतिबंधों को बायपास या दरकिनार करने का प्रयास करना।</Text>
-                    <Text style={styles.bulletPoint}>• ऐसे तरीके से सेवा का उपयोग करना जो लागू कानूनों या विनियमों का उल्लंघन करता हो।</Text>
+                    <Text style={styles.bulletPoint}>• Illegal activities ke liye use karna.</Text>
+                    <Text style={styles.bulletPoint}>• Kisi doosre user ke account ya data ko unauthorized access karna.</Text>
+                    <Text style={styles.bulletPoint}>• Hamare systems, servers, databases ya infrastructure par unauthorized access lena.</Text>
+                    <Text style={styles.bulletPoint}>• Service ke source code ko hack, reverse engineer, decompile ya derive karna.</Text>
+                    <Text style={styles.bulletPoint}>• App ke unauthorized derivative versions copy, modify, reproduce ya distribute karna.</Text>
+                    <Text style={styles.bulletPoint}>• Malware, viruses ya malicious code introduce karna.</Text>
+                    <Text style={styles.bulletPoint}>• Spam, abuse, harassment ya malicious activities ke liye use karna.</Text>
+                    <Text style={styles.bulletPoint}>• Service ya infrastructure ko disrupt, damage ya overload karna.</Text>
+                    <Text style={styles.bulletPoint}>• Security measures, usage limits ya restrictions ko bypass karna.</Text>
+                    <Text style={styles.bulletPoint}>• Applicable laws ya regulations violate karna.</Text>
                     <Text style={styles.paragraph}>
-                      हम प्रतिबंधित गतिविधियों में शामिल खातों के खिलाफ उचित कार्रवाई करने का अधिकार सुरक्षित रखते हैं।
+                      Prohibited activities mein shamil accounts ke khilaaf hum appropriate action lene ka right reserve karte hain.
                     </Text>
                   </View>
 
                   {/* Section 10 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>10. बौद्धिक संपदा (Intellectual Property)</Text>
+                    <Text style={styles.sectionHeading}>10. Intellectual Property (Baudhik Sampada)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot और इसकी अंतर्निहित तकनीक का स्वामित्व Task Pilot के पास है या उसके द्वारा लाइसेंस प्राप्त है। इसमें बिना किसी सीमा के शामिल हैं:
+                      Task Pilot aur iski underlying technology Task Pilot ki ownership aur property hai. Isme shamil hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• Task Pilot नाम</Text>
-                    <Text style={styles.bulletPoint}>• लोगो और ब्रांडिंग</Text>
-                    <Text style={styles.bulletPoint}>• एप्लिकेशन डिज़ाइन और यूज़र इंटरफ़ेस</Text>
-                    <Text style={styles.bulletPoint}>• स्रोत कोड (Source code)</Text>
-                    <Text style={styles.bulletPoint}>• सॉफ्टवेयर और फीचर्स</Text>
-                    <Text style={styles.bulletPoint}>• ग्राफिक्स, टेक्स्ट और अन्य मालिकाना सामग्री</Text>
+                    <Text style={styles.bulletPoint}>• Task Pilot name</Text>
+                    <Text style={styles.bulletPoint}>• Logo aur branding</Text>
+                    <Text style={styles.bulletPoint}>• Application design aur UI</Text>
+                    <Text style={styles.bulletPoint}>• Source code</Text>
+                    <Text style={styles.bulletPoint}>• Software aur features</Text>
+                    <Text style={styles.bulletPoint}>• Graphics, text aur proprietary material</Text>
                     <Text style={styles.paragraph}>
-                      इन शर्तों के अनुसार सेवा का उपयोग करने के सीमित अधिकार को छोड़कर, कोई भी स्वामित्व अधिकार आपको हस्तांतरित नहीं किया जाता है।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      आप हमारी पूर्व लिखित अनुमति के बिना Task Pilot के किसी भी हिस्से से कॉपी, पुन: पेश, संशोधित, वितरित, बेच, लाइसेंस, रिवर्स इंजीनियर, या व्युत्पन्न कार्य नहीं बना सकते हैं।
+                      In Terms ke mutabiq Service use karne ke limited right ke alawa koi ownership rights aapko transfer nahi hote hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      सेवा के भीतर आपके द्वारा बनाई गई सामग्री पर आपका स्वामित्व अप्रभावित रहता है।
+                      Aap bina hamari prior written permission ke Task Pilot ke kisi bhi part ko copy, reproduce, modify, distribute, sell, license ya derivative work nahi bana sakte.
+                    </Text>
+                    <Text style={styles.paragraph}>
+                      Aapke dwara Service ke andar banaye content par aapka ownership barkarar rehta hai.
                     </Text>
                   </View>
 
                   {/* Section 11 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>11. सेवा की उपलब्धता (Service Availability)</Text>
+                    <Text style={styles.sectionHeading}>11. Service Availability</Text>
                     <Text style={styles.paragraph}>
-                      हमारा लक्ष्य Task Pilot को उपलब्ध और कार्यात्मक बनाए रखना है, लेकिन हम यह गारंटी नहीं देते कि सेवा हमेशा उपलब्ध, निर्बाध, त्रुटि रहित, सुरक्षित या तकनीकी समस्याओं से मुक्त होगी।
+                      Hum Task Pilot ko hamesha available aur reliable rakhne ka pura prayas karte hain, lekin hum yeh guarantee nahi dete ki Service hamesha available, uninterrupted, error-free, secure ya technical bugs se free rahegi.
                     </Text>
                     <Text style={styles.paragraph}>
-                      रखरखाव, अपग्रेड, सर्वर समस्याओं, सुरक्षा उपायों, तकनीकी समस्याओं या हमारे उचित नियंत्रण से परे परिस्थितियों के कारण Task Pilot कभी-कभी अनुपलब्ध हो सकता है।
+                      Maintenance, upgrades, server issues, security measures ya technical problems ke chalte Task Pilot temporarily unavailable ho sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हम उचित रूप से आवश्यक होने पर सेवा के कुछ हिस्सों को संशोधित, अपडेट, सुधार, निलंबित या बंद कर सकते हैं।
+                      Hum zaroori hone par Service ke parts ko modify, update, improve, suspend ya discontinue kar sakte hain.
                     </Text>
                   </View>
 
                   {/* Section 12 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>12. सुविधाओं और योजनाओं में परिवर्तन</Text>
+                    <Text style={styles.sectionHeading}>12. Features aur Plans Mein Badlaav</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot सेवा के Free या Pro संस्करणों से सुविधाओं को जोड़, संशोधित, सुधार, प्रतिबंधित या हटा सकता है।
+                      Task Pilot Free ya Pro versions mein features add, modify, improve, restrict ya remove kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हम भविष्य में नई योजनाएं, सुविधाएं, मूल्य संरचनाएं या कार्यक्षमताएं भी पेश कर सकते हैं।
+                      Hum future mein naye plans, features ya pricing structures bhi introduce kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि Pro सब्सक्रिप्शन की कीमत बदलती है, तो नई कीमत भविष्य की खरीदारी पर लागू होगी। मूल्य परिवर्तन से पहले से खरीदी गई 30 दिनों की Pro अवधि में कोई बदलाव नहीं होगा।
+                      Agar Pro subscription price change hoti hai, toh nayi price future purchases par apply hogi. Existing purchased 30-day Pro period par koi effect nahi hoga.
                     </Text>
                   </View>
 
                   {/* Section 13 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>13. तृतीय-पक्ष सेवाएं (Third-Party Services)</Text>
+                    <Text style={styles.sectionHeading}>13. Third-Party Services</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot सेवा के कुछ हिस्सों को संचालित करने के लिए तीसरे पक्ष के सेवा प्रदाताओं पर भरोसा कर सकता है, जिसमें भुगतान प्रसंस्करण, ईमेल वितरण, सूचनाएं, होस्टिंग, बुनियादी ढांचा या अन्य तकनीकी सेवाएं शामिल हैं।
+                      Task Pilot Service chalane ke liye third-party service providers par rely karta hai, jaise payment processing, email delivery, notifications, hosting aur server infrastructure.
                     </Text>
                     <Text style={styles.paragraph}>
-                      इन सेवाओं में Razorpay, Expo, Firebase, Resend, Gmail, होस्टिंग प्रदाता या समय-समय पर Task Pilot द्वारा उपयोग की जाने वाली अन्य सेवाएं शामिल हो सकती हैं।
+                      In services mein Razorpay, Expo, Firebase, Resend, Gmail ya hosting providers shamil ho sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      तृतीय-पक्ष सेवाओं का आपका उपयोग उन प्रदाताओं के अपने नियमों और नीतियों के अधीन भी हो सकता है।
+                      Third-party services ka use unke apne terms aur privacy policies ke anusar govern hota hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot पूरी तरह से तृतीय-पक्ष सेवाओं के कारण होने वाली रुकावटों, विफलताओं या सीमाओं के लिए ज़िम्मेदार नहीं है।
+                      Third-party services ke kaaran hone wale interruptions ya failures ke liye Task Pilot solely responsible nahi hai.
                     </Text>
                   </View>
 
                   {/* Section 14 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>14. खाता निलंबन और समाप्ति (Account Suspension and Termination)</Text>
+                    <Text style={styles.sectionHeading}>14. Account Suspension aur Termination</Text>
                     <Text style={styles.paragraph}>
-                      यदि हम उचित रूप से यह निर्धारित करते हैं कि आपने इन शर्तों का उल्लंघन किया है या निषिद्ध, धोखाधड़ी, अपमानजनक, अवैध, या सुरक्षा के लिए खतरनाक गतिविधि में लगे हुए हैं, तो Task Pilot आपके खाते को निलंबित या समाप्त कर सकता है।
+                      Agar hume pata chalta hai ki aapne in Terms ka violation kiya hai ya fraudulent, abusive, illegal ya security-threatening activity ki hai, toh Task Pilot aapka account suspend ya terminate kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यह अधिकार Free और Pro दोनों खातों पर लागू होता है।
+                      Yeh right Free aur Pro dono accounts par apply hota hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि इन शर्तों के उल्लंघन के कारण आपका खाता समाप्त कर दिया जाता है, तो आप किसी भी अप्रयुक्त Pro सदस्यता अवधि के लिए रिफंड के हकदार नहीं होंगे, सिवाय इसके कि जहां लागू कानून द्वारा आवश्यक हो।
+                      Agar Terms violation ki wajah se account terminate kiya jata hai, toh aap kisi bhi unused Pro period ke refund ke hakdar nahi honge.
                     </Text>
                     <Text style={styles.paragraph}>
-                      समाप्ति के बाद, आपके कार्य और खाता डेटा को परिचालन, सुरक्षा, कानूनी या अन्य वैध उद्देश्यों के लिए सीमित अवधि के लिए बनाए रखा जा सकता है। यदि आगे कोई कार्रवाई आवश्यक नहीं है, तो ऐसे डेटा को बाद में हमारी डेटा-प्रतिधारण प्रथाओं और गोपनीयता नीति के अनुसार हटाया जा सकता है।
+                      Termination ke baad, operational, security, legal ya dispute resolution ke liye data limited time tak retain ho sakta hai aur uske baad delete kar diya jata hai.
                     </Text>
                   </View>
 
                   {/* Section 15 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>15. अस्वीकरण (Disclaimer)</Text>
+                    <Text style={styles.sectionHeading}>15. Disclaimer (Aswikaran)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot एक उत्पादकता और कार्य-प्रबंधन सेवा के रूप में प्रदान किया जाता है।
+                      Task Pilot ek productivity aur task-management tool ke taur par provide kiya jata hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हम गारंटी नहीं देते कि:
+                      Hum yeh guarantee nahi dete ki:
                     </Text>
-                    <Text style={styles.bulletPoint}>• कार्य हमेशा बिना किसी रुकावट के उपलब्ध रहेंगे।</Text>
-                    <Text style={styles.bulletPoint}>• सूचनाएं हमेशा डिलीवर की जाएंगी।</Text>
-                    <Text style={styles.bulletPoint}>• सूचनाएं हमेशा ठीक इच्छित समय पर पहुंचेंगी।</Text>
-                    <Text style={styles.bulletPoint}>• सेवा हमेशा त्रुटियों या तकनीकी समस्याओं से मुक्त रहेगी।</Text>
-                    <Text style={styles.bulletPoint}>• डेटा या कार्यक्षमता कभी भी अस्थायी रूप से अनुपलब्ध नहीं होगी।</Text>
+                    <Text style={styles.bulletPoint}>• Tasks hamesha bina kisi interruption ke available rahenge.</Text>
+                    <Text style={styles.bulletPoint}>• Notifications hamesha deliver hongi.</Text>
+                    <Text style={styles.bulletPoint}>• Notifications hamesha exact time par hi aayengi.</Text>
+                    <Text style={styles.bulletPoint}>• Service hamesha errors ya technical bugs se free rahegi.</Text>
+                    <Text style={styles.bulletPoint}>• Data ya features kabhi temporarily unavailable nahi honge.</Text>
                     <Text style={styles.paragraph}>
-                      आप अपने विवेक और जोखिम पर Task Pilot का उपयोग करते हैं। Task Pilot कोई आपातकालीन चेतावनी प्रणाली नहीं है और आपातकालीन, चिकित्सा, कानूनी, वित्तीय, सुरक्षा-महत्वपूर्ण या जीवन-महत्वपूर्ण मामलों के लिए इस पर भरोसा नहीं किया जाना चाहिए।
+                      Aap Task Pilot ka use apne discretion aur risk par karte hain. Emergency, medical, legal ya critical matters ke liye ispar akele depend na karein.
                     </Text>
                   </View>
 
                   {/* Section 16 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>16. दायित्व की सीमा (Limitation of Liability)</Text>
+                    <Text style={styles.sectionHeading}>16. Limitation of Liability</Text>
                     <Text style={styles.paragraph}>
-                      लागू कानून द्वारा अनुमत अधिकतम सीमा तक, Task Pilot और इसके मालिक, संचालक, कर्मचारी, सहयोगी और सेवा प्रदाता सेवा के आपके उपयोग या उपयोग करने में असमर्थता से उत्पन्न या उससे संबंधित अप्रत्यक्ष, आकस्मिक, परिणामी, विशेष या दंडात्मक नुकसान के लिए उत्तरदायी नहीं होंगे।
+                      Applicable law dwara permitted maximum extent tak, Task Pilot aur iske creators, employees ya affiliates indirect, incidental, consequential ya special damages ke liye liable nahi honge.
                     </Text>
                     <Text style={styles.paragraph}>
-                      इसमें, जहां कानून द्वारा अनुमति दी गई है, छूटी हुई, विलंबित या विफल सूचनाओं, कार्य उपलब्धता के मुद्दों, सेवा रुकावटों, तकनीकी विफलताओं, डिवाइस की समस्याओं, नेटवर्क समस्याओं, या महत्वपूर्ण मामलों के लिए सेवा पर निर्भरता के परिणामस्वरूप होने वाले नुकसान शामिल हैं।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      इन शर्तों में कुछ भी ऐसे दायित्व को बाहर करने या सीमित करने का इरादा नहीं रखता है जिसे लागू कानून के तहत कानूनी रूप से बाहर या सीमित नहीं किया जा सकता है।
+                      Isme missed, delayed ya failed notifications, service interruptions, technical failures ya network problems se hone wale losses shamil hain.
                     </Text>
                   </View>
 
                   {/* Section 17 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>17. गोपनीयता नीति (Privacy Policy)</Text>
+                    <Text style={styles.sectionHeading}>17. Privacy Policy</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot का आपका उपयोग हमारी गोपनीयता नीति द्वारा भी नियंत्रित होता है, जो बताती है कि हम व्यक्तिगत जानकारी कैसे एकत्र, उपयोग, संग्रहीत और सुरक्षित करते हैं।
+                      Task Pilot ka use hamari Privacy Policy ke through bhi govern hota hai, jo batati hai ki hum personal information kaise collect, use aur protect karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      हमारी गोपनीयता नीति इन शर्तों का हिस्सा है।
+                      Hamari Privacy Policy in Terms ka ek part hai.
                     </Text>
                   </View>
 
                   {/* Section 18 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>18. इन शर्तों में परिवर्तन</Text>
+                    <Text style={styles.sectionHeading}>18. In Terms Mein Badlaav (Changes to These Terms)</Text>
                     <Text style={styles.paragraph}>
-                      हम सेवा, सुविधाओं, मूल्य निर्धारण, कानूनी आवश्यकताओं या व्यावसायिक प्रथाओं में बदलाव को दर्शाने के लिए समय-समय पर इन शर्तों को अपडेट कर सकते हैं।
+                      Hum service features, legal requirements ya business practices ko reflect karne ke liye samay-samay par in Terms ko update kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      जब हम परिवर्तन करते हैं, तो हम "अंतिम अपडेट" तिथि को अपडेट कर सकते हैं और, जहां उपयुक्त हो, एप्लिकेशन या अन्य उचित माध्यमों से सूचना प्रदान कर सकते हैं।
+                      Jab hum changes karenge, toh hum "Last Updated" date update karenge aur application ke through notice provide karenge.
                     </Text>
                     <Text style={styles.paragraph}>
-                      लागू कानून द्वारा अनुमत सीमा तक, अद्यतन शर्तें प्रभावी होने के बाद Task Pilot का आपका निरंतर उपयोग संशोधित शर्तों की स्वीकृति का गठन करता है।
+                      Updated Terms aane ke baad continue use revised Terms ki acceptance mana jayega.
                     </Text>
                   </View>
 
                   {/* Section 19 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>19. शासी कानून (Governing Law)</Text>
+                    <Text style={styles.sectionHeading}>19. Governing Law (Kanoon aur Jurisdiction)</Text>
                     <Text style={styles.paragraph}>
-                      ये शर्तें कानून के सिद्धांतों के टकराव की परवाह किए बिना, भारत के लागू कानूनों के अनुसार शासित और व्याख्या की जाएंगी।
+                      Yeh Terms India ke applicable laws ke anusar govern aur interpret ki jaayengi.
                     </Text>
                     <Text style={styles.paragraph}>
-                      इन शर्तों या सेवा से संबंधित कोई भी विवाद लागू कानून के अधीन भारत में उपयुक्त क्षेत्राधिकार वाले न्यायालयों के अधिकार क्षेत्र के अधीन होगा।
+                      In Terms ya Service se related kisi bhi dispute ka jurisdiction India ke appropriate courts ke under hoga.
                     </Text>
                   </View>
 
                   {/* Section 20 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>20. संपर्क करें (Contact Us)</Text>
+                    <Text style={styles.sectionHeading}>20. Contact Us (Sampark Karein)</Text>
                     <Text style={styles.paragraph}>
-                      यदि इन शर्तों या Task Pilot के संबंध में आपके कोई प्रश्न, चिंताएं, शिकायतें या सहायता अनुरोध हैं, तो आप एप्लिकेशन के भीतर प्रदान किए गए समर्थन/संपर्क विकल्पों के माध्यम से या हमारे निर्दिष्ट सहायता संपर्क (<Text style={styles.linkText}>support@taskpilot.com</Text>) के माध्यम से हमसे संपर्क कर सकते हैं।
+                      Agar in Terms ya Task Pilot ke regarding aapke koi questions, concerns, complaints ya support requests hain, toh aap in-app support/tickets ya hamare support email <Text style={styles.linkText}>support@taskpilot.com</Text> par contact kar sakte hain.
                     </Text>
                   </View>
                 </>
@@ -782,7 +779,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                 onPress={onClose}
               >
                 <Text style={styles.doneBtnText}>
-                  {isHindi ? 'स्वीकार करें (Accept)' : 'I Accept'}
+                  {isHindi ? 'I Accept (Sweekar Karein)' : 'I Accept'}
                 </Text>
               </TouchableOpacity>
             </View>

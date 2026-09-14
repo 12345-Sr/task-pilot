@@ -38,10 +38,10 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 <Text style={styles.shieldIcon}>🛡️</Text>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={styles.title} numberOfLines={1}>
-                    {isHindi ? 'Privacy Policy' : 'Privacy Policy'}
+                    Privacy Policy
                   </Text>
                   <Text style={styles.subtitle} numberOfLines={1}>
-                    {isHindi ? 'अंतिम अपडेट: सितंबर 2026' : 'Last Updated: September 2026'}
+                    Last Updated: September 2026
                   </Text>
                 </View>
               </View>
@@ -64,269 +64,246 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Task Pilot ("Task Pilot", "हम", "हमें", या "हमारा") आपकी गोपनीयता का सम्मान करता है और हमारी कार्य-प्रबंधन और उत्पादकता सेवा का उपयोग करते समय आपके द्वारा प्रदान की जाने वाली जानकारी की सुरक्षा के लिए प्रतिबद्ध है।
+                      Task Pilot ("Task Pilot", "hum", "humein", ya "hamara") aapki privacy ki respect karta hai aur aapki details protect karne ke liye committed hai. Yeh Privacy Policy explain karti hai ki hum kaunsi information collect karte hain, use kaise use karte hain, aur aapke paas kya choices hain.
                     </Text>
                   </View>
 
                   {/* Section 1 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>1. जो जानकारी हम एकत्र करते हैं (Information We Collect)</Text>
+                    <Text style={styles.sectionHeading}>1. Jo Information Hum Collect Karte Hain (Information We Collect)</Text>
                     <Text style={styles.paragraph}>
-                      जब आप एक Task Pilot अकाउंट बनाते और उपयोग करते हैं, तो हम निम्नलिखित जानकारी एकत्र और संग्रहीत कर सकते हैं:
+                      Jab aap ek Task Pilot account banate aur use karte hain, toh hum yeh information collect aur store kar sakte hain:
                     </Text>
-                    <Text style={styles.subheading}>खाता जानकारी (Account Information):</Text>
-                    <Text style={styles.bulletPoint}>• नाम</Text>
-                    <Text style={styles.bulletPoint}>• ईमेल पता</Text>
-                    <Text style={styles.bulletPoint}>• पासवर्ड जानकारी (हैशेड)</Text>
-                    <Text style={styles.bulletPoint}>• ईमेल सत्यापन जानकारी</Text>
+                    <Text style={styles.subheading}>Account Information:</Text>
+                    <Text style={styles.bulletPoint}>• Name (Aapka naam)</Text>
+                    <Text style={styles.bulletPoint}>• Email address</Text>
+                    <Text style={styles.bulletPoint}>• Password information (Secure hash ke through)</Text>
+                    <Text style={styles.bulletPoint}>• Email verification status</Text>
                     <Text style={styles.paragraph}>
-                      आपका पासवर्ड उपयुक्त पासवर्ड-हैशिंग/सुरक्षा तंत्र का उपयोग करके संग्रहीत किया जाता है और इसे सादे-पाठ (plain-text) डेटा के रूप में संग्रहीत करने का इरादा नहीं है।
-                    </Text>
-
-                    <Text style={styles.subheading}>टास्क और रिमाइंडर जानकारी:</Text>
-                    <Text style={styles.paragraph}>
-                      हम Task Pilot के भीतर आपके द्वारा बनाई गई जानकारी एकत्र और संग्रहीत करते हैं, जिसमें शामिल हैं:
-                    </Text>
-                    <Text style={styles.bulletPoint}>• टास्क के नाम या विवरण</Text>
-                    <Text style={styles.bulletPoint}>• निर्धारित तिथियां</Text>
-                    <Text style={styles.bulletPoint}>• निर्धारित समय</Text>
-                    <Text style={styles.bulletPoint}>• रिमाइंडर जानकारी</Text>
-                    <Text style={styles.bulletPoint}>• कार्य स्थिति (status)</Text>
-                    <Text style={styles.bulletPoint}>• टाइमलाइन/रिपीट जानकारी</Text>
-                    <Text style={styles.bulletPoint}>• कार्य-प्रबंधन कार्यक्षमता प्रदान करने के लिए आवश्यक अन्य जानकारी</Text>
-                    <Text style={styles.paragraph}>
-                      आप अपने द्वारा बनाई गई सामग्री का स्वामित्व बनाए रखते हैं।
+                      Aapka password security hashing algorithms ke through store hota hai aur readable plain-text format mein kabhi save nahi hota.
                     </Text>
 
-                    <Text style={styles.subheading}>डिवाइस और नोटिफिकेशन जानकारी:</Text>
+                    <Text style={styles.subheading}>Task aur Reminder Information:</Text>
                     <Text style={styles.paragraph}>
-                      रिमाइंडर सूचनाएं प्रदान करने के लिए, हम आपके खाते या डिवाइस से जुड़े डिवाइस या पुश-नोटिफिकेशन टोकन को एकत्र और संग्रहीत कर सकते हैं। यह Task Pilot को आपके डिवाइस पर प्रासंगिक सूचनाएं भेजने की अनुमति देता है।
+                      Hum Task Pilot ke andar aapke dwara banayi gayi information store karte hain:
+                    </Text>
+                    <Text style={styles.bulletPoint}>• Task names aur descriptions</Text>
+                    <Text style={styles.bulletPoint}>• Scheduled dates</Text>
+                    <Text style={styles.bulletPoint}>• Scheduled times</Text>
+                    <Text style={styles.bulletPoint}>• Reminder settings</Text>
+                    <Text style={styles.bulletPoint}>• Task completion status</Text>
+                    <Text style={styles.bulletPoint}>• Timeline/repeat settings</Text>
+                    <Text style={styles.bulletPoint}>• Task-management features chalane ke liye required other details</Text>
+                    <Text style={styles.paragraph}>
+                      Aap apne banaye hue tasks aur content ke pure owner rehte hain.
+                    </Text>
+
+                    <Text style={styles.subheading}>Device aur Notification Details:</Text>
+                    <Text style={styles.paragraph}>
+                      Reminder notifications bhejne ke liye, hum aapke device ya account se associated device push-notification token collect aur store karte hain. Isse Task Pilot aapke device par timely alerts deliver kar pata hai.
                     </Text>
                   </View>
 
                   {/* Section 2 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>2. हम आपकी जानकारी का उपयोग कैसे करते हैं</Text>
+                    <Text style={styles.sectionHeading}>2. Hum Information Ka Use Kaise Karte Hain</Text>
                     <Text style={styles.paragraph}>
-                      हम एकत्रित जानकारी का उपयोग निम्नलिखित के लिए करते हैं:
+                      Hum collected data ka use strictly in purposes ke liye karte hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• आपका खाता बनाना और बनाए रखना।</Text>
-                    <Text style={styles.bulletPoint}>• अपने खाते को प्रमाणित (authenticate) करना।</Text>
-                    <Text style={styles.bulletPoint}>• अपना ईमेल पता सत्यापित करना।</Text>
-                    <Text style={styles.bulletPoint}>• लॉगिन और पासवर्ड-पुनर्प्राप्ति कार्यक्षमता प्रदान करना।</Text>
-                    <Text style={styles.bulletPoint}>• अपने कार्यों और रिमाइंडर्स को संग्रहीत और प्रदर्शित करना।</Text>
-                    <Text style={styles.bulletPoint}>• सूचनाएं शेड्यूल और वितरित करना।</Text>
-                    <Text style={styles.bulletPoint}>• Free और Pro कार्यक्षमता प्रदान करना।</Text>
-                    <Text style={styles.bulletPoint}>• सब्सक्रिप्शन भुगतानों को प्रोसेस करना।</Text>
-                    <Text style={styles.bulletPoint}>• ग्राहक सहायता (customer support) प्रदान करना।</Text>
-                    <Text style={styles.bulletPoint}>• तकनीकी समस्याओं की जांच करना और उनका समाधान करना।</Text>
-                    <Text style={styles.bulletPoint}>• सेवा को बनाए रखना और सुरक्षित करना।</Text>
-                    <Text style={styles.bulletPoint}>• अनधिकृत या अपमानजनक गतिविधि का पता लगाना और उसे रोकना।</Text>
-                    <Text style={styles.bulletPoint}>• लागू कानूनी दायित्वों का अनुपालन करना।</Text>
+                    <Text style={styles.bulletPoint}>• Aapka account create aur maintain karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Account authenticate aur verify karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Email address verification ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Login aur password recovery support provide karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Aapke tasks aur reminders ko store aur display karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Notifications schedule aur deliver karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Free aur Pro functionality provide karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Subscription payments securely process karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Customer support aur technical tickets resolve karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Service ko secure aur abuse-free maintain karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Fraud, spam ya unauthorized activity detect aur prevent karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Applicable legal obligations comply karne ke liye.</Text>
                     <Text style={styles.paragraph}>
-                      हम विज्ञापन उद्देश्यों के लिए आपकी व्यक्तिगत जानकारी या कार्य सामग्री को बेचते नहीं हैं।
+                      Hum advertising ya promotions ke liye aapka personal data kisi third party ko sell nahi karte.
                     </Text>
                   </View>
 
                   {/* Section 3 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>3. आपका टास्क डेटा कैसे उपयोग किया जाता है</Text>
+                    <Text style={styles.sectionHeading}>3. Aapka Task Data Kaise Use Hota Hai</Text>
                     <Text style={styles.paragraph}>
-                      आपकी कार्य और रिमाइंडर जानकारी मुख्य रूप से संसाधित और संग्रहीत की जाती है ताकि Task Pilot आपके द्वारा अनुरोधित कार्यक्षमता प्रदान कर सके।
+                      Aapki task aur reminder details sirf Task Pilot ki features provide karne ke liye process aur store hoti hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      उदाहरण के लिए, हमें आपके कार्यों को संग्रहीत करने की आवश्यकता है ताकि आप बाद में अपने खाते के माध्यम से उन तक पहुंच सकें और निर्धारित अनुस्मारक उत्पन्न किए जा सकें।
+                      For example, tasks store hona zaroori hai taaki aap baad mein unhe access kar sakein aur timely reminders generate ho sakein.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आपके कार्यों को सार्वजनिक रूप से प्रदर्शित करने या अन्य Task Pilot उपयोगकर्ताओं के लिए उपलब्ध कराने का इरादा नहीं है।
+                      Aapke tasks kabhi bhi publicly display nahi hote aur na hi doosre Task Pilot users ko dikhaye jaate hain.
                     </Text>
                   </View>
 
                   {/* Section 4 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>4. खाता प्रमाणीकरण और सुरक्षा</Text>
+                    <Text style={styles.sectionHeading}>4. Account Authentication aur Security</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot आपके खाते की सुरक्षा के लिए प्रमाणीकरण तंत्र का उपयोग करता है।
+                      Task Pilot aapke account ko protect karne ke liye standard authentication mechanisms use karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      पासवर्ड को पढ़ने योग्य सादे-पाठ पासवर्ड के रूप में संग्रहीत करने के बजाय पासवर्ड-हैशिंग/सुरक्षा प्रथाओं का उपयोग करके नियंत्रित किया जाता है।
+                      Passwords plain-text ke bajaye salted cryptographic hash ke sath store kiye jaate hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      आप अपना ईमेल पता और पासवर्ड सुरक्षित रखने के लिए स्वयं जिम्मेदार हैं।
+                      Apna login credentials aur password secure rakhna aapki zimmedari hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      कोई भी ऑनलाइन सेवा पूर्ण सुरक्षा की गारंटी नहीं दे सकती। यद्यपि हम आपकी जानकारी की सुरक्षा के लिए उचित तकनीकी और संगठनात्मक उपाय करते हैं, हम यह गारंटी नहीं दे सकते कि अनधिकृत पहुंच, सुरक्षा घटनाएं या अन्य विफलताएं कभी नहीं होंगी।
+                      Koi bhi online platform 100% security guarantee nahi kar sakta, lekin hum aapka data protect karne ke liye industry-grade technical aur organizational safeguards use karte hain.
                     </Text>
                   </View>
 
                   {/* Section 5 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>5. नोटिफिकेशन्स</Text>
+                    <Text style={styles.sectionHeading}>5. Notifications</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot आपके डिवाइस पर रिमाइंडर देने के लिए पुश-नोटिफिकेशन सेवाओं का उपयोग कर सकता है। सूचनाएं प्राप्त करने के लिए, आपको अपने डिवाइस पर आवश्यक सूचना अनुमति प्रदान करनी होगी।
+                      Task Pilot reminders deliver karne ke liye push-notification services use karta hai. Notifications pane ke liye device par notification permission allow hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      सूचनाओं में किसी निर्धारित कार्य की पहचान करने या आपको याद दिलाने के लिए आवश्यक जानकारी शामिल हो सकती है।
+                      Notifications mein scheduled task ko identify karne ke liye zaroori details hoti hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      सूचना वितरण डिवाइस सेटिंग्स, ऑपरेटिंग-सिस्टम प्रतिबंधों, नेटवर्क स्थितियों, तृतीय-पक्ष अधिसूचना बुनियादी ढांचे, रखरखाव, या अन्य तकनीकी परिस्थितियों से प्रभावित हो सकता है।
+                      Device settings, OS battery optimizations, network problems ya 3rd-party delivery infrastructure ke kaaran notifications delay ya interrupt ho sakti hain.
                     </Text>
                   </View>
 
                   {/* Section 6 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>6. तृतीय-पक्ष सेवा प्रदाता (Third-Party Service Providers)</Text>
+                    <Text style={styles.sectionHeading}>6. Third-Party Service Providers</Text>
                     <Text style={styles.paragraph}>
-                      हम Task Pilot को संचालित करने में सहायता के लिए तृतीय-पक्ष प्रदाताओं का उपयोग कर सकते हैं। इनमें निम्नलिखित सेवाएं शामिल हो सकती हैं:
+                      Task Pilot ko smoothly operate karne ke liye hum trusted third-party providers use karte hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>भुगतान प्रसंस्करण (Payment processing):</Text> Razorpay</Text>
-                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>पुश सूचनाएं (Push notifications):</Text> Expo और/या Firebase</Text>
-                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>ईमेल वितरण (Email delivery):</Text> Resend और/या Gmail</Text>
-                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>होस्टिंग/सर्वर अवसंरचना:</Text> लागू होस्टिंग और बुनियादी ढांचा प्रदाता</Text>
-                    <Text style={styles.bulletPoint}>• Task Pilot को संचालित और बनाए रखने के लिए आवश्यक अन्य तकनीकी सेवाएं</Text>
+                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Payment processing:</Text> Razorpay</Text>
+                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Push notifications:</Text> Expo aur/ya Firebase</Text>
+                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Email delivery:</Text> Resend aur/ya Gmail</Text>
+                    <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Hosting & Servers:</Text> Cloud hosting aur database infrastructure</Text>
+                    <Text style={styles.bulletPoint}>• Service maintain karne ke liye required other technical providers</Text>
                     <Text style={styles.paragraph}>
-                      ये प्रदाता अपनी सेवाएं प्रदान करने के लिए आवश्यक होने पर हमारी ओर से जानकारी संसाधित कर सकते हैं। हम विज्ञापन उद्देश्यों के लिए आपकी व्यक्तिगत जानकारी इन प्रदाताओं को नहीं बेचते हैं। तृतीय-पक्ष प्रदाताओं की अपनी गोपनीयता नीतियां और शर्तें हो सकती हैं।
+                      Yeh providers sirf service deliver karne ke purpose se information process karte hain. Hum inhe ads ke liye data sell nahi karte.
                     </Text>
                   </View>
 
                   {/* Section 7 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>7. पेमेंट्स (Payments)</Text>
+                    <Text style={styles.sectionHeading}>7. Payments</Text>
                     <Text style={styles.paragraph}>
-                      जब आप Task Pilot Pro खरीदते हैं, तो भुगतान प्रसंस्करण Razorpay या Task Pilot द्वारा उपलब्ध कराए गए किसी अन्य भुगतान प्रदाता के माध्यम से नियंत्रित किया जाता है।
+                      Task Pilot Pro purchase karne par payment processing Razorpay ya designated payment gateway ke through handle hoti hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      भुगतान प्रदाता आपके लेन-देन को संसाधित करने के लिए आवश्यक जानकारी एकत्र कर सकते हैं।
+                      Payment providers transaction process karne ke liye zaroori details collect karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      सदस्यता सेवा प्रदान करने के लिए Task Pilot को आपकी पूरी भुगतान-कार्ड जानकारी संग्रहीत करने की आवश्यकता नहीं है। भुगतान जानकारी लागू भुगतान प्रदाता द्वारा अपनी नीतियों और कानूनी दायित्वों के अनुसार भी रखी जा सकती है।
+                      Task Pilot aapke complete payment card details apne servers par store nahi karta. Payment records payment provider ki apni policies aur legal obligations ke anusar retain hote hain.
                     </Text>
                   </View>
 
                   {/* Section 8 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>8. डेटा शेयरिंग (Data Sharing)</Text>
+                    <Text style={styles.sectionHeading}>8. Data Sharing</Text>
                     <Text style={styles.paragraph}>
-                      हम आपकी व्यक्तिगत जानकारी या कार्य सामग्री को बेचते नहीं हैं। हम केवल उचित रूप से आवश्यक होने पर ही जानकारी का खुलासा कर सकते हैं, जिसमें शामिल हैं:
+                      Hum aapki personal information ya tasks kabhi sell nahi karte. Information sirf zaroori situations mein disclose ho sakti hai, jaise:
                     </Text>
-                    <Text style={styles.bulletPoint}>• सेवा प्रदाताओं को जो हमें Task Pilot संचालित करने में मदद करते हैं।</Text>
-                    <Text style={styles.bulletPoint}>• सेवा की सुरक्षा और अखंडता की रक्षा के लिए।</Text>
-                    <Text style={styles.bulletPoint}>• धोखाधड़ी, दुरुपयोग या अनधिकृत गतिविधि की जांच करने के लिए।</Text>
-                    <Text style={styles.bulletPoint}>• लागू कानूनों, विनियमों, कानूनी प्रक्रियाओं, अदालती आदेशों या अधिकृत सरकारी अधिकारियों के वैध अनुरोधों का पालन करने के लिए।</Text>
-                    <Text style={styles.bulletPoint}>• जहां प्रकटीकरण अन्यथा आवश्यक हो या लागू कानून द्वारा अनुमत हो।</Text>
-                    <Text style={styles.paragraph}>
-                      जहां कानूनी रूप से अनुमति हो, हम प्रकटीकरण को लागू अनुरोध या उद्देश्य से संबंधित जानकारी तक सीमित करने के लिए उचित कदम उठा सकते हैं।
-                    </Text>
+                    <Text style={styles.bulletPoint}>• Service providers jo Task Pilot operate karne mein madad karte hain.</Text>
+                    <Text style={styles.bulletPoint}>• Service ki security aur integrity protect karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Fraud, abuse ya illegal activity investigate karne ke liye.</Text>
+                    <Text style={styles.bulletPoint}>• Applicable laws, court orders ya government authorities ke legal requests comply karne ke liye.</Text>
                   </View>
 
                   {/* Section 9 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>9. डेटा प्रतिधारण (Data Retention)</Text>
+                    <Text style={styles.sectionHeading}>9. Data Retention</Text>
                     <Text style={styles.paragraph}>
-                      हम आपके खाते और कार्य की जानकारी तब तक बनाए रखते हैं जब तक सेवा प्रदान करने और आपके खाते को बनाए रखने के लिए उचित रूप से आवश्यक हो।
+                      Aapka data tab tak retain rehta hai jab tak aapka account active hai aur service provide karne ke liye zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि कोई खाता समाप्त कर दिया जाता है, तो प्रासंगिक जानकारी को सुरक्षा, कानूनी, परिचालन, बैकअप, विवाद-समाधान, या अन्य वैध उद्देश्यों के लिए सीमित अवधि के लिए बनाए रखा जा सकता है।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      लागू प्रतिधारण अवधि के बाद, जानकारी को हटाया या अनामित (anonymized) किया जा सकता है।
+                      Account terminate hone ke baad, security, legal ya dispute resolution ke liye data limited time tak retain ho sakta hai aur uske baad delete ya anonymize kar diya jata hai.
                     </Text>
                   </View>
 
                   {/* Section 10 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>10. खाता हटाना (Account Deletion)</Text>
+                    <Text style={styles.sectionHeading}>10. Account Deletion</Text>
                     <Text style={styles.paragraph}>
-                      वर्तमान में, Task Pilot सीधे एप्लिकेशन के भीतर एक सेल्फ-सर्विस खाता हटाने का विकल्प प्रदान नहीं करता है।
+                      Currently, app ke andar automatic self-service deletion option available nahi hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि आप अपना खाता या व्यक्तिगत जानकारी हटाने का अनुरोध करना चाहते हैं, तो आप उपलब्ध समर्थन/संपर्क चैनल के माध्यम से Task Pilot से संपर्क कर सकते हैं।
+                      Agar aap apna account ya personal details delete karwana chahte hain, toh aap in-app Support ticket ya <Text style={styles.linkText}>support@taskpilot.com</Text> par request send kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      एक वैध विलोपन अनुरोध प्राप्त करने के बाद, हम अनुरोध को सत्यापित कर सकते हैं और लागू कानून और हमारी वैध परिचालन और कानूनी आवश्यकताओं के अनुसार विलोपन की प्रक्रिया कर सकते हैं।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      कुछ जानकारी को कानून द्वारा आवश्यक या अनुमत होने पर सीमित अवधि के लिए बनाए रखने की आवश्यकता हो सकती है।
+                      Valid deletion request receive hone aur identity verify karne ke baad hum legal guidelines ke mutabiq account delete kar dete hain.
                     </Text>
                   </View>
 
                   {/* Section 11 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>11. डेटा सुरक्षा (Data Security)</Text>
+                    <Text style={styles.sectionHeading}>11. Data Security</Text>
                     <Text style={styles.paragraph}>
-                      हम आपकी जानकारी को अनधिकृत पहुंच, परिवर्तन, प्रकटीकरण या विनाश से बचाने के लिए डिज़ाइन किए गए उचित तकनीकी और संगठनात्मक उपायों का उपयोग करते हैं। इन उपायों में शामिल हो सकते हैं:
+                      Hum unauthorized access aur data loss se bachane ke liye standard technical measures use karte hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• HTTPS/TLS का उपयोग करके सुरक्षित संचार</Text>
-                    <Text style={styles.bulletPoint}>• पासवर्ड हैशिंग</Text>
-                    <Text style={styles.bulletPoint}>• एक्सेस नियंत्रण</Text>
-                    <Text style={styles.bulletPoint}>• सर्वर और डेटाबेस सुरक्षा उपाय</Text>
-                    <Text style={styles.bulletPoint}>• सुरक्षा निगरानी और रखरखाव</Text>
-                    <Text style={styles.bulletPoint}>• बैकअप और पुनर्प्राप्ति उपाय</Text>
+                    <Text style={styles.bulletPoint}>• HTTPS/TLS encrypted communication</Text>
+                    <Text style={styles.bulletPoint}>• Strong password hashing</Text>
+                    <Text style={styles.bulletPoint}>• Secure database access controls</Text>
+                    <Text style={styles.bulletPoint}>• Server monitoring aur backups</Text>
                     <Text style={styles.paragraph}>
-                      हालांकि, किसी भी इंटरनेट ट्रांसमिशन या इलेक्ट्रॉनिक स्टोरेज सिस्टम को पूरी तरह से सुरक्षित होने की गारंटी नहीं दी जा सकती है।
+                      Lekin dhyan rahe ki internet par koi bhi electronic transmission 100% fail-proof nahi hota.
                     </Text>
                   </View>
 
                   {/* Section 12 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>12. बच्चों की गोपनीयता (Children's Privacy)</Text>
+                    <Text style={styles.sectionHeading}>12. Children's Privacy</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot का उपयोग ऐसे उद्देश्यों के लिए नहीं किया जाना चाहिए जिनके लिए हमें लागू कानून के उल्लंघन में बच्चों से जानबूझकर व्यक्तिगत जानकारी एकत्र करने की आवश्यकता हो।
+                      Task Pilot minors ya bachhon se knowingly personal data collect karne ke liye design nahi kiya gaya hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      यदि हमें पता चलता है कि हमने ऐसी परिस्थितियों में किसी बच्चे से व्यक्तिगत जानकारी एकत्र की है जहां ऐसा संग्रह अनुमत नहीं है, तो हम जानकारी को हटाने के लिए उचित कदम उठा सकते हैं।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      माता-पिता या कानूनी अभिभावक जो मानते हैं कि किसी बच्चे ने हमें व्यक्तिगत जानकारी प्रदान की है, वे उपलब्ध सहायता चैनल के माध्यम से हमसे संपर्क कर सकते हैं।
+                      Agar kisi minor ka data unauthorized tarike se collect ho gaya ho, toh parents ya guardians support channel ke through contact karke data delete karwa sakte hain.
                     </Text>
                   </View>
 
                   {/* Section 13 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>13. कुकीज़ और ट्रैकिंग (Cookies and Tracking)</Text>
+                    <Text style={styles.sectionHeading}>13. Cookies aur Tracking</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot की मुख्य कार्य-प्रबंधन कार्यक्षमता के लिए हमें विज्ञापन उद्देश्यों के लिए व्यक्तिगत जानकारी या कार्य सामग्री बेचने की आवश्यकता नहीं है।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      यदि भविष्य में एनालिटिक्स, कुकीज, पहचानकर्ता या इसी तरह की प्रौद्योगिकियां पेश की जाती हैं, तो इस गोपनीयता नीति को जहां लागू कानून द्वारा आवश्यक हो, उनके उपयोग को समझाने के लिए अद्यतन किया जा सकता है।
+                      Task Pilot core features ke liye personal information ya task details advertise karne ke liye tracking use nahi karta. Future mein tracking/analytics aane par policy update ki jayegi.
                     </Text>
                   </View>
 
                   {/* Section 14 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>14. आपके अधिकार (Your Rights)</Text>
+                    <Text style={styles.sectionHeading}>14. Aapke Rights (Your Rights)</Text>
                     <Text style={styles.paragraph}>
-                      आपके स्थान और लागू कानून के आधार पर, आपके पास अपनी व्यक्तिगत जानकारी से संबंधित अधिकार हो सकते हैं, जिसमें निम्नलिखित अधिकार शामिल हो सकते हैं:
+                      Applicable laws ke mutabiq aapke paas yeh rights ho sakte hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• कुछ व्यक्तिगत जानकारी तक पहुंच का अनुरोध करना।</Text>
-                    <Text style={styles.bulletPoint}>• गलत जानकारी को सही करने का अनुरोध करना।</Text>
-                    <Text style={styles.bulletPoint}>• जहां कानूनी रूप से लागू हो, व्यक्तिगत जानकारी को हटाने का अनुरोध करना।</Text>
-                    <Text style={styles.bulletPoint}>• आपकी जानकारी कैसे संसाधित की जाती है, इसके बारे में प्रश्न पूछना।</Text>
-                    <Text style={styles.bulletPoint}>• गोपनीयता संबंधी चिंताओं या शिकायतों को उठाना।</Text>
+                    <Text style={styles.bulletPoint}>• Apne personal data ko access karne ka request.</Text>
+                    <Text style={styles.bulletPoint}>• Inaccurate information ko correct karwane ka request.</Text>
+                    <Text style={styles.bulletPoint}>• Account aur data delete karwane ka request.</Text>
+                    <Text style={styles.bulletPoint}>• Data handling se related concerns ya queries raise karna.</Text>
                     <Text style={styles.paragraph}>
-                      लागू अधिकारों का प्रयोग करने के लिए, Task Pilot द्वारा प्रदान की गई सहायता/संपर्क जानकारी का उपयोग करके हमसे संपर्क करें। कुछ अनुरोधों को संसाधित करने से पहले हमें आपकी पहचान सत्यापित करने की आवश्यकता हो सकती है।
+                      Rights exercise karne ke liye Task Pilot support team se contact karein. Requests process karne se pehle identity verification zaroori ho sakti hai.
                     </Text>
                   </View>
 
                   {/* Section 15 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>15. इस गोपनीयता नीति में परिवर्तन</Text>
+                    <Text style={styles.sectionHeading}>15. Privacy Policy Mein Changes</Text>
                     <Text style={styles.paragraph}>
-                      हम अपनी सेवा, प्रौद्योगिकी, कानूनी आवश्यकताओं या डेटा प्रथाओं में बदलाव को दर्शाने के लिए समय-समय पर इस गोपनीयता नीति को अपडेट कर सकते हैं।
+                      Hum technology, legal updates ya service practices ke according is Privacy Policy ko samay-samay par update kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      जब हम परिवर्तन करेंगे, तो हम "अंतिम अपडेट" तिथि को अपडेट करेंगे और जहां उपयुक्त हो अतिरिक्त सूचना प्रदान कर सकते हैं।
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      हम आपको समय-समय पर इस गोपनीयता नीति की समीक्षा करने के लिए प्रोत्साहित करते हैं।
+                      Changes hone par "Last Updated" date revise hogi aur zaroori hone par notice diya jayega.
                     </Text>
                   </View>
 
                   {/* Section 16 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>16. संपर्क करें (Contact Us)</Text>
+                    <Text style={styles.sectionHeading}>16. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      यदि इस गोपनीयता नीति या आपकी जानकारी से निपटने के संबंध में आपके कोई प्रश्न, चिंताएं, शिकायतें या अनुरोध हैं, तो कृपया Task Pilot द्वारा प्रदान किए गए समर्थन/संपर्क विकल्पों के माध्यम से या हमारे आधिकारिक ईमेल (<Text style={styles.linkText}>support@taskpilot.com</Text>) पर हमसे संपर्क करें।
+                      Agar is Privacy Policy ya apne data handling ke regarding aapka koi sawaal ya complaint hai, toh humse in-app support/tickets ya direct email <Text style={styles.linkText}>support@taskpilot.com</Text> par contact karein.
                     </Text>
                   </View>
                 </>
@@ -617,7 +594,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 onPress={onClose}
               >
                 <Text style={styles.doneBtnText}>
-                  {isHindi ? 'समझ गया (I Understand)' : 'I Understand'}
+                  {isHindi ? 'I Understand (Samajh Gaya)' : 'I Understand'}
                 </Text>
               </TouchableOpacity>
             </View>
