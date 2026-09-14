@@ -8,7 +8,9 @@ export interface AppState {
   language: SupportedLanguage;
   isAuthenticated: boolean;
   isPremium: boolean;
+  subscriptionInfo: { status: string; currentPeriodEnd: string | null; planPrice?: number } | null;
   paywallVisible: boolean;
+  premiumStatusVisible: boolean;
   selectedTaskId: string | null;
   taskDescriptions: Record<string, string>;
 
@@ -17,7 +19,9 @@ export interface AppState {
   setToken: (token: string | null) => void;
   setLanguage: (language: SupportedLanguage) => void;
   setIsPremium: (isPremium: boolean) => void;
+  setSubscriptionInfo: (info: { status: string; currentPeriodEnd: string | null; planPrice?: number } | null) => void;
   setPaywallVisible: (visible: boolean) => void;
+  setPremiumStatusVisible: (visible: boolean) => void;
   setSelectedTaskId: (id: string | null) => void;
   setTaskDescription: (key: string, description: string) => void;
   freeUsageByDate: Record<string, number>;
@@ -35,7 +39,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   language: 'hi',
   isAuthenticated: false,
   isPremium: false,
+  subscriptionInfo: null,
   paywallVisible: false,
+  premiumStatusVisible: false,
   selectedTaskId: null,
   taskDescriptions: {},
   freeUsageByDate: {},
@@ -57,7 +63,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (e) {}
   },
   setIsPremium: (isPremium) => set({ isPremium }),
+  setSubscriptionInfo: (subscriptionInfo) => set({ subscriptionInfo }),
   setPaywallVisible: (paywallVisible) => set({ paywallVisible }),
+  setPremiumStatusVisible: (premiumStatusVisible) => set({ premiumStatusVisible }),
   setSelectedTaskId: (selectedTaskId) => set({ selectedTaskId }),
   setFreeLifetimeCreated: (count) =>
     set({ freeLifetimeCreated: Math.min(3, Math.max(0, count)) }),
@@ -95,7 +103,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   logout: () => {
     setAuthHeader(null);
-    set({ user: null, token: null, isAuthenticated: false, isPremium: false });
+    set({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isPremium: false,
+      subscriptionInfo: null,
+      premiumStatusVisible: false,
+    });
   },
 }));
 

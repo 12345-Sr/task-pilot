@@ -15,17 +15,22 @@ import { useAppStore } from '../store';
 import { t } from '../i18n';
 import { useUpgradeSubscription } from '../hooks';
 import { PaywallModal } from '../components/PaywallModal';
+import { PremiumStatusModal } from '../components/PremiumStatusModal';
 
 export const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, setPaywallVisible } = useAppStore();
+  const { language, isPremium, setPaywallVisible, setPremiumStatusVisible } = useAppStore();
   const upgradeMutation = useUpgradeSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
   const handleSubscribe = () => {
-    setPaywallVisible(true);
+    if (isPremium) {
+      setPremiumStatusVisible(true);
+    } else {
+      setPaywallVisible(true);
+    }
   };
 
   return (
@@ -156,33 +161,36 @@ export const PremiumScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Upgrade CTA */}
+        {/* Upgrade CTA / View Pro Details CTA */}
         <TouchableOpacity
           style={[styles.upgradeBtn, upgradeMutation.isPending && styles.btnDisabled]}
           activeOpacity={0.85}
           onPress={handleSubscribe}
-          disabled={upgradeMutation.isPending || isPremium}
+          disabled={upgradeMutation.isPending}
         >
           {upgradeMutation.isPending ? (
             <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.upgradeBtnText}>
               {isPremium
-                ? t(language, 'already_pro')
-                : language === 'hi'
-                ? '3 Din Free Try Karein'
-                : t(language, 'unlock_pro')}
+                ? (language === 'hi' ? '👑 Pro Status & Details Dekhein' : '👑 View Pro Details & Status')
+                : (language === 'hi' ? '3 Din Free Try Karein' : t(language, 'unlock_pro'))}
             </Text>
           )}
         </TouchableOpacity>
 
         <Text style={styles.cancelAnytimeText}>
-          {language === 'hi' ? 'Kabhi bhi cancel kar sakte hain.' : 'Cancel anytime with 1 tap.'}
+          {isPremium
+            ? (language === 'hi' ? 'Aapka Task Pilot Pro plan active hai.' : 'Your Task Pilot Pro plan is currently active.')
+            : (language === 'hi' ? 'Kabhi bhi cancel kar sakte hain.' : 'Cancel anytime with 1 tap.')}
         </Text>
       </ScrollView>
 
       {/* Razorpay Payment Wall & UPI QR Modal */}
       <PaywallModal />
+
+      {/* Pro Details & Status Modal */}
+      <PremiumStatusModal />
     </SafeAreaView>
   );
 };

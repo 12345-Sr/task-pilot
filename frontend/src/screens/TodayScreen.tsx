@@ -22,13 +22,21 @@ import PaywallModal from '../components/PaywallModal';
 import EditTaskModal from '../components/EditTaskModal';
 import BrandLogo from '../components/BrandLogo';
 import CalendarIcon from '../components/CalendarIcon';
+import { PremiumStatusModal } from '../components/PremiumStatusModal';
 import { NotificationService } from '../services/notifications/notification.service';
 import { Task } from '../types';
 
 export const TodayScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, paywallVisible, setPaywallVisible, getFreeUsage } = useAppStore();
+  const {
+    language,
+    isPremium,
+    paywallVisible,
+    setPaywallVisible,
+    setPremiumStatusVisible,
+    getFreeUsage,
+  } = useAppStore();
   const { data: user } = useUserProfile();
   useSubscription();
   const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
@@ -137,8 +145,28 @@ export const TodayScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Mini Subscription Status Pill */}
-          {!isPremium ? (() => {
+          {/* Mini Subscription Status Pill / Pro Status Pill */}
+          {isPremium ? (
+            <TouchableOpacity
+              style={styles.proBannerMini}
+              activeOpacity={0.85}
+              onPress={() => setPremiumStatusVisible(true)}
+            >
+              <View style={styles.trialBannerLeft}>
+                <Text style={styles.proBadge}>👑 Pro Active</Text>
+                <Text style={styles.proText} numberOfLines={1} ellipsizeMode="tail">
+                  {language === 'hi'
+                    ? 'Unlimited tasks • Status dekhein'
+                    : 'Unlimited tasks • View status'}
+                </Text>
+              </View>
+              <View style={styles.proDetailsBtnMini}>
+                <Text style={styles.proDetailsBtnTextMini}>
+                  {language === 'hi' ? 'Details →' : 'Details →'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (() => {
             const { used: freeUsed, remaining: freeRemaining } = getFreeUsage();
             return (
               <TouchableOpacity
@@ -157,7 +185,7 @@ export const TodayScreen: React.FC = () => {
                 </View>
               </TouchableOpacity>
             );
-          })() : null}
+          })()}
         </View>
 
         {/* 2-Tab Switcher (Today vs Scheduled Window) */}
@@ -324,6 +352,9 @@ export const TodayScreen: React.FC = () => {
           onClose={() => setPaywallVisible(false)}
         />
 
+        {/* Pro Plan Details & Status Modal */}
+        <PremiumStatusModal />
+
         {/* Task Edit Modal (AM/PM, Time, Title, Priority, Date, Notes) */}
         <EditTaskModal
           visible={!!editingTask}
@@ -444,6 +475,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   upgradeBtnTextMini: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.white,
+  },
+  proBannerMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    gap: 8,
+  },
+  proBadge: {
+    flexShrink: 0,
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#15803D',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  proText: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#166534',
+  },
+  proDetailsBtnMini: {
+    flexShrink: 0,
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proDetailsBtnTextMini: {
     fontSize: 11,
     fontWeight: '800',
     color: colors.white,

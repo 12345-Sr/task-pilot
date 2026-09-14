@@ -39,7 +39,14 @@ interface OrderData {
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) => {
   const insets = useSafeAreaInsets();
-  const { paywallVisible, setPaywallVisible, language, setIsPremium } = useAppStore();
+  const {
+    paywallVisible,
+    setPaywallVisible,
+    language,
+    setIsPremium,
+    isPremium,
+    setPremiumStatusVisible,
+  } = useAppStore();
   const isHinglish = language === 'hi';
 
   const isVisible = visible !== undefined ? visible : paywallVisible;
@@ -63,6 +70,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   useEffect(() => {
+    if (isVisible && isPremium) {
+      handleClose();
+      setPremiumStatusVisible(true);
+      return;
+    }
     if (isVisible) {
       createPaymentOrder();
     } else {
@@ -77,7 +89,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         pollTimerRef.current = null;
       }
     };
-  }, [isVisible]);
+  }, [isVisible, isPremium]);
 
   const createPaymentOrder = async () => {
     setLoadingOrder(true);
@@ -177,6 +189,18 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   const handlePaymentSuccess = () => {
     setIsPremium(true);
+    handleClose();
+
+    // Fetch fresh subscription details from backend
+    apiClient.get('/subscription/status').then((res: any) => {
+      if (res) {
+        useAppStore.getState().setSubscriptionInfo({
+          status: res.status || 'active',
+          currentPeriodEnd: res.currentPeriodEnd || null,
+          planPrice: res.planPrice || 399,
+        });
+      }
+    }).catch(() => {});
 
     NotificationService.sendLocalNotification(
       isHinglish ? '🎉 Pro Plan Active Ho Gaya!' : '🎉 Pro Plan Activated!',
@@ -191,7 +215,18 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       isHinglish
         ? 'Aapka Task Pilot Pro subscription successfully activate ho gaya hai. Ab aap bina kisi limit ke tasks bana sakte hain!'
         : 'Your Task Pilot Pro subscription is now active! Enjoy unlimited reminders and full productivity tools.',
-      [{ text: isHinglish ? 'Shuru Karein 🚀' : 'Get Started 🚀', onPress: handleClose }]
+      [
+        {
+          text: isHinglish ? 'Details & Status Dekhein 👑' : 'View Pro Details 👑',
+          onPress: () => {
+            setPremiumStatusVisible(true);
+          },
+        },
+        {
+          text: isHinglish ? 'Shuru Karein 🚀' : 'Get Started 🚀',
+          style: 'cancel',
+        },
+      ]
     );
   };
 

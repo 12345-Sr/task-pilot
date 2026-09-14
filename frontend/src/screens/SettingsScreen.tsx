@@ -26,6 +26,7 @@ import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
 import { PaywallModal } from '../components/PaywallModal';
+import { PremiumStatusModal } from '../components/PremiumStatusModal';
 
 interface SettingsLanguageOption {
   code: SupportedLanguage;
@@ -49,7 +50,16 @@ const SETTINGS_LANGUAGES: SettingsLanguageOption[] = [
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, setLanguage, isPremium, logout, setPaywallVisible, isAuthenticated } = useAppStore();
+  const {
+    language,
+    setLanguage,
+    isPremium,
+    logout,
+    setPaywallVisible,
+    setPremiumStatusVisible,
+    subscriptionInfo,
+    isAuthenticated,
+  } = useAppStore();
   const isHindi = language === 'hi';
   const { data: user } = useUserProfile();
   useSubscription();
@@ -120,7 +130,15 @@ export const SettingsScreen: React.FC = () => {
                   {isPremium ? '👑 ' + t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
                 </Text>
               </View>
-              {!isPremium && (
+              {isPremium ? (
+                <TouchableOpacity
+                  style={styles.miniProBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setPremiumStatusVisible(true)}
+                >
+                  <Text style={styles.miniProBtnText}>👑 {isHindi ? 'Pro Details' : 'Pro Details'}</Text>
+                </TouchableOpacity>
+              ) : (
                 <TouchableOpacity
                   style={styles.miniUpgradeBtn}
                   activeOpacity={0.8}
@@ -133,8 +151,38 @@ export const SettingsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Upgrade Banner if on free plan */}
-        {!isPremium && (
+        {/* Upgrade Banner if free plan OR Pro Status Banner if Premium */}
+        {isPremium ? (
+          <TouchableOpacity
+            style={styles.proActiveBanner}
+            activeOpacity={0.88}
+            onPress={() => setPremiumStatusVisible(true)}
+          >
+            <View style={styles.proActiveCrownWrap}>
+              <Text style={{ fontSize: 24 }}>👑</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.proActiveBannerTitle}>
+                  {isHindi ? 'Task Pilot Pro Active' : 'Task Pilot Pro Active'}
+                </Text>
+                <View style={styles.activePillSmall}>
+                  <Text style={styles.activePillSmallText}>ACTIVE ✓</Text>
+                </View>
+              </View>
+              <Text style={styles.proActiveBannerSub}>
+                {isHindi
+                  ? 'Aapka Pro subscription active hai. Validity aur membership details dekhein.'
+                  : 'Your Pro subscription is active. View validity and membership status.'}
+              </Text>
+            </View>
+            <View style={styles.proActiveBannerBtn}>
+              <Text style={styles.proActiveBannerBtnText}>
+                {isHindi ? 'Details →' : 'Details →'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity
             style={styles.proBanner}
             activeOpacity={0.88}
@@ -166,23 +214,29 @@ export const SettingsScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.settingRow}
             activeOpacity={0.7}
-            onPress={() => setPaywallVisible(true)}
+            onPress={() => (isPremium ? setPremiumStatusVisible(true) : setPaywallVisible(true))}
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>👑</Text>
               <View>
                 <Text style={styles.settingLabel}>
-                  {isPremium ? (isHindi ? 'Pro Plan Active' : 'Pro Plan Active') : (isHindi ? 'Upgrade to Pro' : 'Upgrade to Pro')}
+                  {isPremium
+                    ? (isHindi ? '👑 Pro Subscription Status' : '👑 Pro Subscription Status')
+                    : (isHindi ? 'Upgrade to Pro' : 'Upgrade to Pro')}
                 </Text>
                 <Text style={styles.settingSubLabel}>
                   {isPremium
-                    ? (isHindi ? 'Unlimited task reminders active hain' : 'Unlimited task reminders active')
-                    : (isHindi ? '₹399/mahina • Pay via UPI QR Code' : '₹399/month • Pay via UPI QR Code')}
+                    ? (isHindi ? 'Active • Plan details aur validity status dekhein' : 'Active • View plan details & validity')
+                    : (isHindi ? '₹399/mahina • Sabhi features unlock karein' : '₹399/month • Unlock all features')}
                 </Text>
               </View>
             </View>
             <View style={styles.settingRight}>
-              {!isPremium && (
+              {isPremium ? (
+                <View style={styles.activeBadgePill}>
+                  <Text style={styles.activeBadgePillText}>{isHindi ? 'Active ✓' : 'Active ✓'}</Text>
+                </View>
+              ) : (
                 <View style={styles.upgradeBadgePill}>
                   <Text style={styles.upgradeBadgePillText}>{isHindi ? 'Upgrade' : 'Upgrade'}</Text>
                 </View>
@@ -455,6 +509,9 @@ export const SettingsScreen: React.FC = () => {
 
       {/* Razorpay Payment Wall & UPI QR Modal */}
       <PaywallModal />
+
+      {/* Pro Plan Details & Status Modal */}
+      <PremiumStatusModal />
     </SafeAreaView>
   );
 };
@@ -548,6 +605,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
+  miniProBtn: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  miniProBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
   proBanner: {
     backgroundColor: '#FFF7ED',
     borderWidth: 1.5,
@@ -596,6 +664,68 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
+  proActiveBanner: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#22C55E',
+    borderRadius: radius.lg,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 4,
+  },
+  proActiveCrownWrap: {
+    flexShrink: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proActiveBannerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: -0.2,
+  },
+  activePillSmall: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+  },
+  activePillSmallText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: 0.3,
+  },
+  proActiveBannerSub: {
+    fontSize: 12,
+    color: '#166534',
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  proActiveBannerBtn: {
+    flexShrink: 0,
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proActiveBannerBtnText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
   upgradeBadgePill: {
     flexShrink: 0,
     backgroundColor: '#FFF7ED',
@@ -609,6 +739,20 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '800',
     color: '#EA580C',
+  },
+  activeBadgePill: {
+    flexShrink: 0,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  activeBadgePillText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#15803D',
   },
   section: {
     gap: spacing.xs,

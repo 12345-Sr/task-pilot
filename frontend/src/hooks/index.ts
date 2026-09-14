@@ -312,13 +312,18 @@ export function useResetPassword() {
 // SUBSCRIPTION HOOKS
 // -------------------------------------------------------------
 export function useSubscription() {
-  const { setIsPremium, setFreeLifetimeCreated, setPaywallVisible, language } = useAppStore();
+  const { setIsPremium, setSubscriptionInfo, setFreeLifetimeCreated, setPaywallVisible, language } = useAppStore();
   return useQuery({
     queryKey: QUERY_KEYS.SUBSCRIPTION,
     queryFn: async () => {
       const sub = await subscriptionRepository.getStatus();
       const isPro = sub?.status === 'active' || (sub as any)?.isPremium === true;
       setIsPremium(isPro);
+      setSubscriptionInfo({
+        status: sub?.status || (isPro ? 'active' : 'free'),
+        currentPeriodEnd: (sub as any)?.currentPeriodEnd || null,
+        planPrice: (sub as any)?.planPrice || 399,
+      });
       if (typeof (sub as any)?.dailyUsed === 'number') {
         setFreeLifetimeCreated((sub as any).dailyUsed);
       }

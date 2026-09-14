@@ -17,11 +17,12 @@ import StreakCard from '../components/StreakCard';
 import WeeklyChart from '../components/WeeklyChart';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ErrorState from '../components/ErrorState';
+import { PremiumStatusModal } from '../components/PremiumStatusModal';
 
 export const ProgressScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, setPaywallVisible } = useAppStore();
+  const { language, isPremium, setPaywallVisible, setPremiumStatusVisible } = useAppStore();
   const { data: progress, isLoading, error, refetch, isRefetching } = useWeeklyProgress();
 
   // Determine best day dynamically from real completed tasks (hidden for new users with 0 completions)
@@ -153,8 +154,29 @@ export const ProgressScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Premium Upgrade prompt if free tier */}
-        {!isPremium && (
+        {/* Premium Upgrade prompt if free tier OR Pro Status Banner if Premium */}
+        {isPremium ? (
+          <TouchableOpacity
+            style={styles.proActiveBanner}
+            activeOpacity={0.85}
+            onPress={() => setPremiumStatusVisible(true)}
+          >
+            <View style={styles.upgradeBannerContent}>
+              <Text style={styles.upgradeBannerEmoji}>👑</Text>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.proActiveBannerTitle}>
+                  {language === 'hi' ? 'Task Pilot Pro Member' : 'Task Pilot Pro Member'}
+                </Text>
+                <Text style={styles.proActiveBannerSubtitle}>
+                  {language === 'hi'
+                    ? 'Unlimited tasks aur streak insights unlock hain • Status dekhein'
+                    : 'Unlimited tasks & full streak insights unlocked • View status'}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 18, color: '#15803D', fontWeight: '800' }}>›</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity
             style={styles.upgradeBanner}
             activeOpacity={0.85}
@@ -172,6 +194,9 @@ export const ProgressScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Pro Details & Status Modal */}
+      <PremiumStatusModal />
     </SafeAreaView>
   );
 };
@@ -371,6 +396,24 @@ const styles = StyleSheet.create({
   upgradeBannerSubtitle: {
     ...typography.caption,
     color: colors.textSecondary,
+    marginTop: 2,
+  },
+  proActiveBanner: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#22C55E',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.xs,
+  },
+  proActiveBannerTitle: {
+    ...typography.bodySmall,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  proActiveBannerSubtitle: {
+    ...typography.caption,
+    color: '#166534',
     marginTop: 2,
   },
 });
