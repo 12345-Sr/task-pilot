@@ -145,10 +145,17 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     if (!orderData) return;
     setVerifying(true);
     try {
+      // 1. First check if subscription is already active (polling or callback)
+      const statusRes: any = await apiClient.get('/subscription/status');
+      if (statusRes?.isPremium || statusRes?.status === 'active') {
+        handlePaymentSuccess();
+        return;
+      }
+
+      // 2. Ask backend to check order status directly with Razorpay
       const res: any = await apiClient.post('/subscription/verify-payment', {
         order_id: orderData.orderId,
         razorpay_order_id: orderData.orderId,
-        razorpay_payment_id: `pay_${Date.now()}`,
       });
 
       if (res?.ok || res?.isPremium) {
@@ -157,19 +164,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         throw new Error(res?.error || 'Verification failed');
       }
     } catch (err: any) {
-      try {
-        const statusRes: any = await apiClient.get('/subscription/status');
-        if (statusRes?.isPremium || statusRes?.status === 'active') {
-          handlePaymentSuccess();
-          return;
-        }
-      } catch (e) {}
-
       Alert.alert(
         'Payment Status',
         isHinglish
-          ? 'Agar aapne payment poora kar diya hai, toh kripya 5 second intezaar karke dobara tap karein. Bank confirmation milte hi Pro automatically unlock ho jayega.'
-          : 'If you have completed payment, please wait a few seconds and tap verify again.'
+          ? 'Payment abhi confirm nahi hua hai. Agar aapne Chrome me payment poora kar diya hai, toh kripya 3-5 second wait karke dobara tap karein.'
+          : 'Payment not detected yet. If you just paid in Chrome, please wait a few seconds and tap verify again.'
       );
     } finally {
       setVerifying(false);
