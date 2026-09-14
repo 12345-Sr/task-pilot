@@ -228,7 +228,7 @@ router.post('/create-order', requireUser, async (req, res) => {
 router.get('/checkout', async (req, res) => {
   try {
     const { order_id, user_id, real_order } = req.query;
-    const keyId = razorpayKeyId || 'rzp_test_TZW0dzD6BHG8kK';
+    const keyId = req.query.key_id || getCleanKeyId() || DEFAULT_RZP_KEY_ID;
     const amountPaise = 39900;
 
     let userName = 'Task Pilot User';
@@ -376,7 +376,7 @@ router.get('/payment-callback', async (req, res) => {
       }
     }
 
-    if (isVerified || (razorpay_payment_id && !razorpayKeySecret)) {
+    if (isVerified || (razorpay_payment_id && !getCleanKeySecret())) {
       let resolvedUserId = user_id;
       if (!resolvedUserId && targetOrderId) {
         const subRow = await db.query(
@@ -438,6 +438,9 @@ router.get('/payment-callback', async (req, res) => {
     </div>
     <div class="note">
       ✓ Aap ab is window ko band karke <b>Task Pilot app</b> par wapas jaa sakte hain.
+    </div>
+    <div style="margin-top: 20px;">
+      <a href="taskpilot://" style="display: inline-block; background: #10B981; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">👉 Return to Task Pilot App</a>
     </div>
   </div>
 </body>
