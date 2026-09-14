@@ -35,6 +35,8 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
     subscriptionInfo,
     setSubscriptionInfo,
     setIsPremium,
+    isPremium,
+    setPaywallVisible,
     language,
   } = useAppStore();
   const isHinglish = language === 'hi';
@@ -48,6 +50,13 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
     } else {
       setPremiumStatusVisible(false);
     }
+  };
+
+  const handleOpenUpgrade = () => {
+    handleClose();
+    setTimeout(() => {
+      setPaywallVisible(true);
+    }, 150);
   };
 
   const handleRefresh = async () => {
@@ -64,12 +73,11 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
         });
         if (!isPro) {
           Alert.alert(
-            isHinglish ? 'Plan Expire Ho Gaya Hai' : 'Plan Has Expired',
+            isHinglish ? 'Status Check' : 'Status Check',
             isHinglish
-              ? 'Aapka Pro subscription period khatam ho gaya hai. Ab aap dobara Pro upgrade kar sakte hain.'
-              : 'Your Pro subscription period has ended. Upgrade options are now available again.'
+              ? 'Aapka account abhi Free tier par hai. Upgrade option available hai.'
+              : 'Your account is currently on the Free tier. Upgrade options are available.'
           );
-          handleClose();
         }
       }
     } catch (e) {
@@ -126,8 +134,10 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
             </Text>
           </View>
 
-          <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedText}>✓ Verified</Text>
+          <View style={[styles.verifiedBadge, !isPremium && styles.freeBadge]}>
+            <Text style={[styles.verifiedText, !isPremium && styles.freeBadgeText]}>
+              {isPremium ? '✓ Pro Verified' : 'Free Plan'}
+            </Text>
           </View>
         </View>
 
@@ -139,24 +149,41 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Active Pro Hero Card */}
+          {/* Hero Card */}
           <View style={styles.heroCard}>
-            <View style={styles.crownCircle}>
-              <Text style={styles.crownIcon}>👑</Text>
+            <View style={[styles.crownCircle, !isPremium && styles.crownCircleFree]}>
+              <Text style={styles.crownIcon}>{isPremium ? '👑' : '⭐'}</Text>
             </View>
 
-            <View style={styles.activeStatusPill}>
-              <View style={styles.greenDot} />
-              <Text style={styles.activeStatusPillText}>
-                {isHinglish ? 'PRO PLAN ACTIVE' : 'PRO PLAN ACTIVE'}
-              </Text>
-            </View>
+            {isPremium ? (
+              <View style={styles.activeStatusPill}>
+                <View style={styles.greenDot} />
+                <Text style={styles.activeStatusPillText}>
+                  {isHinglish ? 'PRO PLAN ACTIVE' : 'PRO PLAN ACTIVE'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.freeStatusPill}>
+                <View style={styles.amberDot} />
+                <Text style={styles.freeStatusPillText}>
+                  {isHinglish ? 'FREE TIER (LIMIT: 3 TASKS)' : 'FREE TIER (LIMIT: 3 TASKS)'}
+                </Text>
+              </View>
+            )}
 
-            <Text style={styles.heroTitle}>Task Pilot Pro Member</Text>
+            <Text style={styles.heroTitle}>
+              {isPremium
+                ? 'Task Pilot Pro Member'
+                : (isHinglish ? 'Task Pilot Free Tier' : 'Task Pilot Free Tier')}
+            </Text>
             <Text style={styles.heroSubtitle}>
-              {isHinglish
-                ? 'Aapke pass sabhi premium productivity features ka unlimited access hai.'
-                : 'You have unlimited access to all productivity features.'}
+              {isPremium
+                ? (isHinglish
+                    ? 'Aapke pass sabhi premium productivity features ka unlimited access hai.'
+                    : 'You have unlimited access to all productivity features.')
+                : (isHinglish
+                    ? 'Aap abhi Free tier par hain. Unlimited daily reminders aur advance audio alerts ke liye Pro upgrade karein.'
+                    : 'You are on the Free tier. Upgrade to Pro for unlimited reminders and advance sound alerts.')}
             </Text>
 
             {/* Validity Box */}
@@ -164,13 +191,19 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
               <View style={styles.validityRow}>
                 <View>
                   <Text style={styles.validityLabel}>
-                    {isHinglish ? 'Plan Validity' : 'Plan Validity'}
+                    {isPremium
+                      ? (isHinglish ? 'Plan Validity' : 'Plan Validity')
+                      : (isHinglish ? 'Current Status' : 'Current Status')}
                   </Text>
-                  <Text style={styles.validityDate}>{formattedEndDate}</Text>
+                  <Text style={styles.validityDate}>
+                    {isPremium ? formattedEndDate : (isHinglish ? 'Free Tier Active' : 'Free Tier Active')}
+                  </Text>
                 </View>
-                <View style={styles.daysLeftPill}>
-                  <Text style={styles.daysLeftText}>
-                    ⏳ {daysRemaining} {isHinglish ? 'Din Baaki' : 'Days Left'}
+                <View style={[styles.daysLeftPill, !isPremium && styles.daysLeftPillFree]}>
+                  <Text style={[styles.daysLeftText, !isPremium && styles.daysLeftTextFree]}>
+                    {isPremium
+                      ? `⏳ ${daysRemaining} ${isHinglish ? 'Din Baaki' : 'Days Left'}`
+                      : '⚡ Upgrade Ready'}
                   </Text>
                 </View>
               </View>
@@ -181,23 +214,29 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
                 <Text style={styles.planInfoLabel}>
                   {isHinglish ? 'Plan Ka Naam' : 'Plan Name'}
                 </Text>
-                <Text style={styles.planInfoVal}>Task Pilot Pro (₹399/mo)</Text>
+                <Text style={styles.planInfoVal}>
+                  {isPremium ? 'Task Pilot Pro (₹399/mo)' : 'Task Pilot Free Tier'}
+                </Text>
               </View>
               <View style={styles.planInfoRow}>
                 <Text style={styles.planInfoLabel}>
                   {isHinglish ? 'Billing Status' : 'Billing Status'}
                 </Text>
-                <Text style={styles.planInfoValSuccess}>
-                  {isHinglish ? 'Paid (Successful ✓)' : 'Paid (Successful ✓)'}
+                <Text style={isPremium ? styles.planInfoValSuccess : styles.planInfoValPending}>
+                  {isPremium
+                    ? (isHinglish ? 'Paid (Successful ✓)' : 'Paid (Successful ✓)')
+                    : (isHinglish ? 'Free (Upgrade Available)' : 'Free (Upgrade Available)')}
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* Active Features List */}
+          {/* Features List */}
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>
-              {isHinglish ? 'Unlocked Premium Features' : 'Unlocked Premium Features'}
+              {isPremium
+                ? (isHinglish ? 'Unlocked Premium Features' : 'Unlocked Premium Features')
+                : (isHinglish ? 'Pro Plan Features (Upgrade Par Milega)' : 'Pro Plan Features')}
             </Text>
 
             <View style={styles.featureItem}>
@@ -210,7 +249,7 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
                 </Text>
                 <Text style={styles.featureDesc}>
                   {isHinglish
-                    ? 'Free plan ki 3-task limit hat gayi hai. Jitne chahein tasks banayein.'
+                    ? 'Free plan ki 3-task limit hat jaati hai. Jitne chahein daily reminders banayein.'
                     : 'The 3-task free tier limit is removed. Create as many reminders as you need.'}
                 </Text>
               </View>
@@ -265,34 +304,54 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
             </View>
           </View>
 
-          {/* Expiry & Renewal Info Card */}
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>
-              ℹ️ {isHinglish ? 'Plan Expiry Jankari' : 'Plan Expiry Notice'}
+          {/* Expiry / Upgrade Notice Card */}
+          <View style={[styles.infoCard, !isPremium && styles.infoCardFree]}>
+            <Text style={[styles.infoTitle, !isPremium && styles.infoTitleFree]}>
+              ℹ️ {isPremium
+                ? (isHinglish ? 'Plan Expiry Jankari' : 'Plan Expiry Notice')
+                : (isHinglish ? 'Pro Membership Kaise Kaam Karta Hai?' : 'How Pro Membership Works?')}
             </Text>
-            <Text style={styles.infoText}>
-              {isHinglish
-                ? `Yeh plan ${daysRemaining} din tak poori tarah active rahega. Jab validity date (${formattedEndDate}) complete hogi, tab app wapas free plan par shift ho jayegi aur screen par 'Upgrade' ka option dobara dikhne lagega, jisse aap asani se renew kar sakenge.`
-                : `Your Pro plan is active for ${daysRemaining} more days. Once this period expires on ${formattedEndDate}, the app will switch back to the free plan and the 'Upgrade' option will reappear so you can renew anytime.`}
+            <Text style={[styles.infoText, !isPremium && styles.infoTextFree]}>
+              {isPremium
+                ? (isHinglish
+                    ? `Yeh plan ${daysRemaining} din tak poori tarah active rahega. Jab validity date (${formattedEndDate}) complete hogi, tab app wapas free plan par shift ho jayegi aur screen par 'Upgrade' ka option dobara dikhne lagega, jisse aap asani se renew kar sakenge.`
+                    : `Your Pro plan is active for ${daysRemaining} more days. Once this period expires on ${formattedEndDate}, the app will switch back to the free plan and the 'Upgrade' option will reappear so you can renew anytime.`)
+                : (isHinglish
+                    ? 'Payment poora hone par Pro plan turant activate ho jaata hai aur sabhi upgrade buttons hat kar yeh Status Page show hota hai. Plan period khatam hone par upgrade option wapas aa jaata hai.'
+                    : 'Upon successful payment, Pro plan activates immediately and upgrade buttons are replaced by this Status Page. When the period ends, upgrade options reappear.')}
             </Text>
           </View>
 
-          {/* Refresh & Close Actions */}
+          {/* Actions */}
           <View style={styles.actionsWrap}>
-            <TouchableOpacity
-              style={styles.refreshBtn}
-              activeOpacity={0.8}
-              onPress={handleRefresh}
-              disabled={refreshing}
-            >
-              {refreshing ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={styles.refreshBtnText}>
-                  🔄 {isHinglish ? 'Status Refresh Karein' : 'Refresh Status'}
+            {!isPremium && (
+              <TouchableOpacity
+                style={styles.upgradeCtaBtn}
+                activeOpacity={0.88}
+                onPress={handleOpenUpgrade}
+              >
+                <Text style={styles.upgradeCtaBtnText}>
+                  👑 {isHinglish ? 'Pro Upgrade Karein (₹399/mahina)' : 'Upgrade to Pro (₹399/month)'}
                 </Text>
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+
+            {isPremium && (
+              <TouchableOpacity
+                style={styles.refreshBtn}
+                activeOpacity={0.8}
+                onPress={handleRefresh}
+                disabled={refreshing}
+              >
+                {refreshing ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={styles.refreshBtnText}>
+                    🔄 {isHinglish ? 'Status Refresh Karein' : 'Refresh Status'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.doneBtn}
@@ -581,6 +640,80 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  upgradeCtaBtn: {
+    backgroundColor: '#EA580C',
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  upgradeCtaBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  freeBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+  },
+  freeBadgeText: {
+    color: '#64748B',
+  },
+  crownCircleFree: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+  },
+  freeStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  amberDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D97706',
+  },
+  freeStatusPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 0.5,
+  },
+  daysLeftPillFree: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FDBA74',
+  },
+  daysLeftTextFree: {
+    color: '#C2410C',
+  },
+  planInfoValPending: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#EA580C',
+  },
+  infoCardFree: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  infoTitleFree: {
+    color: '#92400E',
+  },
+  infoTextFree: {
+    color: '#78350F',
   },
 });
 

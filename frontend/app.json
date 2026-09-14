@@ -2,13 +2,13 @@
   "expo": {
     "name": "TaskPilot",
     "slug": "task-pilot",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#EDF2F4",
     "android": {
       "package": "com.taskpilot.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#EDF2F4"

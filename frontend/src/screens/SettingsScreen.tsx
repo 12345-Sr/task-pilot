@@ -211,10 +211,11 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>{isHindi ? 'Subscription aur Plan' : 'Subscription & Plan'}</Text>
 
+          {/* Row 1: Always accessible Pro Details & Status Modal */}
           <TouchableOpacity
             style={styles.settingRow}
             activeOpacity={0.7}
-            onPress={() => (isPremium ? setPremiumStatusVisible(true) : setPaywallVisible(true))}
+            onPress={() => setPremiumStatusVisible(true)}
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>👑</Text>
@@ -222,12 +223,12 @@ export const SettingsScreen: React.FC = () => {
                 <Text style={styles.settingLabel}>
                   {isPremium
                     ? (isHindi ? '👑 Pro Subscription Status' : '👑 Pro Subscription Status')
-                    : (isHindi ? 'Upgrade to Pro' : 'Upgrade to Pro')}
+                    : (isHindi ? 'Pro Membership Details & Status' : 'Pro Membership Details & Status')}
                 </Text>
                 <Text style={styles.settingSubLabel}>
                   {isPremium
-                    ? (isHindi ? 'Active • Plan details aur validity status dekhein' : 'Active • View plan details & validity')
-                    : (isHindi ? '₹399/mahina • Sabhi features unlock karein' : '₹399/month • Unlock all features')}
+                    ? (isHindi ? 'Active • Plan validity aur details dekhein' : 'Active • View plan validity & details')
+                    : (isHindi ? 'Free Tier • Plan status aur benefits dekhein' : 'Free Tier • View status & unlocked perks')}
                 </Text>
               </View>
             </View>
@@ -237,13 +238,40 @@ export const SettingsScreen: React.FC = () => {
                   <Text style={styles.activeBadgePillText}>{isHindi ? 'Active ✓' : 'Active ✓'}</Text>
                 </View>
               ) : (
-                <View style={styles.upgradeBadgePill}>
-                  <Text style={styles.upgradeBadgePillText}>{isHindi ? 'Upgrade' : 'Upgrade'}</Text>
+                <View style={styles.detailsBadgePill}>
+                  <Text style={styles.detailsBadgePillText}>{isHindi ? 'Details ›' : 'Details ›'}</Text>
                 </View>
               )}
               <Text style={styles.chevron}>›</Text>
             </View>
           </TouchableOpacity>
+
+          {/* Row 2: Upgrade Option (ONLY shown when !isPremium; REMOVED when isPremium!) */}
+          {!isPremium && (
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => setPaywallVisible(true)}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>⚡</Text>
+                <View>
+                  <Text style={styles.settingLabel}>
+                    {isHindi ? 'Upgrade to Task Pilot Pro' : 'Upgrade to Task Pilot Pro'}
+                  </Text>
+                  <Text style={styles.settingSubLabel}>
+                    {isHindi ? '₹399/mahina • Unlimited daily reminders paayein' : '₹399/month • Unlock unlimited reminders'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.settingRight}>
+                <View style={styles.upgradeBadgePill}>
+                  <Text style={styles.upgradeBadgePillText}>{isHindi ? 'Pay ₹399' : 'Pay ₹399'}</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Preferences Section */}
@@ -739,6 +767,20 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '800',
     color: '#EA580C',
+  },
+  detailsBadgePill: {
+    flexShrink: 0,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  detailsBadgePillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#475569',
   },
   activeBadgePill: {
     flexShrink: 0,

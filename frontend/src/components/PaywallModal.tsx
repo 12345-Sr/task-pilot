@@ -46,6 +46,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     setIsPremium,
     isPremium,
     setPremiumStatusVisible,
+    user,
   } = useAppStore();
   const isHinglish = language === 'hi';
 
@@ -110,7 +111,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         amount: 399,
         amountPaise: 39900,
         currency: 'INR',
-        checkoutUrl: `https://task-pilot-api.onrender.com/api/subscription/checkout?order_id=${mockOrderId}`,
+        checkoutUrl: `https://task-pilot-api.onrender.com/api/subscription/checkout?order_id=${mockOrderId}&user_id=${user?.id || ''}`,
         planTitle: 'Task Pilot Pro Plan',
         validity: '30 Days',
       });
