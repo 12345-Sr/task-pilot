@@ -42,6 +42,7 @@ credentials.json
 
 # APK Builds
 *.apk
+*.zip
 frontend/android/app/build/
 frontend/android/.gradle/
 

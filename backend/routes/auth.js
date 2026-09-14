@@ -321,6 +321,13 @@ router.post('/login', async (req, res) => {
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
+    if (user.is_active === false) {
+      return res.status(403).json({
+        error: 'Your account has been deactivated by administrator. Please contact support.',
+        isDeactivated: true
+      });
+    }
+
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
@@ -491,14 +498,21 @@ router.post('/reset-password', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', requireUser, async (req, res) => {
   const result = await db.query(
-    'SELECT id, name, email, phone, language, install_date FROM users WHERE id = $1',
+    'SELECT id, name, email, phone, language, COALESCE(is_active, true) AS is_active, install_date FROM users WHERE id = $1',
     [req.userId]
   );
   if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+  const user = result.rows[0];
+  if (user.is_active === false) {
+    return res.status(403).json({
+      error: 'Your account has been deactivated by administrator. Please contact support.',
+      isDeactivated: true
+    });
+  }
   const subResult = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [req.userId]);
   const sub = subResult.rows[0];
   const isPremium = sub?.status === 'active';
-  res.json({ user: { ...result.rows[0], isPremium }, isPremium, subscription: sub || null });
+  res.json({ user: { ...user, isPremium }, isPremium, subscription: sub || null });
 });
 
 // PATCH /api/auth/language  { language: 'hi' | 'en' | 'mr' | 'bn' | 'ta' | 'te' | 'gu' | 'pa' }

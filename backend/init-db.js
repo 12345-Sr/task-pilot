@@ -15,10 +15,15 @@ async function initDatabase(retries = 5, delayMs = 3000) {
           password_hash   TEXT NOT NULL,
           language        VARCHAR(5) NOT NULL DEFAULT 'hi',
           push_token      TEXT,
+          is_active       BOOLEAN NOT NULL DEFAULT TRUE,
           install_date    TIMESTAMPTZ NOT NULL DEFAULT now(),
           created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
           updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
         );
+
+        -- Safe column migrations for existing databases
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+        CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
 
         CREATE TABLE IF NOT EXISTS subscriptions (
           id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),

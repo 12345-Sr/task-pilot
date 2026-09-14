@@ -2282,17 +2282,29 @@ function renderUsersTable(list) {
     const dateStr = u.install_date ? new Date(u.install_date).toLocaleDateString() : 'N/A';
     const subStatus = u.subscription_status || 'free';
     const badgeClass = subStatus === 'active' ? 'active' : (subStatus === 'expired' ? 'expired' : 'free');
+    const isActive = u.is_active !== false;
+    const activeBadge = isActive
+      ? '<span class="status-badge" style="background:#DCFCE7; color:#16A34A; font-size:10px; margin-left:6px;">ACTIVE</span>'
+      : '<span class="status-badge" style="background:#FEE2E2; color:#DC2626; font-size:10px; margin-left:6px;">DEACTIVATED</span>';
     return `
-      <tr>
+      <tr style="${isActive ? '' : 'opacity:0.75; background:#FFF8F8;'}">
         <td>
-          <div style="font-weight:700;">${escapeHtml(u.name || 'Task Pilot User')}</div>
+          <div style="font-weight:700; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+            <span>${escapeHtml(u.name || 'Task Pilot User')}</span>
+            ${activeBadge}
+          </div>
           <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(u.email || '')}</div>
+          ${u.phone ? `<div style="font-size:11px; color:var(--text-muted);">📱 ${escapeHtml(u.phone)}</div>` : ''}
         </td>
         <td>${escapeHtml((u.language || 'en').toUpperCase())}</td>
         <td>${dateStr}</td>
         <td><span class="status-badge ${badgeClass}">${subStatus.toUpperCase()}</span></td>
         <td>
-          <button class="btn-submit" style="width:auto; padding:5px 12px; font-size:12px; margin-top:0;" onclick="viewUserDetail('${u.id || 1}')">Inspect</button>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0;" onclick="viewUserDetail('${u.id || 1}')">Inspect</button>
+            <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0; background:${isActive ? '#F59E0B' : '#10B981'}; border-color:transparent;" onclick="toggleUserStatus('${u.id}', ${isActive})">${isActive ? 'Deactivate' : 'Activate'}</button>
+            <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0; background:#EF4444; border-color:transparent;" onclick="deleteUser('${u.id}', '${escapeHtml(u.name || 'User')}')">Delete</button>
+          </div>
         </td>
       </tr>
     `;
@@ -2314,10 +2326,63 @@ async function viewUserDetail(uid) {
     const res = await fetch(`${API_BASE}/admin/users/${uid}`, { headers: authHeaders() });
     if (res.ok) {
       const d = await res.json();
-      alert(`User: ${d.user?.name || 'User'}\nEmail: ${d.user?.email}\nStreak: ${d.stats?.currentStreak ?? 0} days\nTasks: ${d.stats?.totalTasks ?? 0}`);
+      const statusText = d.user?.is_active === false ? 'DEACTIVATED' : 'ACTIVE';
+      alert(`User: ${d.user?.name || 'User'}\nEmail: ${d.user?.email}\nPhone: ${d.user?.phone || 'N/A'}\nAccount Status: ${statusText}\nLanguage: ${(d.user?.language || 'en').toUpperCase()}\nRecent Tasks: ${d.recentTasks?.length || 0}`);
     }
   } catch (e) {
     showToast(`User details ready`);
+  }
+}
+
+async function toggleUserStatus(uid, currentActive) {
+  const action = currentActive ? 'deactivate' : 'activate';
+  const confirmMsg = currentActive 
+    ? 'Are you sure you want to DEACTIVATE this user? They will be immediately blocked from logging in or using the app.' 
+    : 'Are you sure you want to ACTIVATE this user? Their account access will be restored immediately.';
+  
+  if (!confirm(confirmMsg)) return;
+
+  showToast(`Updating user status...`);
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${uid}/status`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ isActive: !currentActive })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || `User status updated`);
+      await loadUsers();
+      if (typeof loadOverview === 'function') loadOverview();
+    } else {
+      alert(data.error || `Failed to update user status`);
+    }
+  } catch (err) {
+    alert(`Network error: ${err.message}`);
+  }
+}
+
+async function deleteUser(uid, userName) {
+  const confirmMsg = `⚠️ PERMANENT DELETE WARNING:\n\nAre you sure you want to permanently delete user "${userName}"?\n\nThis will remove all associated tasks, reminders, and subscription records from the database. This action CANNOT be undone.`;
+  
+  if (!confirm(confirmMsg)) return;
+
+  showToast(`Permanently deleting user #${uid}...`);
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${uid}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || `User permanently deleted`);
+      await loadUsers();
+      if (typeof loadOverview === 'function') loadOverview();
+    } else {
+      alert(data.error || `Failed to delete user`);
+    }
+  } catch (err) {
+    alert(`Network error: ${err.message}`);
   }
 }
 

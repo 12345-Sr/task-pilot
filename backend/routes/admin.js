@@ -187,7 +187,7 @@ router.get('/users', requireAdmin, async (req, res) => {
 
   try {
     const result = await db.query(
-      `SELECT u.id, u.name, u.email, u.language, u.install_date,
+      `SELECT u.id, u.name, u.email, u.phone, u.language, COALESCE(u.is_active, true) AS is_active, u.install_date,
               s.status AS subscription_status, s.current_period_end
        FROM users u
        LEFT JOIN subscriptions s ON s.user_id = u.id
@@ -205,9 +205,9 @@ router.get('/users', requireAdmin, async (req, res) => {
     if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
       return res.json({
         users: [
-          { id: '1', name: 'Rohan Sharma', email: 'rohan@example.com', language: 'hi', subscription_status: 'active' },
-          { id: '2', name: 'Priya Patel', email: 'priya@example.com', language: 'gu', subscription_status: 'free' },
-          { id: '3', name: 'Aarav Mehta', email: 'aarav@example.com', language: 'en', subscription_status: 'free' },
+          { id: '1', name: 'Rohan Sharma', email: 'rohan@example.com', language: 'hi', is_active: true, subscription_status: 'active' },
+          { id: '2', name: 'Priya Patel', email: 'priya@example.com', language: 'gu', is_active: true, subscription_status: 'free' },
+          { id: '3', name: 'Aarav Mehta', email: 'aarav@example.com', language: 'en', is_active: false, subscription_status: 'free' },
         ],
         total: 3,
         page: 1,
@@ -221,7 +221,7 @@ router.get('/users', requireAdmin, async (req, res) => {
 // GET /api/admin/users/:id — full detail incl. their tasks
 router.get('/users/:id', requireAdmin, async (req, res) => {
   try {
-    const userR = await db.query('SELECT id, name, email, phone, language, install_date FROM users WHERE id = $1', [req.params.id]);
+    const userR = await db.query('SELECT id, name, email, phone, language, COALESCE(is_active, true) AS is_active, install_date, created_at, updated_at FROM users WHERE id = $1', [req.params.id]);
     if (!userR.rows.length) return res.status(404).json({ error: 'Not found' });
     const subR = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [req.params.id]);
     const tasksR = await db.query('SELECT * FROM tasks WHERE user_id = $1 ORDER BY task_date DESC LIMIT 50', [req.params.id]);
@@ -310,6 +310,99 @@ router.post('/users/:id/grant-premium', requireAdmin, async (req, res) => {
     res.json({ subscription: result.rows[0] });
   } catch (err) {
     res.json({ subscription: { user_id: req.params.id, status: 'active', current_period_end: periodEnd } });
+  }
+});
+
+// PATCH /api/admin/users/:id/status — activate or deactivate a user account
+router.patch('/users/:id/status', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  let { isActive, is_active } = req.body;
+  let targetStatus = isActive !== undefined ? isActive : is_active;
+
+  try {
+    if (targetStatus === undefined) {
+      // Toggle if not explicitly specified
+      const curr = await db.query('SELECT is_active FROM users WHERE id = $1', [id]);
+      if (!curr.rows.length) return res.status(404).json({ error: 'User not found' });
+      targetStatus = !curr.rows[0].is_active;
+    } else {
+      targetStatus = Boolean(targetStatus);
+    }
+
+    const result = await db.query(
+      'UPDATE users SET is_active = $1, updated_at = now() WHERE id = $2 RETURNING id, name, email, is_active, updated_at',
+      [targetStatus, id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updatedUser = result.rows[0];
+    console.log(`[ADMIN] User ${updatedUser.name} (${updatedUser.email}) status set to: ${targetStatus ? 'ACTIVE' : 'DEACTIVATED'}`);
+    return res.json({
+      ok: true,
+      message: targetStatus ? 'User activated successfully' : 'User deactivated successfully',
+      user: updatedUser
+    });
+  } catch (err) {
+    console.error('[ADMIN] Error toggling user status:', err);
+    return res.status(500).json({ error: err.message || 'Failed to update user status' });
+  }
+});
+
+// POST /api/admin/users/:id/deactivate — explicitly deactivate user account
+router.post('/users/:id/deactivate', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      'UPDATE users SET is_active = FALSE, updated_at = now() WHERE id = $1 RETURNING id, name, email, is_active, updated_at',
+      [id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+    return res.json({ ok: true, message: 'User deactivated successfully', user: result.rows[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Failed to deactivate user' });
+  }
+});
+
+// POST /api/admin/users/:id/activate — reactivate user account
+router.post('/users/:id/activate', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      'UPDATE users SET is_active = TRUE, updated_at = now() WHERE id = $1 RETURNING id, name, email, is_active, updated_at',
+      [id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+    return res.json({ ok: true, message: 'User activated successfully', user: result.rows[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Failed to activate user' });
+  }
+});
+
+// DELETE /api/admin/users/:id — permanently remove user and cascade delete tasks and subscriptions
+router.delete('/users/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const userRes = await db.query('SELECT id, name, email FROM users WHERE id = $1', [id]);
+    if (!userRes.rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const user = userRes.rows[0];
+
+    // Delete user — CASCADE automatically removes subscriptions, tasks, and alert_logs
+    await db.query('DELETE FROM users WHERE id = $1', [id]);
+
+    console.log(`[ADMIN] User deleted: ${user.name} (${user.email}) [ID: ${id}]`);
+    return res.json({
+      ok: true,
+      message: `User ${user.name} (${user.email}) was permanently removed.`,
+      deletedUser: user
+    });
+  } catch (err) {
+    console.error('[ADMIN] Error deleting user:', err);
+    return res.status(500).json({ error: err.message || 'Failed to delete user' });
   }
 });
 
