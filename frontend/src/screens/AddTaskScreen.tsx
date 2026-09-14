@@ -222,7 +222,7 @@ export const AddTaskScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+            { paddingBottom: Math.max(insets.bottom, 24) + 120 },
           ]}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
@@ -457,7 +457,9 @@ export const AddTaskScreen: React.FC = () => {
                 activeOpacity={0.7}
                 onPress={() => setIsConfirmModalVisible(false)}
               >
-                <Text style={styles.modalEditBtnText}>{t(language, 'edit_details_btn')}</Text>
+                <Text style={styles.modalEditBtnText} numberOfLines={1} adjustsFontSizeToFit>
+                  {t(language, 'edit_details_btn')}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -469,7 +471,9 @@ export const AddTaskScreen: React.FC = () => {
                 {createTaskMutation.isPending ? (
                   <ActivityIndicator color={colors.surface} size="small" />
                 ) : (
-                  <Text style={styles.modalSubmitBtnText}>{t(language, 'confirm_task_submit')}</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1} adjustsFontSizeToFit>
+                    {t(language, 'confirm_task_submit')}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

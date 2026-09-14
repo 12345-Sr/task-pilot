@@ -34,6 +34,7 @@ interface OrderData {
   amount: number;
   amountPaise: number;
   currency: string;
+  checkoutUrl?: string;
   upiUrl: string;
   qrImageUrl: string;
   merchantVpa: string;
@@ -52,6 +53,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showQrSection, setShowQrSection] = useState(false);
   const pollTimerRef = useRef<any>(null);
 
   const handleClose = () => {
@@ -97,15 +99,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       }
     } catch (err: any) {
       console.warn('Error creating Razorpay payment order:', err?.message || err);
-      // Fallback order info so QR is still generated
+      // Fallback order info with direct checkout link
       const mockOrderId = `order_${Date.now()}`;
       const upiUrl = `upi://pay?pa=taskpilot.rzp@icici&pn=Task%20Pilot&tr=${mockOrderId}&am=399.00&cu=INR&tn=Task%20Pilot%20Pro%20Plan`;
       setOrderData({
         orderId: mockOrderId,
-        keyId: 'rzp_live_taskpilot',
+        keyId: 'rzp_test_TZW0dzD6BHG8kK',
         amount: 399,
         amountPaise: 39900,
         currency: 'INR',
+        checkoutUrl: `https://task-pilot-api.onrender.com/api/subscription/checkout?order_id=${mockOrderId}`,
         upiUrl,
         qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`,
         merchantVpa: 'taskpilot.rzp@icici',
@@ -130,7 +133,22 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       } catch (e) {
         // Silently continue polling
       }
-    }, 4000);
+    }, 3000);
+  };
+
+  const handleOpenRazorpayCheckout = async () => {
+    const fallbackUrl = `https://task-pilot-api.onrender.com/api/subscription/checkout${orderData?.orderId ? `?order_id=${orderData.orderId}` : ''}`;
+    const url = orderData?.checkoutUrl || fallbackUrl;
+    try {
+      await Linking.openURL(url);
+    } catch (err) {
+      Alert.alert(
+        isHinglish ? 'Checkout Nahi Khula' : 'Could Not Open Checkout',
+        isHinglish
+          ? 'Kripya apna browser check karein ya neeche diye gaye UPI option se pay karein.'
+          : 'Please check your browser or use the UPI option below.'
+      );
+    }
   };
 
   const handleOpenUpiApp = async () => {
@@ -270,12 +288,80 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             </View>
           </View>
 
-          {/* QR Code Payment Box */}
+          {/* Primary: Full Razorpay Gateway Card (All Payment Methods Accepted) */}
+          <View style={styles.rzpGatewayCard}>
+            <View style={styles.rzpCardHeader}>
+              <View style={styles.rzpBadge}>
+                <Text style={styles.rzpBadgeText}>🛡️ ALL PAYMENT METHODS ACCEPTED</Text>
+              </View>
+              <Text style={styles.rzpCardTitle}>
+                {isHinglish ? 'Razorpay Secure Checkout' : 'Razorpay Secure Checkout'}
+              </Text>
+              <Text style={styles.rzpCardSub}>
+                {isHinglish
+                  ? 'Kisi bhi Card, UPI App, Net Banking ya Wallet se turant pay karein.'
+                  : 'Pay instantly using any Card, UPI App, Net Banking, or Wallet.'}
+              </Text>
+            </View>
+
+            {/* Methods Grid Display */}
+            <View style={styles.methodsGrid}>
+              <View style={styles.methodGridItem}>
+                <Text style={styles.methodGridIcon}>💳</Text>
+                <View style={styles.methodGridTextWrap}>
+                  <Text style={styles.methodGridTitle}>Cards</Text>
+                  <Text style={styles.methodGridDesc}>Debit / Credit (Visa, RuPay, Master)</Text>
+                </View>
+              </View>
+
+              <View style={styles.methodGridItem}>
+                <Text style={styles.methodGridIcon}>📱</Text>
+                <View style={styles.methodGridTextWrap}>
+                  <Text style={styles.methodGridTitle}>UPI</Text>
+                  <Text style={styles.methodGridDesc}>GPay, PhonePe, Paytm, Any UPI</Text>
+                </View>
+              </View>
+
+              <View style={styles.methodGridItem}>
+                <Text style={styles.methodGridIcon}>🏦</Text>
+                <View style={styles.methodGridTextWrap}>
+                  <Text style={styles.methodGridTitle}>Net Banking</Text>
+                  <Text style={styles.methodGridDesc}>SBI, HDFC, ICICI & 50+ Banks</Text>
+                </View>
+              </View>
+
+              <View style={styles.methodGridItem}>
+                <Text style={styles.methodGridIcon}>👛</Text>
+                <View style={styles.methodGridTextWrap}>
+                  <Text style={styles.methodGridTitle}>Wallets</Text>
+                  <Text style={styles.methodGridDesc}>Paytm, Mobikwik & PayLater</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Big Primary CTA Button: Launch Razorpay Full Checkout */}
+            <TouchableOpacity
+              style={styles.payRazorpayBtn}
+              activeOpacity={0.88}
+              onPress={handleOpenRazorpayCheckout}
+            >
+              <Text style={styles.payRazorpayBtnText}>
+                💳 {isHinglish ? 'Pay ₹399 with Razorpay' : 'Pay ₹399 with Razorpay'}
+              </Text>
+              <Text style={styles.payRazorpayBtnSubText}>
+                {isHinglish
+                  ? 'Sabhi payment options ke sath official gateway kholein'
+                  : 'Open official secure gateway with all payment options'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Secondary: QR Code Payment Box */}
           <View style={styles.qrSectionCard}>
             <View style={styles.qrHeaderRow}>
               <View style={styles.qrTitleWrap}>
                 <Text style={styles.qrMainTitle}>
-                  {isHinglish ? 'Scan & Pay via UPI' : 'Scan & Pay via UPI'}
+                  {isHinglish ? '📱 Ya Phir UPI QR Code Scan Karein' : '📱 Or Scan UPI QR Code'}
                 </Text>
                 <Text style={styles.qrSubTitle}>
                   {isHinglish ? 'Google Pay • PhonePe • Paytm • BHIM • Cred' : 'Google Pay • PhonePe • Paytm • BHIM • Cred'}
@@ -283,7 +369,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               </View>
               <View style={styles.livePulseBadge}>
                 <View style={styles.pulseDot} />
-                <Text style={styles.pulseText}>LIVE QR</Text>
+                <Text style={styles.pulseText}>UPI QR</Text>
               </View>
             </View>
 
@@ -293,7 +379,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 <View style={styles.qrLoadingBox}>
                   <ActivityIndicator size="large" color={colors.primary} />
                   <Text style={styles.qrLoadingText}>
-                    {isHinglish ? 'Razorpay Secure QR ban raha hai...' : 'Generating Razorpay Secure QR...'}
+                    {isHinglish ? 'Secure QR load ho raha hai...' : 'Loading Secure QR...'}
                   </Text>
                 </View>
               ) : orderData?.qrImageUrl ? (
@@ -327,7 +413,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             >
               <Text style={styles.payAppBtnIcon}>📱</Text>
               <Text style={styles.payAppBtnText}>
-                {isHinglish ? 'PhonePe / GPay / Paytm Me Kholein' : 'Pay Directly in UPI App'}
+                {isHinglish ? 'Direct UPI App Me Kholein (GPay / PhonePe)' : 'Pay Directly in UPI App'}
               </Text>
             </TouchableOpacity>
 
@@ -342,7 +428,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Text style={styles.verifyBtnText}>
-                  {isHinglish ? '✅ Main Pay Kar Chuka Hoon (Verify)' : '✅ I Have Paid (Verify Payment)'}
+                  {isHinglish ? '✅ Main Pay Kar Chuka Hoon (Verify Status)' : '✅ I Have Paid (Verify Status)'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -350,8 +436,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             {/* Live Polling Note */}
             <Text style={styles.pollingNotice}>
               {isHinglish
-                ? '⏳ QR scan karke pay karte hi app automatically detect kar legi.'
-                : '⏳ The app automatically detects your payment once completed via QR.'}
+                ? '⏳ Payment karte hi app automatically detect karke Pro features unlock kar degi.'
+                : '⏳ The app automatically detects your payment and unlocks Pro features.'}
             </Text>
           </View>
 
@@ -579,6 +665,104 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  rzpGatewayCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: radius.xl || 20,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#C5A059',
+    marginBottom: 16,
+    ...shadows.card,
+  },
+  rzpCardHeader: {
+    marginBottom: 16,
+  },
+  rzpBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(197, 160, 89, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C5A059',
+    marginBottom: 8,
+  },
+  rzpBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#EAB308',
+    letterSpacing: 0.5,
+  },
+  rzpCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  rzpCardSub: {
+    fontSize: 12.5,
+    color: '#94A3B8',
+    lineHeight: 18,
+  },
+  methodsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 18,
+  },
+  methodGridItem: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#1E293B',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  methodGridIcon: {
+    fontSize: 20,
+  },
+  methodGridTextWrap: {
+    flex: 1,
+  },
+  methodGridTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  methodGridDesc: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  payRazorpayBtn: {
+    backgroundColor: colors.primary, // Camel gold / champagne
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  payRazorpayBtnText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 0.2,
+  },
+  payRazorpayBtnSubText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#334155',
+    marginTop: 2,
+    textAlign: 'center',
   },
   qrSectionCard: {
     backgroundColor: colors.surface,

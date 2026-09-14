@@ -4,17 +4,12 @@ import Constants from 'expo-constants';
 
 // Dynamically discover host IP from Metro connection (e.g. 192.168.1.35)
 const metroIp = Constants?.expoConfig?.hostUri?.split(':')[0] || '192.168.1.35';
-const CLOUD_API_URL = 'https://task-pilot-wf3g.onrender.com/api';
+// Live production cloud API on Render
+const CLOUD_API_URL = 'https://task-pilot-api.onrender.com/api';
 
-// In local development (__DEV__), route to the active local backend on port 4000
-// where newly added endpoints and Gmail SMTP OTP are running!
-const localUrl = Platform.OS === 'web'
-  ? 'http://localhost:4000/api'
-  : `http://${metroIp}:4000/api`;
-
-export const API_BASE_URL = __DEV__
-  ? (process.env.EXPO_PUBLIC_API_URL && !process.env.EXPO_PUBLIC_API_URL.includes('onrender.com') ? process.env.EXPO_PUBLIC_API_URL : localUrl)
-  : (process.env.EXPO_PUBLIC_API_URL || CLOUD_API_URL);
+// By default, connect to live production cloud backend.
+// If EXPO_PUBLIC_API_URL is explicitly set, prioritize that.
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || CLOUD_API_URL;
 
 console.log(`[API CLIENT] Active backend URL: ${API_BASE_URL}`);
 
@@ -22,7 +17,7 @@ export const USE_MOCK_API = process.env.EXPO_PUBLIC_DATA_MODE === 'mock';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 35000,
+  timeout: 60000, // 60s to accommodate Render free-tier cold starts
   headers: {
     'Content-Type': 'application/json',
   },
@@ -71,7 +66,9 @@ apiClient.interceptors.response.use(
 
     let message = error.message;
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      message = 'Server waking up or taking longer to respond. Please try again in a moment.';
+      message = 'Server shuru ho raha hai (waking up). Kripya 5 second baad dobara tap karein. (Server is waking up, please retry in a few seconds.)';
+    } else if (error.message?.includes('Network Error') || !error.response) {
+      message = 'Server se connect hone me samasya aayi. Kripya apna internet check karein ya thodi der me dobara try karein.';
     }
 
     const errorData = error.response?.data || {

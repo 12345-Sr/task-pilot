@@ -19,7 +19,7 @@ if (Platform.OS !== 'web' && LogBox && typeof LogBox.ignoreLogs === 'function') 
 
 export default function App() {
   useEffect(() => {
-    NotificationService.init().catch(() => {});
+    NotificationService.init().catch(() => { });
   }, []);
 
   return (
