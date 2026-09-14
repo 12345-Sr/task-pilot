@@ -100,16 +100,29 @@ router.post('/create-order', requireUser, async (req, res) => {
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 10)}_${Date.now()}`;
 
     let order = null;
+    let isRealRzpOrder = false;
     if (rzpInstance) {
-      order = await rzpInstance.orders.create({
-        amount: amountPaise,
-        currency: 'INR',
-        receipt,
-        notes: {
-          userId: String(req.userId),
-          plan: 'pro_monthly',
-        },
-      });
+      try {
+        order = await rzpInstance.orders.create({
+          amount: amountPaise,
+          currency: 'INR',
+          receipt,
+          notes: {
+            userId: String(req.userId),
+            plan: 'pro_monthly',
+          },
+        });
+        if (order && order.id) {
+          isRealRzpOrder = true;
+        }
+      } catch (rzpErr) {
+        console.warn('[RAZORPAY] orders.create API warning:', rzpErr?.error?.description || rzpErr?.message || rzpErr);
+        order = {
+          id: `order_${Date.now()}`,
+          amount: amountPaise,
+          currency: 'INR',
+        };
+      }
     } else {
       order = {
         id: `order_${Date.now()}`,
@@ -120,7 +133,7 @@ router.post('/create-order', requireUser, async (req, res) => {
 
     const host = req.get('host') || 'task-pilot-api.onrender.com';
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
-    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}`;
+    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}${isRealRzpOrder ? '&real_order=1' : ''}`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=399.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
@@ -164,7 +177,7 @@ router.post('/create-order', requireUser, async (req, res) => {
 // Renders the official Razorpay Standard Checkout modal with all payment methods (Cards, UPI, Netbanking, Wallets)
 router.get('/checkout', async (req, res) => {
   try {
-    const { order_id, user_id } = req.query;
+    const { order_id, user_id, real_order } = req.query;
     const keyId = razorpayKeyId || 'rzp_test_TZW0dzD6BHG8kK';
     const amountPaise = 39900;
 
@@ -242,7 +255,6 @@ router.get('/checkout', async (req, res) => {
         currency: 'INR',
         name: 'Task Pilot Pro',
         description: '30-Day Pro Subscription (Unlimited Tasks & Alerts)',
-        order_id: ${JSON.stringify(order_id || '')},
         prefill: {
           name: ${JSON.stringify(userName)},
           email: ${JSON.stringify(userEmail)},
@@ -263,6 +275,9 @@ router.get('/checkout', async (req, res) => {
           }
         }
       };
+      if (${real_order === '1'} && ${JSON.stringify(order_id || '')}) {
+        options.order_id = ${JSON.stringify(order_id || '')};
+      }
       var rzp1 = new Razorpay(options);
       rzp1.on('payment.failed', function (response){
         alert('Payment not completed: ' + (response.error.description || 'Please try another payment method.'));

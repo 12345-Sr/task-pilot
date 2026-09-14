@@ -98,7 +98,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         throw new Error(res?.error || 'Failed to initialize payment');
       }
     } catch (err: any) {
-      console.warn('Error creating Razorpay payment order:', err?.message || err);
+      console.log('[PAYWALL] Backend order init note:', err?.message || err);
       // Fallback order info with direct checkout link
       const mockOrderId = `order_${Date.now()}`;
       const upiUrl = `upi://pay?pa=taskpilot.rzp@icici&pn=Task%20Pilot&tr=${mockOrderId}&am=399.00&cu=INR&tn=Task%20Pilot%20Pro%20Plan`;
