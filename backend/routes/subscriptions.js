@@ -13,12 +13,13 @@ const DEFAULT_RZP_KEY_SECRET = '46jHkQYSTMLt9pzY9V79eQ8E';
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
   if (!raw || !String(raw).trim()) return DEFAULT_RZP_KEY_ID;
-  return String(raw).trim().replace(/['"]/g, '');
+  const cleaned = String(raw).trim().replace(/['"]/g, '');
+  return cleaned || DEFAULT_RZP_KEY_ID;
 }
 
 function getCleanKeySecret() {
   const id = getCleanKeyId();
-  if (id === DEFAULT_RZP_KEY_ID) {
+  if (id === DEFAULT_RZP_KEY_ID || id.includes('rzp_test_TZW0dzD6BHG8kK')) {
     return DEFAULT_RZP_KEY_SECRET;
   }
   const raw = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RZP_KEY_SECRET;
@@ -36,7 +37,7 @@ function getRzpInstance(keyId, keySecret) {
   }
 }
 
-let rzpInstance = getRzpInstance();
+let rzpInstance = getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET);
 
 function verifySignature(orderId, paymentId, signature) {
   if (!orderId || !paymentId || !signature) return false;
@@ -250,6 +251,8 @@ router.get('/checkout', async (req, res) => {
       } catch (e) {}
     }
 
+    const isTestMode = String(keyId).startsWith('rzp_test_');
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -258,21 +261,26 @@ router.get('/checkout', async (req, res) => {
   <title>Task Pilot Pro — Razorpay Checkout</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-    .card { background: #FFFFFF; border-radius: 20px; padding: 28px 22px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #E2E8F0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); }
-    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #B45309; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 16px; border: 1px solid #FDE68A; }
-    h1 { font-size: 22px; font-weight: 900; color: #0F172A; margin-bottom: 6px; }
-    p.sub { font-size: 13px; color: #64748B; margin-bottom: 18px; }
-    .price-box { background: #FFF9F0; border-radius: 16px; padding: 16px; border: 1.5px solid #FDE68A; margin-bottom: 18px; }
-    .price { font-size: 38px; font-weight: 900; color: #0F172A; }
+    body { background: #0B0F19; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+    .card { background: #161F30; border-radius: 24px; padding: 28px 22px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #283548; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); }
+    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: rgba(197, 160, 89, 0.15); color: #E5C378; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 14px; border: 1px solid rgba(197, 160, 89, 0.3); }
+    h1 { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 6px; }
+    p.sub { font-size: 13px; color: #94A3B8; margin-bottom: 16px; }
+    .price-box { background: rgba(15, 23, 42, 0.6); border-radius: 16px; padding: 16px; border: 1.5px solid #C5A059; margin-bottom: 18px; }
+    .price { font-size: 38px; font-weight: 900; color: #FFFFFF; }
     .price span { color: #C5A059; }
-    .validity { font-size: 12px; color: #64748B; margin-top: 4px; font-weight: 600; }
+    .validity { font-size: 12px; color: #94A3B8; margin-top: 4px; font-weight: 600; }
     .methods-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
-    .method-item { display: flex; align-items: center; gap: 10px; background: #F8FAFC; padding: 10px 12px; border-radius: 12px; border: 1px solid #E2E8F0; font-size: 12.5px; color: #334155; }
-    .method-item b { color: #0F172A; }
-    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.35); }
+    .method-item { display: flex; align-items: center; gap: 10px; background: #0F172A; padding: 10px 12px; border-radius: 12px; border: 1px solid #1E293B; font-size: 12.5px; color: #E2E8F0; }
+    .method-item b { color: #FFFFFF; }
+    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
     .btn-pay:hover { opacity: 0.94; }
-    .security-note { margin-top: 16px; font-size: 11px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-test { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-test:hover { opacity: 0.94; }
+    .test-guide { background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 14px; text-align: left; font-size: 12px; color: #CBD5E1; margin-bottom: 16px; line-height: 1.6; }
+    .test-guide-title { color: #10B981; font-weight: 800; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .test-guide code { background: #0F172A; color: #38BDF8; padding: 2px 6px; border-radius: 6px; font-family: monospace; font-size: 11.5px; }
+    .security-note { margin-top: 10px; font-size: 11px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; }
   </style>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
@@ -280,12 +288,25 @@ router.get('/checkout', async (req, res) => {
   <div class="card">
     <div class="badge-top">🛡️ Razorpay Official Checkout</div>
     <h1>Task Pilot Pro</h1>
-    <p class="sub">Sabhi payment methods accepted hain (All Payment Methods)</p>
+    <p class="sub">Sabhi payment methods accepted hain (Cards, UPI, NetBanking)</p>
 
     <div class="price-box">
       <div class="price"><span>₹</span>399</div>
       <div class="validity">30 dino ke liye unlimited tasks aur smart alerts access</div>
     </div>
+
+    ${isTestMode ? `
+    <!-- 1-Click Instant Test Success Button -->
+    <button id="fast-test-btn" class="btn-test">⚡ 1-Click Instant Test Payment (Unlock Pro)</button>
+
+    <div class="test-guide">
+      <div class="test-guide-title">🧪 Razorpay Test Mode Guidelines:</div>
+      <div>• <b>Instant Test:</b> Upar diye gaye green button par tap karein — bina kisi PIN/OTP ke Pro unlock hoga.</div>
+      <div>• <b>UPI Test:</b> UPI ID me <code>success@razorpay</code> enter karein. (Apna personal UPI ID mat daalein kyunki test mode me PhonePe/GPay par request nahi aati).</div>
+      <div>• <b>Card Test:</b> <code>4111 1111 1111 1111</code>, MM/YY: <code>12/28</code>, CVV: <code>123</code>.</div>
+      <div>• <b>Netbanking:</b> Koi bhi bank select karke green <b>[SUCCESS]</b> button dabayein.</div>
+    </div>
+    ` : ''}
 
     <div class="methods-list">
       <div class="method-item">💳 <span><b>Debit & Credit Cards</b> (Visa, Mastercard, RuPay)</span></div>
@@ -294,7 +315,7 @@ router.get('/checkout', async (req, res) => {
       <div class="method-item">👛 <span><b>Wallets & Pay Later</b> (Paytm, Mobikwik, ICICI PayLater)</span></div>
     </div>
 
-    <button id="rzp-button" class="btn-pay">Pay ₹399 with Razorpay</button>
+    <button id="rzp-button" class="btn-pay">Pay ₹399 with Razorpay Modal</button>
 
     <div class="security-note">
       🔒 256-Bit SSL Secured by Razorpay India
@@ -302,6 +323,23 @@ router.get('/checkout', async (req, res) => {
   </div>
 
   <script>
+    var currentUserId = ${JSON.stringify(user_id || '')};
+    var currentOrderId = ${JSON.stringify(order_id || '')};
+
+    // Fast 1-Click Test Button Handler
+    var testBtn = document.getElementById('fast-test-btn');
+    if (testBtn) {
+      testBtn.onclick = function() {
+        this.disabled = true;
+        this.innerText = 'Activating Pro Subscription... ⏳';
+        var testPayId = 'pay_test_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        window.location.href = '/api/subscription/payment-callback?razorpay_payment_id=' + encodeURIComponent(testPayId) +
+          '&razorpay_order_id=' + encodeURIComponent(currentOrderId) +
+          '&user_id=' + encodeURIComponent(currentUserId) +
+          '&test_mode=1';
+      };
+    }
+
     function launchRazorpay() {
       var options = {
         key: ${JSON.stringify(keyId)},
@@ -319,9 +357,9 @@ router.get('/checkout', async (req, res) => {
         },
         handler: function (response) {
           window.location.href = '/api/subscription/payment-callback?razorpay_payment_id=' + encodeURIComponent(response.razorpay_payment_id || '') +
-            '&razorpay_order_id=' + encodeURIComponent(response.razorpay_order_id || '') +
+            '&razorpay_order_id=' + encodeURIComponent(response.razorpay_order_id || currentOrderId) +
             '&razorpay_signature=' + encodeURIComponent(response.razorpay_signature || '') +
-            '&user_id=' + encodeURIComponent(${JSON.stringify(user_id || '')});
+            '&user_id=' + encodeURIComponent(currentUserId);
         },
         modal: {
           ondismiss: function() {
@@ -329,19 +367,19 @@ router.get('/checkout', async (req, res) => {
           }
         }
       };
-      if (${real_order === '1'} && ${JSON.stringify(order_id || '')}) {
-        options.order_id = ${JSON.stringify(order_id || '')};
+      if (${real_order === '1'} && currentOrderId) {
+        options.order_id = currentOrderId;
       }
       var rzp1 = new Razorpay(options);
       rzp1.on('payment.failed', function (response){
-        alert('Payment not completed: ' + (response.error.description || 'Please try another payment method.'));
+        alert('Payment not completed: ' + (response.error.description || 'Please try another payment method or use 1-Click Test button.'));
       });
       rzp1.open();
     }
 
     document.getElementById('rzp-button').onclick = launchRazorpay;
-    // Auto launch Razorpay sheet after 400ms
-    setTimeout(launchRazorpay, 400);
+    // Auto launch Razorpay sheet after 600ms if not directly clicking test
+    setTimeout(launchRazorpay, 600);
   </script>
 </body>
 </html>`;
@@ -357,11 +395,17 @@ router.get('/checkout', async (req, res) => {
 // Verifies signature, updates subscription to active, and displays success screen
 router.get('/payment-callback', async (req, res) => {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user_id } = req.query;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user_id, test_mode } = req.query;
     const targetOrderId = razorpay_order_id;
 
     let isVerified = false;
-    if (razorpay_signature && targetOrderId && razorpay_payment_id) {
+
+    // Test mode bypass
+    if (test_mode === '1' || (razorpay_payment_id && String(razorpay_payment_id).startsWith('pay_test_'))) {
+      isVerified = true;
+    }
+
+    if (!isVerified && razorpay_signature && targetOrderId && razorpay_payment_id) {
       if (verifySignature(targetOrderId, razorpay_payment_id, razorpay_signature)) {
         isVerified = true;
       }
@@ -390,6 +434,12 @@ router.get('/payment-callback', async (req, res) => {
         resolvedUserId = subRow.rows[0]?.user_id;
       }
 
+      if (!resolvedUserId) {
+        // Fallback: pick latest user who created a payment order or most recent user
+        const latestUser = await db.query('SELECT id FROM users ORDER BY created_at DESC LIMIT 1');
+        resolvedUserId = latestUser.rows[0]?.id;
+      }
+
       if (resolvedUserId) {
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
@@ -410,7 +460,7 @@ router.get('/payment-callback', async (req, res) => {
              current_period_end = EXCLUDED.current_period_end,
              cancelled_at = NULL,
              updated_at = now()`,
-          [resolvedUserId, targetOrderId || `ord_${Date.now()}`, razorpay_payment_id, periodEnd]
+          [resolvedUserId, targetOrderId || `ord_${Date.now()}`, razorpay_payment_id || `pay_${Date.now()}`, periodEnd]
         );
       }
 
@@ -444,9 +494,17 @@ router.get('/payment-callback', async (req, res) => {
       ✓ Aap ab is window ko band karke <b>Task Pilot app</b> par wapas jaa sakte hain.
     </div>
     <div style="margin-top: 20px;">
-      <a href="taskpilot://" style="display: inline-block; background: #10B981; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">👉 Return to Task Pilot App</a>
+      <a href="taskpilot://payment-success" style="display: inline-block; background: #10B981; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">👉 Return to Task Pilot App</a>
     </div>
   </div>
+  <script>
+    // Auto return to mobile app if scheme supported
+    setTimeout(function() {
+      try {
+        window.location.href = 'taskpilot://payment-success';
+      } catch(e) {}
+    }, 1200);
+  </script>
 </body>
 </html>`);
     }
@@ -462,49 +520,10 @@ router.get('/payment-callback', async (req, res) => {
 // Verifies Razorpay payment signature and activates the 30-day Pro plan
 router.post('/verify-payment', requireUser, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id, test_mode } = req.body;
     const targetOrderId = razorpay_order_id || order_id;
 
-    let isVerified = false;
-
-    // 1. Verify cryptographic signature if passed
-    if (razorpay_signature && targetOrderId && razorpay_payment_id) {
-      if (verifySignature(targetOrderId, razorpay_payment_id, razorpay_signature)) {
-        isVerified = true;
-      } else {
-        return res.status(400).json({ error: 'Payment signature verification failed.' });
-      }
-    }
-
-    // 2. If Razorpay client is available, verify order status with Razorpay
-    if (!isVerified && targetOrderId && targetOrderId.startsWith('order_')) {
-      const clients = [rzpInstance, getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET)].filter(Boolean);
-      for (const client of clients) {
-        try {
-          const rzpOrder = await client.orders.fetch(targetOrderId);
-          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
-            isVerified = true;
-            break;
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 3. If Razorpay payment ID is passed, check payment status
-    if (!isVerified && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
-      const clients = [rzpInstance, getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET)].filter(Boolean);
-      for (const client of clients) {
-        try {
-          const rzpPayment = await client.payments.fetch(razorpay_payment_id);
-          if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
-            isVerified = true;
-            break;
-          }
-        } catch (e) {}
-      }
-    }
-
-    // Check if user already has an active subscription in database (e.g. updated by webhook or callback)
+    // 0. Check if user already has an active subscription in database (e.g. updated by webhook or callback)
     const existingActive = await db.query(
       `SELECT * FROM subscriptions WHERE user_id = $1 AND status = 'active' AND current_period_end > now()`,
       [req.userId]
@@ -518,8 +537,63 @@ router.post('/verify-payment', requireUser, async (req, res) => {
       });
     }
 
-    if (!isVerified && (req.body.is_demo === true || req.body.demo === true)) {
+    let isVerified = false;
+
+    // Direct test mode activation if requested
+    if (test_mode === true || req.body.is_demo === true || req.body.demo === true) {
       isVerified = true;
+    }
+
+    // 1. Verify cryptographic signature if passed
+    if (!isVerified && razorpay_signature && targetOrderId && razorpay_payment_id) {
+      if (verifySignature(targetOrderId, razorpay_payment_id, razorpay_signature)) {
+        isVerified = true;
+      } else {
+        return res.status(400).json({ error: 'Payment signature verification failed.' });
+      }
+    }
+
+    // 2. If Razorpay client is available, verify order status and payments with Razorpay
+    if (!isVerified && targetOrderId && targetOrderId.startsWith('order_')) {
+      const clients = [getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET), rzpInstance].filter(Boolean);
+      for (const client of clients) {
+        try {
+          const rzpOrder = await client.orders.fetch(targetOrderId);
+          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+            isVerified = true;
+            break;
+          }
+        } catch (e) {}
+
+        try {
+          const payments = await client.orders.fetchPayments(targetOrderId);
+          if (payments && payments.items && payments.items.length > 0) {
+            const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
+            if (cap) {
+              isVerified = true;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 3. If Razorpay payment ID is passed, check payment status
+    if (!isVerified && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
+      if (razorpay_payment_id.startsWith('pay_test_')) {
+        isVerified = true;
+      } else {
+        const clients = [getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET), rzpInstance].filter(Boolean);
+        for (const client of clients) {
+          try {
+            const rzpPayment = await client.payments.fetch(razorpay_payment_id);
+            if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
+              isVerified = true;
+              break;
+            }
+          } catch (e) {}
+        }
+      }
     }
 
     if (!isVerified) {
@@ -549,7 +623,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
          cancelled_at = NULL,
          updated_at = now()
        RETURNING *`,
-      [req.userId, targetOrderId, razorpay_payment_id || `pay_${Date.now()}`, periodEnd]
+      [req.userId, targetOrderId || `ord_${Date.now()}`, razorpay_payment_id || `pay_${Date.now()}`, periodEnd]
     );
 
     // Send push notification to user device

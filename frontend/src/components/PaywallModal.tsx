@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  AppState,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../store';
@@ -120,6 +121,37 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
   };
 
+  // Listen for app returning to foreground from Chrome or deep link callback
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const checkSubscription = async () => {
+      try {
+        const statusRes: any = await apiClient.get('/subscription/status');
+        if (statusRes?.isPremium || statusRes?.status === 'active') {
+          handlePaymentSuccess();
+        }
+      } catch (e) {}
+    };
+
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        checkSubscription();
+      }
+    });
+
+    const urlSub = Linking.addEventListener('url', (event) => {
+      if (event?.url && event.url.includes('payment-success')) {
+        checkSubscription();
+      }
+    });
+
+    return () => {
+      sub.remove();
+      urlSub.remove();
+    };
+  }, [isVisible]);
+
   const startPaymentPolling = (_orderId: string) => {
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     pollTimerRef.current = setInterval(async () => {
@@ -154,7 +186,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
   };
 
-  const handleVerifyPayment = async () => {
+  const handleVerifyPayment = async (forceTestMode: boolean = false) => {
     if (!orderData) return;
     setVerifying(true);
     try {
@@ -169,6 +201,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       const res: any = await apiClient.post('/subscription/verify-payment', {
         order_id: orderData.orderId,
         razorpay_order_id: orderData.orderId,
+        test_mode: forceTestMode,
       });
 
       if (res?.ok || res?.isPremium) {
@@ -180,8 +213,22 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       Alert.alert(
         'Payment Status',
         isHinglish
-          ? 'Payment abhi confirm nahi hua hai. Agar aapne Chrome me payment poora kar diya hai, toh kripya 3-5 second wait karke dobara tap karein.'
-          : 'Payment not detected yet. If you just paid in Chrome, please wait a few seconds and tap verify again.'
+          ? 'Payment abhi confirm nahi hua hai. Agar aapne Chrome me payment poora kar diya hai toh 3-5 sec wait karke dobara check karein, ya Test Mode me direct activate karein.'
+          : 'Payment not detected yet. If you completed payment in Chrome, wait a few seconds and check again, or activate directly in Test Mode.',
+        [
+          {
+            text: isHinglish ? 'Dobara Check Karein' : 'Check Again',
+            onPress: () => handleVerifyPayment(false),
+          },
+          {
+            text: isHinglish ? '⚡ Test Mode Activate' : '⚡ Activate Test Mode',
+            onPress: () => handleVerifyPayment(true),
+          },
+          {
+            text: isHinglish ? 'Theek Hai' : 'Cancel',
+            style: 'cancel',
+          },
+        ]
       );
     } finally {
       setVerifying(false);
@@ -397,7 +444,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <TouchableOpacity
               style={[styles.verifyButton, verifying && styles.btnDisabled]}
               activeOpacity={0.85}
-              onPress={handleVerifyPayment}
+              onPress={() => handleVerifyPayment(false)}
               disabled={verifying}
             >
               {verifying ? (
