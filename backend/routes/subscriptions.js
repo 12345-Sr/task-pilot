@@ -14,13 +14,13 @@ const router = express.Router();
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
   if (!raw || !String(raw).trim()) return '';
-  return String(raw).trim().replace(/['"]/g, '');
+  return String(raw).trim().replace(/['"\\s]/g, '');
 }
 
 function getCleanKeySecret() {
   const raw = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RZP_KEY_SECRET;
   if (!raw || !String(raw).trim()) return '';
-  return String(raw).trim().replace(/['"]/g, '');
+  return String(raw).trim().replace(/['"\\s]/g, '');
 }
 
 function getRzpInstance(keyId, keySecret) {
@@ -155,9 +155,10 @@ router.post('/create-order', requireUser, async (req, res) => {
         isRealRzpOrder = true;
       }
     } catch (rzpErr) {
-      console.error('[RAZORPAY] orders.create error:', rzpErr?.error?.description || rzpErr?.message || rzpErr);
+      const errDesc = rzpErr?.error?.description || rzpErr?.message || String(rzpErr);
+      console.error(`[RAZORPAY] orders.create error with key (${activeKeyId ? activeKeyId.slice(0, 8) + '...' + activeKeyId.slice(-4) : 'EMPTY'}, secret length: ${activeKeySecret ? activeKeySecret.length : 0}):`, errDesc);
       return res.status(500).json({
-        error: rzpErr?.error?.description || 'Failed to create payment order with Razorpay. Please verify credentials in .env.',
+        error: errDesc || 'Failed to create payment order with Razorpay. Please verify credentials in .env.',
       });
     }
 
