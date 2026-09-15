@@ -1,62 +1,53 @@
 const express = require('express');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config();
+
 const db = require('../db');
 const { requireUser } = require('../middleware/auth');
 const { FREE_DAILY_LIMIT } = require('./tasks');
 
 const router = express.Router();
 
-const DEFAULT_RZP_KEY_ID = 'rzp_test_TZW0dzD6BHG8kK';
-const DEFAULT_RZP_KEY_SECRET = '46jHkQYSTMLt9pzY9V79eQ8E';
-
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
-  if (!raw || !String(raw).trim()) return DEFAULT_RZP_KEY_ID;
-  const cleaned = String(raw).trim().replace(/['"]/g, '');
-  return cleaned || DEFAULT_RZP_KEY_ID;
-}
-
-function getCleanKeySecret() {
-  const id = getCleanKeyId();
-  if (id === DEFAULT_RZP_KEY_ID || id.includes('rzp_test_TZW0dzD6BHG8kK')) {
-    return DEFAULT_RZP_KEY_SECRET;
-  }
-  const raw = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RZP_KEY_SECRET;
-  if (!raw || !String(raw).trim()) return DEFAULT_RZP_KEY_SECRET;
+  if (!raw || !String(raw).trim()) return '';
   return String(raw).trim().replace(/['"]/g, '');
 }
 
-function getAllRzpClients() {
-  const clients = [];
-  const primaryId = getCleanKeyId();
-  const primarySecret = getCleanKeySecret();
-  if (primaryId && primarySecret) {
-    const c = getRzpInstance(primaryId, primarySecret);
-    if (c) clients.push(c);
-  }
-  if (DEFAULT_RZP_KEY_ID && DEFAULT_RZP_KEY_SECRET) {
-    if (primaryId !== DEFAULT_RZP_KEY_ID || primarySecret !== DEFAULT_RZP_KEY_SECRET) {
-      const c = getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET);
-      if (c) clients.push(c);
-    }
-  }
-  return clients.length > 0 ? clients : [getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET)].filter(Boolean);
+function getCleanKeySecret() {
+  const raw = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RZP_KEY_SECRET;
+  if (!raw || !String(raw).trim()) return '';
+  return String(raw).trim().replace(/['"]/g, '');
 }
 
-let rzpInstance = getRzpInstance(getCleanKeyId(), getCleanKeySecret()) || getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET);
+function getRzpInstance(keyId, keySecret) {
+  const id = (keyId || getCleanKeyId()).trim();
+  const secret = (keySecret || getCleanKeySecret()).trim();
+  if (!id || !secret) {
+    return null;
+  }
+  try {
+    return new Razorpay({ key_id: id, key_secret: secret });
+  } catch (e) {
+    console.error('[RAZORPAY] Client initialization failed:', e.message);
+    return null;
+  }
+}
 
 function verifySignature(orderId, paymentId, signature) {
   if (!orderId || !paymentId || !signature) return false;
-  const secrets = Array.from(new Set([getCleanKeySecret(), DEFAULT_RZP_KEY_SECRET].filter(Boolean)));
-  for (const secret of secrets) {
-    try {
-      const hmac = crypto.createHmac('sha256', secret);
-      hmac.update(`${orderId}|${paymentId}`);
-      if (hmac.digest('hex') === signature) return true;
-    } catch (e) {}
+  const secret = getCleanKeySecret();
+  if (!secret) return false;
+  try {
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(`${orderId}|${paymentId}`);
+    return hmac.digest('hex') === signature;
+  } catch (e) {
+    return false;
   }
-  return false;
 }
 
 // GET /api/subscription/status
@@ -138,66 +129,41 @@ router.post('/create-order', requireUser, async (req, res) => {
 
     let order = null;
     let isRealRzpOrder = false;
-    let activeKeyId = getCleanKeyId();
-    let activeKeySecret = getCleanKeySecret();
-    let rzp = getRzpInstance(activeKeyId, activeKeySecret);
+    const activeKeyId = getCleanKeyId();
+    const activeKeySecret = getCleanKeySecret();
+    const rzp = getRzpInstance(activeKeyId, activeKeySecret);
 
-    if (rzp) {
-      try {
-        order = await rzp.orders.create({
-          amount: amountPaise,
-          currency: 'INR',
-          receipt,
-          payment_capture: 1,
-          notes: {
-            userId: String(req.userId),
-            plan: 'pro_monthly',
-          },
-        });
-        if (order && order.id) {
-          isRealRzpOrder = true;
-        }
-      } catch (rzpErr) {
-        console.warn(`[RAZORPAY] Primary orders.create warning (${activeKeyId.slice(0, 12)}...):`, rzpErr?.error?.description || rzpErr?.message || rzpErr);
-        // If authentication failed on primary key (e.g. mistyped secret on Render), automatically fallback to verified credentials
-        if (activeKeyId !== DEFAULT_RZP_KEY_ID || activeKeySecret !== DEFAULT_RZP_KEY_SECRET) {
-          try {
-            console.log('[RAZORPAY] Retrying order creation with verified test key pair...');
-            const fallbackRzp = getRzpInstance(DEFAULT_RZP_KEY_ID, DEFAULT_RZP_KEY_SECRET);
-            order = await fallbackRzp.orders.create({
-              amount: amountPaise,
-              currency: 'INR',
-              receipt,
-              payment_capture: 1,
-              notes: {
-                userId: String(req.userId),
-                plan: 'pro_monthly',
-              },
-            });
-            if (order && order.id) {
-              isRealRzpOrder = true;
-              activeKeyId = DEFAULT_RZP_KEY_ID;
-              activeKeySecret = DEFAULT_RZP_KEY_SECRET;
-              console.log(`[RAZORPAY] Order successfully created with verified credentials: ${order.id}`);
-            }
-          } catch (fallbackErr) {
-            console.warn('[RAZORPAY] Fallback orders.create error:', fallbackErr?.error?.description || fallbackErr?.message);
-          }
-        }
-      }
+    if (!rzp || !activeKeyId || !activeKeySecret) {
+      console.error('[RAZORPAY] Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET in environment variables (.env)');
+      return res.status(500).json({
+        error: 'Razorpay keys are not configured on the server. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env',
+      });
     }
 
-    if (!order || !order.id) {
-      order = {
-        id: `order_${Date.now()}_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 6)}_${crypto.randomBytes(4).toString('hex')}`,
+    try {
+      order = await rzp.orders.create({
         amount: amountPaise,
         currency: 'INR',
-      };
+        receipt,
+        payment_capture: 1,
+        notes: {
+          userId: String(req.userId),
+          plan: 'pro_monthly',
+        },
+      });
+      if (order && order.id) {
+        isRealRzpOrder = true;
+      }
+    } catch (rzpErr) {
+      console.error('[RAZORPAY] orders.create error:', rzpErr?.error?.description || rzpErr?.message || rzpErr);
+      return res.status(500).json({
+        error: rzpErr?.error?.description || 'Failed to create payment order with Razorpay. Please verify credentials in .env.',
+      });
     }
 
     const host = req.get('host') || 'task-pilot-api.onrender.com';
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
-    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}${isRealRzpOrder ? '&real_order=1' : ''}`;
+    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=399.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
@@ -241,8 +207,11 @@ router.post('/create-order', requireUser, async (req, res) => {
 // Renders the official Razorpay Standard Checkout modal with all payment methods (Cards, UPI, Netbanking, Wallets)
 router.get('/checkout', async (req, res) => {
   try {
-    const { order_id, user_id, real_order } = req.query;
-    const keyId = req.query.key_id || getCleanKeyId() || DEFAULT_RZP_KEY_ID;
+    const { order_id, user_id } = req.query;
+    const keyId = req.query.key_id || getCleanKeyId();
+    if (!keyId) {
+      return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
+    }
     const amountPaise = 39900;
 
     let userName = 'Task Pilot User';
@@ -408,43 +377,39 @@ router.get('/payment-callback', async (req, res) => {
       }
     }
 
-    // 2. If signature missing/failed, verify payment status directly with Razorpay API
-    const clients = getAllRzpClients();
-    if (!isVerified && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
-      for (const client of clients) {
-        try {
-          const p = await client.payments.fetch(razorpay_payment_id);
-          if (p && (p.status === 'captured' || p.status === 'authorized')) {
-            if (p.status === 'authorized') {
-              try { await client.payments.capture(p.id, 39900, 'INR'); } catch (e) {}
-            }
-            isVerified = true;
-            break;
+    // 2. If signature missing/failed, verify payment status directly with Razorpay API (.env credentials)
+    const rzpClient = getRzpInstance();
+    if (!isVerified && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
+      try {
+        const p = await rzpClient.payments.fetch(razorpay_payment_id);
+        if (p && (p.status === 'captured' || p.status === 'authorized')) {
+          if (p.status === 'authorized') {
+            try { await rzpClient.payments.capture(p.id, 39900, 'INR'); } catch (e) {}
           }
-        } catch (e) {}
-      }
+          isVerified = true;
+        }
+      } catch (e) {}
     }
 
-    // 3. If still not verified, check if order itself is paid (belt-and-suspenders)
-    if (!isVerified && targetOrderId && targetOrderId.startsWith('order_')) {
-      for (const client of clients) {
+    // 3. If still not verified, check if order itself is paid
+    if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
+      try {
+        const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
+        if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+          isVerified = true;
+        }
+      } catch (e) {}
+
+      if (!isVerified) {
         try {
-          const rzpOrder = await client.orders.fetch(targetOrderId);
-          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
-            isVerified = true;
-            break;
-          }
-        } catch (e) {}
-        try {
-          const payments = await client.orders.fetchPayments(targetOrderId);
+          const payments = await rzpClient.orders.fetchPayments(targetOrderId);
           if (payments && payments.items && payments.items.length > 0) {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await client.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
+                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
               }
               isVerified = true;
-              break;
             }
           }
         } catch (e) {}
@@ -572,7 +537,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
     }
 
     let isVerified = false;
-    const clients = getAllRzpClients();
+    const rzpClient = getRzpInstance();
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // Retry check up to 3 times with 1.2s delay to catch fast webhook/bank settlement delays
@@ -585,47 +550,43 @@ router.post('/verify-payment', requireUser, async (req, res) => {
         }
       }
 
-      // 2. Verify order status and attached payments with Razorpay API
-      if (!isVerified && targetOrderId && targetOrderId.startsWith('order_')) {
-        for (const client of clients) {
-          try {
-            const rzpOrder = await client.orders.fetch(targetOrderId);
-            if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+      // 2. Verify order status and attached payments with Razorpay API (.env credentials)
+      if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
+        try {
+          const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
+          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+            isVerified = true;
+            break;
+          }
+        } catch (e) {}
+
+        try {
+          const payments = await rzpClient.orders.fetchPayments(targetOrderId);
+          if (payments && payments.items && payments.items.length > 0) {
+            const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
+            if (cap) {
+              if (cap.status === 'authorized') {
+                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
+              }
               isVerified = true;
               break;
             }
-          } catch (e) {}
-
-          try {
-            const payments = await client.orders.fetchPayments(targetOrderId);
-            if (payments && payments.items && payments.items.length > 0) {
-              const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
-              if (cap) {
-                if (cap.status === 'authorized') {
-                  try { await client.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
-                }
-                isVerified = true;
-                break;
-              }
-            }
-          } catch (e) {}
-        }
+          }
+        } catch (e) {}
       }
 
-      // 3. Verify payment by ID directly with Razorpay API
-      if (!isVerified && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
-        for (const client of clients) {
-          try {
-            const rzpPayment = await client.payments.fetch(razorpay_payment_id);
-            if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
-              if (rzpPayment.status === 'authorized') {
-                try { await client.payments.capture(rzpPayment.id, 39900, 'INR'); } catch (e) {}
-              }
-              isVerified = true;
-              break;
+      // 3. Verify payment by ID directly with Razorpay API (.env credentials)
+      if (!isVerified && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
+        try {
+          const rzpPayment = await rzpClient.payments.fetch(razorpay_payment_id);
+          if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
+            if (rzpPayment.status === 'authorized') {
+              try { await rzpClient.payments.capture(rzpPayment.id, 39900, 'INR'); } catch (e) {}
             }
-          } catch (e) {}
-        }
+            isVerified = true;
+            break;
+          }
+        } catch (e) {}
       }
 
       if (isVerified) break;
