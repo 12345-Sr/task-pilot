@@ -126,7 +126,9 @@ router.get('/status', requireUser, async (req, res) => {
 // Creates a Razorpay order and generates dynamic UPI QR details for the payment wall
 router.post('/create-order', requireUser, async (req, res) => {
   try {
-    const planPriceInr = 399;
+    // ⚠️ TEMP LIVE-MODE TEST PRICE — set to ₹1 to verify the real Razorpay checkout
+    // completes end-to-end in production. Change back to 399 before real launch.
+    const planPriceInr = 1;
     const amountPaise = planPriceInr * 100;
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
@@ -170,7 +172,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=399.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=1.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`;
 
     // Save pending intent in subscriptions table
@@ -179,7 +181,7 @@ router.post('/create-order', requireUser, async (req, res) => {
          user_id, status, plan_price, currency, payment_provider,
          provider_subscription_id, updated_at
        )
-       VALUES ($1, 'free', 399.00, 'INR', 'razorpay', $2, now())
+       VALUES ($1, 'free', 1.00, 'INR', 'razorpay', $2, now())
        ON CONFLICT (user_id) DO UPDATE SET
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          updated_at = now()`,
@@ -216,7 +218,7 @@ router.get('/checkout', async (req, res) => {
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
-    const amountPaise = 39900;
+    const amountPaise = 100;
 
     let userName = 'Task Pilot User';
     let userEmail = 'user@taskpilot.app';
@@ -271,7 +273,7 @@ router.get('/checkout', async (req, res) => {
     <p class="sub">Sabhi payment methods accepted hain (Cards, UPI, NetBanking)</p>
 
     <div class="price-box">
-      <div class="price"><span>₹</span>399</div>
+      <div class="price"><span>₹</span>1</div>
       <div class="validity">30 dino ke liye unlimited tasks aur smart alerts access</div>
     </div>
 
@@ -291,7 +293,7 @@ router.get('/checkout', async (req, res) => {
       <div class="method-item">👛 <span><b>Wallets & Pay Later</b> (Paytm, Mobikwik, ICICI PayLater)</span></div>
     </div>
 
-    <button id="rzp-button" class="btn-pay">Pay ₹399 with Razorpay</button>
+    <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay</button>
 
     <div class="security-note">
       🔒 256-Bit SSL Secured by Razorpay India
@@ -337,7 +339,7 @@ router.get('/checkout', async (req, res) => {
         modal: {
           ondismiss: function() {
             isLaunching = false;
-            if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+            if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
             console.log('Razorpay modal closed');
           }
         }
@@ -351,20 +353,20 @@ router.get('/checkout', async (req, res) => {
         var rzp1 = new Razorpay(options);
         rzp1.on('payment.failed', function (response){
           isLaunching = false;
-          if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+          if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
           var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
           console.warn('[RAZORPAY] Payment failed:', reason);
         });
         rzp1.open();
       } catch (e) {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
         console.error('[RAZORPAY] Error opening modal:', e);
       }
 
       setTimeout(function() {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
       }, 4000);
     }
 
@@ -408,7 +410,7 @@ router.get('/payment-callback', async (req, res) => {
         const p = await rzpClient.payments.fetch(razorpay_payment_id);
         if (p && (p.status === 'captured' || p.status === 'authorized')) {
           if (p.status === 'authorized') {
-            try { await rzpClient.payments.capture(p.id, 39900, 'INR'); } catch (e) { }
+            try { await rzpClient.payments.capture(p.id, 100, 'INR'); } catch (e) { }
           }
           isVerified = true;
         }
@@ -419,7 +421,7 @@ router.get('/payment-callback', async (req, res) => {
     if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
       try {
         const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
-        if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+        if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 100))) {
           isVerified = true;
         }
       } catch (e) { }
@@ -431,7 +433,7 @@ router.get('/payment-callback', async (req, res) => {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) { }
+                try { await rzpClient.payments.capture(cap.id, 100, 'INR'); } catch (e) { }
               }
               isVerified = true;
             }
@@ -475,10 +477,10 @@ router.get('/payment-callback', async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', 1.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 399.00,
+         plan_price = 1.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,
@@ -515,7 +517,7 @@ router.get('/payment-callback', async (req, res) => {
     <p>Task Pilot Pro Plan 30 dino ke liye activate ho gaya hai! Sabhi features unlock hain.</p>
     <div class="ref-box">
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
-      <div><b>Amount:</b> ₹399.00</div>
+      <div><b>Amount:</b> ₹1.00</div>
     </div>
     <div class="note">
       ✓ Aap ab is window ko band karke <b>Task Pilot app</b> par wapas jaa sakte hain.
@@ -578,7 +580,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
       if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
         try {
           const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
-          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
+          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 100))) {
             isVerified = true;
             break;
           }
@@ -590,7 +592,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) { }
+                try { await rzpClient.payments.capture(cap.id, 100, 'INR'); } catch (e) { }
               }
               isVerified = true;
               break;
@@ -605,7 +607,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
           const rzpPayment = await rzpClient.payments.fetch(razorpay_payment_id);
           if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
             if (rzpPayment.status === 'authorized') {
-              try { await rzpClient.payments.capture(rzpPayment.id, 39900, 'INR'); } catch (e) { }
+              try { await rzpClient.payments.capture(rzpPayment.id, 100, 'INR'); } catch (e) { }
             }
             isVerified = true;
             break;
@@ -635,10 +637,10 @@ router.post('/verify-payment', requireUser, async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', 1.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 399.00,
+         plan_price = 1.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,
