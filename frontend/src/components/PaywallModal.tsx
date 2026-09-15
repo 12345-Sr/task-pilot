@@ -186,7 +186,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
   };
 
-  const handleVerifyPayment = async (forceTestMode: boolean = false) => {
+  const handleVerifyPayment = async () => {
     if (!orderData) return;
     setVerifying(true);
     try {
@@ -201,7 +201,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       const res: any = await apiClient.post('/subscription/verify-payment', {
         order_id: orderData.orderId,
         razorpay_order_id: orderData.orderId,
-        test_mode: forceTestMode,
       });
 
       if (res?.ok || res?.isPremium) {
@@ -213,19 +212,15 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       Alert.alert(
         'Payment Status',
         isHinglish
-          ? 'Payment abhi confirm nahi hua hai. Agar aapne Chrome me payment poora kar diya hai toh 3-5 sec wait karke dobara check karein, ya Test Mode me direct activate karein.'
-          : 'Payment not detected yet. If you completed payment in Chrome, wait a few seconds and check again, or activate directly in Test Mode.',
+          ? 'Payment abhi confirm nahi hua hai. Agar aapne Chrome me payment poora kar diya hai toh 5-10 sec wait karke dobara check karein.'
+          : 'Payment not detected yet. If you completed payment in Chrome, wait 5-10 seconds and check again.',
         [
           {
-            text: isHinglish ? 'Dobara Check Karein' : 'Check Again',
-            onPress: () => handleVerifyPayment(false),
+            text: isHinglish ? '🔄 Dobara Check Karein' : '🔄 Check Again',
+            onPress: () => handleVerifyPayment(),
           },
           {
-            text: isHinglish ? '⚡ Test Mode Activate' : '⚡ Activate Test Mode',
-            onPress: () => handleVerifyPayment(true),
-          },
-          {
-            text: isHinglish ? 'Theek Hai' : 'Cancel',
+            text: isHinglish ? 'Theek Hai' : 'OK',
             style: 'cancel',
           },
         ]
@@ -444,7 +439,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <TouchableOpacity
               style={[styles.verifyButton, verifying && styles.btnDisabled]}
               activeOpacity={0.85}
-              onPress={() => handleVerifyPayment(false)}
+              onPress={handleVerifyPayment}
               disabled={verifying}
             >
               {verifying ? (
