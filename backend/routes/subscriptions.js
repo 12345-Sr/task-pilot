@@ -14,13 +14,16 @@ const router = express.Router();
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
   if (!raw || !String(raw).trim()) return '';
-  return String(raw).trim().replace(/['"\\s]/g, '');
+  // NOTE: previously this was /['"\\s]/g which matches a literal backslash
+  // plus the literal letter "s" -- it was silently deleting every "s"
+  // character from real Razorpay keys. Fixed to strip quotes/whitespace only.
+  return String(raw).trim().replace(/['"\s]/g, '');
 }
 
 function getCleanKeySecret() {
   const raw = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RZP_KEY_SECRET;
   if (!raw || !String(raw).trim()) return '';
-  return String(raw).trim().replace(/['"\\s]/g, '');
+  return String(raw).trim().replace(/['"\s]/g, '');
 }
 
 function getRzpInstance(keyId, keySecret) {
@@ -87,10 +90,10 @@ router.get('/status', requireUser, async (req, res) => {
           const notifBody = lang === 'hi'
             ? 'Aapka Pro plan expire ho gaya hai. Aap wapas Free tier par aa gaye hain. Naye tasks aur reminder alerts ke liye Pro upgrade karein.'
             : 'Your Pro plan has expired and returned to Free tier. Upgrade to Pro to continue creating tasks and receiving reminder alerts.';
-          sendPush(token, notifTitle, notifBody, { type: 'SUBSCRIPTION_EXPIRED' }).catch(() => {});
+          sendPush(token, notifTitle, notifBody, { type: 'SUBSCRIPTION_EXPIRED' }).catch(() => { });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   let dailyUsed = null;
@@ -181,7 +184,7 @@ router.post('/create-order', requireUser, async (req, res) => {
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          updated_at = now()`,
       [req.userId, order.id]
-    ).catch(() => {});
+    ).catch(() => { });
 
     res.json({
       ok: true,
@@ -227,7 +230,7 @@ router.get('/checkout', async (req, res) => {
           userEmail = uRes.rows[0].email || userEmail;
           userPhone = uRes.rows[0].phone || '';
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const isTestMode = String(keyId).startsWith('rzp_test_');
@@ -405,11 +408,11 @@ router.get('/payment-callback', async (req, res) => {
         const p = await rzpClient.payments.fetch(razorpay_payment_id);
         if (p && (p.status === 'captured' || p.status === 'authorized')) {
           if (p.status === 'authorized') {
-            try { await rzpClient.payments.capture(p.id, 39900, 'INR'); } catch (e) {}
+            try { await rzpClient.payments.capture(p.id, 39900, 'INR'); } catch (e) { }
           }
           isVerified = true;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 3. If still not verified, check if order itself is paid
@@ -419,7 +422,7 @@ router.get('/payment-callback', async (req, res) => {
         if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 39900))) {
           isVerified = true;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (!isVerified) {
         try {
@@ -428,12 +431,12 @@ router.get('/payment-callback', async (req, res) => {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
+                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) { }
               }
               isVerified = true;
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -579,7 +582,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
             isVerified = true;
             break;
           }
-        } catch (e) {}
+        } catch (e) { }
 
         try {
           const payments = await rzpClient.orders.fetchPayments(targetOrderId);
@@ -587,13 +590,13 @@ router.post('/verify-payment', requireUser, async (req, res) => {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) {}
+                try { await rzpClient.payments.capture(cap.id, 39900, 'INR'); } catch (e) { }
               }
               isVerified = true;
               break;
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // 3. Verify payment by ID directly with Razorpay API (.env credentials)
@@ -602,12 +605,12 @@ router.post('/verify-payment', requireUser, async (req, res) => {
           const rzpPayment = await rzpClient.payments.fetch(razorpay_payment_id);
           if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
             if (rzpPayment.status === 'authorized') {
-              try { await rzpClient.payments.capture(rzpPayment.id, 39900, 'INR'); } catch (e) {}
+              try { await rzpClient.payments.capture(rzpPayment.id, 39900, 'INR'); } catch (e) { }
             }
             isVerified = true;
             break;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (isVerified) break;
@@ -660,10 +663,10 @@ router.post('/verify-payment', requireUser, async (req, res) => {
           const body = lang === 'hi'
             ? 'Aapka Task Pilot Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
             : 'Your Task Pilot Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
-          sendPush(token, title, body, { type: 'PRO_ACTIVATED' }).catch(() => {});
+          sendPush(token, title, body, { type: 'PRO_ACTIVATED' }).catch(() => { });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     res.json({
       ok: true,

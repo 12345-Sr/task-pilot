@@ -118,18 +118,18 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         console.warn('[PAYWALL] Backend order retry also failed:', retryErr?.message || retryErr);
       }
 
-      // Seamless fallback order data so payment button remains fully active and usable
-      const fallbackOrderId = `order_${Date.now()}`;
-      setOrderData({
-        orderId: fallbackOrderId,
-        keyId: 'rzp_test_TZW0dzD6BHG8kK',
-        amount: 399,
-        amountPaise: 39900,
-        currency: 'INR',
-        checkoutUrl: `https://task-pilot-api.onrender.com/api/subscription/checkout?order_id=${fallbackOrderId}&user_id=${user?.id || ''}`,
-        planTitle: 'Task Pilot Pro Plan',
-        validity: '30 Days',
-      });
+      // Do NOT fabricate an order here. A client-made order_id (e.g. `order_${Date.now()}`)
+      // and a hardcoded test key were never real Razorpay orders, so the "Pay" button looked
+      // active but Razorpay checkout would always fail when it actually opened, since it never
+      // matches a real order created server-side against the live key. Surface the real failure
+      // instead so the user (and you, in logs) can see the backend order creation is broken.
+      setOrderData(null);
+      Alert.alert(
+        isHinglish ? 'Payment Shuru Nahi Ho Saka' : 'Could Not Start Payment',
+        isHinglish
+          ? 'Server se payment order banane me dikkat aa rahi hai. Kripya thodi der baad dobara try karein.'
+          : 'We could not create a payment order right now. Please try again in a moment.'
+      );
     } finally {
       setLoadingOrder(false);
     }
@@ -145,7 +145,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         if (statusRes?.isPremium || statusRes?.status === 'active') {
           handlePaymentSuccess();
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     const sub = AppState.addEventListener('change', (nextState) => {
@@ -183,11 +183,21 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handleOpenRazorpayCheckout = async () => {
+    if (!orderData?.checkoutUrl) {
+      // No real order was created (backend order creation failed) — retry instead of
+      // opening a checkout page with no key_id/order_id, which can never succeed.
+      Alert.alert(
+        isHinglish ? 'Payment Ready Nahi Hai' : 'Payment Not Ready',
+        isHinglish
+          ? 'Payment order abhi taiyaar nahi hai. Dobara try kar rahe hain...'
+          : 'Payment order is not ready yet. Retrying...'
+      );
+      createPaymentOrder();
+      return;
+    }
     setLaunchingGateway(true);
-    const fallbackUrl = `https://task-pilot-api.onrender.com/api/subscription/checkout${orderData?.orderId ? `?order_id=${orderData.orderId}` : ''}`;
-    const url = orderData?.checkoutUrl || fallbackUrl;
     try {
-      await Linking.openURL(url);
+      await Linking.openURL(orderData.checkoutUrl);
     } catch (err) {
       Alert.alert(
         isHinglish ? 'Browser Nahi Khula' : 'Could Not Open Browser',
@@ -257,7 +267,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
           planPrice: res.planPrice || 399,
         });
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
     NotificationService.sendLocalNotification(
       isHinglish ? '🎉 Pro Plan Active Ho Gaya!' : '🎉 Pro Plan Activated!',
