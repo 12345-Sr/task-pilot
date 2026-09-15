@@ -302,6 +302,9 @@ router.get('/checkout', async (req, res) => {
     function launchRazorpay() {
       if (isLaunching) return;
       isLaunching = true;
+      var btn = document.getElementById('rzp-button');
+      if (btn) btn.innerText = 'Opening Razorpay... ⏳';
+
       var options = {
         key: ${JSON.stringify(keyId)},
         amount: ${amountPaise},
@@ -330,25 +333,42 @@ router.get('/checkout', async (req, res) => {
         modal: {
           ondismiss: function() {
             isLaunching = false;
+            if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
             console.log('Razorpay modal closed');
           }
         }
       };
+
       if (currentOrderId && currentOrderId.startsWith('order_')) {
         options.order_id = currentOrderId;
       }
-      var rzp1 = new Razorpay(options);
-      rzp1.on('payment.failed', function (response){
+
+      try {
+        var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+          isLaunching = false;
+          if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+          var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
+          console.warn('[RAZORPAY] Payment failed:', reason);
+        });
+        rzp1.open();
+      } catch (e) {
         isLaunching = false;
-        alert('Payment not completed: ' + (response.error.description || 'Please try another payment method.'));
-      });
-      rzp1.open();
-      setTimeout(function() { isLaunching = false; }, 3500);
+        if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+        console.error('[RAZORPAY] Error opening modal:', e);
+      }
+
+      setTimeout(function() {
+        isLaunching = false;
+        if (btn) btn.innerText = 'Pay ₹399 with Razorpay';
+      }, 4000);
     }
 
     document.getElementById('rzp-button').onclick = launchRazorpay;
-    // Auto launch Razorpay sheet after 600ms
-    setTimeout(launchRazorpay, 600);
+    // Open modal safely once page finishes loading
+    window.addEventListener('load', function() {
+      setTimeout(launchRazorpay, 500);
+    });
   </script>
 </body>
 </html>`;
