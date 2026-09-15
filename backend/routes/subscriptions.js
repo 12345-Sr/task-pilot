@@ -295,6 +295,8 @@ router.get('/checkout', async (req, res) => {
 
     <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay</button>
 
+    <div id="error-banner" style="display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
+
     <div class="security-note">
       🔒 256-Bit SSL Secured by Razorpay India
     </div>
@@ -304,12 +306,34 @@ router.get('/checkout', async (req, res) => {
     var currentUserId = ${JSON.stringify(user_id || '')};
     var currentOrderId = ${JSON.stringify(order_id || '')};
 
+    function showError(msg) {
+      var banner = document.getElementById('error-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = '⚠️ ' + msg;
+      }
+    }
+    function clearError() {
+      var banner = document.getElementById('error-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
     var isLaunching = false;
     function launchRazorpay() {
       if (isLaunching) return;
       isLaunching = true;
+      clearError();
       var btn = document.getElementById('rzp-button');
       if (btn) btn.innerText = 'Opening Razorpay... ⏳';
+
+      // checkout.js failed to load (blocked, offline, ad-blocker, slow network, etc.)
+      // This used to fail completely silently, which looks exactly like "nothing happens".
+      if (typeof Razorpay === 'undefined') {
+        isLaunching = false;
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
+        return;
+      }
 
       var options = {
         key: ${JSON.stringify(keyId)},
@@ -355,12 +379,14 @@ router.get('/checkout', async (req, res) => {
           isLaunching = false;
           if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
           var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
+          showError(reason);
           console.warn('[RAZORPAY] Payment failed:', reason);
         });
         rzp1.open();
       } catch (e) {
         isLaunching = false;
         if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + '). Please try again.');
         console.error('[RAZORPAY] Error opening modal:', e);
       }
 
@@ -371,10 +397,12 @@ router.get('/checkout', async (req, res) => {
     }
 
     document.getElementById('rzp-button').onclick = launchRazorpay;
-    // Open modal safely once page finishes loading
-    window.addEventListener('load', function() {
-      setTimeout(launchRazorpay, 500);
-    });
+    // NOTE: we intentionally do NOT auto-open the modal on page load anymore.
+    // Opening it (and any subsequent redirect into a UPI app like GPay/PhonePe)
+    // needs to happen inside a real, direct user tap. Mobile Chrome/Android can
+    // silently block app-switch redirects that trace back to a programmatic
+    // page-load trigger instead of a genuine click — which looks exactly like
+    // "it never redirects to GPay" with no visible error.
   </script>
 </body>
 </html>`;
