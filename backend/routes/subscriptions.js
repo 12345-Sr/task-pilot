@@ -53,6 +53,21 @@ function verifySignature(orderId, paymentId, signature) {
   }
 }
 
+// SECURITY: a paid order is not sufficient on its own to activate Pro for whoever
+// happens to call /verify-payment. We must also confirm the order was created for
+// THIS user (matches the notes.userId stamped at /create-order time). Without this,
+// any authenticated user who obtains any valid paid order_id/payment_id (their own
+// old one, or a leaked/shared one) could activate Pro on a different account for free.
+async function orderBelongsToUser(rzpClient, orderId, userId) {
+  if (!rzpClient || !orderId || !userId) return false;
+  try {
+    const order = await rzpClient.orders.fetch(orderId);
+    return !!(order && order.notes && String(order.notes.userId) === String(userId));
+  } catch (e) {
+    return false;
+  }
+}
+
 // GET /api/subscription/status
 // status is 'free' (capped at FREE_DAILY_LIMIT reminders/day) or 'active' (Pro Plan, unlimited).
 router.get('/status', requireUser, async (req, res) => {
@@ -214,7 +229,10 @@ router.post('/create-order', requireUser, async (req, res) => {
 router.get('/checkout', async (req, res) => {
   try {
     const { order_id, user_id } = req.query;
-    const keyId = req.query.key_id || getCleanKeyId();
+    // SECURITY: never trust a key_id from the query string on this public,
+    // unauthenticated route — always use the server's own configured key,
+    // otherwise anyone could point the checkout page at an arbitrary key.
+    const keyId = getCleanKeyId();
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
@@ -628,6 +646,29 @@ router.post('/verify-payment', requireUser, async (req, res) => {
     let isVerified = false;
     const rzpClient = getRzpInstance();
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Resolve which order we're actually verifying. If only a payment_id was given,
+    // look up its parent order first so we have something to check ownership against.
+    let resolvedOrderId = targetOrderId;
+    if (!resolvedOrderId && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
+      try {
+        const p = await rzpClient.payments.fetch(razorpay_payment_id);
+        resolvedOrderId = p && p.order_id;
+      } catch (e) { }
+    }
+
+    // SECURITY: confirm this order was created for the logged-in user before doing
+    // anything else. A valid, paid order that belongs to someone else must never
+    // activate Pro for the current caller.
+    if (rzpClient && resolvedOrderId) {
+      const owns = await orderBelongsToUser(rzpClient, resolvedOrderId, req.userId);
+      if (!owns) {
+        console.warn(`[VERIFY-PAYMENT] Ownership mismatch: user ${req.userId} tried to verify order ${resolvedOrderId} that does not belong to them.`);
+        return res.status(403).json({ error: 'This payment does not belong to your account.' });
+      }
+    } else if (!rzpClient) {
+      return res.status(500).json({ error: 'Razorpay is not configured on the server.' });
+    }
 
     // Retry check up to 3 times with 1.2s delay to catch fast webhook/bank settlement delays
     for (let attempt = 1; attempt <= 3; attempt++) {
