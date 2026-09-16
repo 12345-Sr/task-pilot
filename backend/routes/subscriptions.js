@@ -141,10 +141,9 @@ router.get('/status', requireUser, async (req, res) => {
 // Creates a Razorpay order and generates dynamic UPI QR details for the payment wall
 router.post('/create-order', requireUser, async (req, res) => {
   try {
-    const planPriceInr = process.env.SUBSCRIPTION_PRICE_PAISE
-      ? Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE, 10) / 100)
-      : 399;
-    const amountPaise = planPriceInr * 100;
+    // Original Task Pilot Pro monthly subscription fee: ₹399 (39900 paise)
+    const planPriceInr = 399;
+    const amountPaise = 39900;
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     let order = null;
@@ -236,10 +235,9 @@ router.get('/checkout', async (req, res) => {
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
-    const planPriceInr = process.env.SUBSCRIPTION_PRICE_PAISE
-      ? Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE, 10) / 100)
-      : 399;
-    const amountPaise = planPriceInr * 100;
+    // Original Task Pilot Pro monthly subscription fee: ₹399 (39900 paise)
+    const planPriceInr = 399;
+    const amountPaise = 39900;
 
     let userName = 'Task Pilot User';
     let userEmail = 'user@taskpilot.app';
