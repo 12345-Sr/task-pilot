@@ -141,9 +141,9 @@ router.get('/status', requireUser, async (req, res) => {
 // Creates a Razorpay order and generates dynamic UPI QR details for the payment wall
 router.post('/create-order', requireUser, async (req, res) => {
   try {
-    // ⚠️ TEMP LIVE-MODE TEST PRICE — set to ₹1 to verify the real Razorpay checkout
-    // completes end-to-end in production. Change back to 399 before real launch.
-    const planPriceInr = 1;
+    const planPriceInr = process.env.SUBSCRIPTION_PRICE_PAISE
+      ? Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE, 10) / 100)
+      : 399;
     const amountPaise = planPriceInr * 100;
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
@@ -187,7 +187,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=1.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`;
 
     // Save pending intent in subscriptions table
@@ -196,7 +196,7 @@ router.post('/create-order', requireUser, async (req, res) => {
          user_id, status, plan_price, currency, payment_provider,
          provider_subscription_id, updated_at
        )
-       VALUES ($1, 'free', 1.00, 'INR', 'razorpay', $2, now())
+       VALUES ($1, 'free', 399.00, 'INR', 'razorpay', $2, now())
        ON CONFLICT (user_id) DO UPDATE SET
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          updated_at = now()`,
@@ -236,7 +236,10 @@ router.get('/checkout', async (req, res) => {
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
-    const amountPaise = 100;
+    const planPriceInr = process.env.SUBSCRIPTION_PRICE_PAISE
+      ? Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE, 10) / 100)
+      : 399;
+    const amountPaise = planPriceInr * 100;
 
     let userName = 'Task Pilot User';
     let userEmail = 'user@taskpilot.app';
@@ -296,7 +299,7 @@ router.get('/checkout', async (req, res) => {
     <div class="price-box">
       <div class="price-row">
         <span class="currency">₹</span>
-        <span class="price">1</span>
+        <span class="price">${planPriceInr}</span>
         <span class="period">/ month</span>
       </div>
       <div class="validity">30 dino ke liye unlimited tasks aur proactive alerts access</div>
@@ -316,7 +319,7 @@ router.get('/checkout', async (req, res) => {
       <div class="method-item">👛 <span><b>Wallets</b> (Paytm, Mobikwik)</span></div>
     </div>
 
-    <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay</button>
+    <button id="rzp-button" class="btn-pay">Pay ₹${planPriceInr} with Razorpay</button>
 
     <div id="error-banner" style="display:none; background: #FEF2F2; border: 1px solid #FCA5A5; color: #DC2626; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
 
@@ -351,7 +354,7 @@ router.get('/checkout', async (req, res) => {
 
       if (typeof Razorpay === 'undefined') {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
         showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
         return;
       }
@@ -384,7 +387,7 @@ router.get('/checkout', async (req, res) => {
         modal: {
           ondismiss: function() {
             isLaunching = false;
-            if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+            if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
             console.log('Razorpay modal closed');
           }
         }
@@ -398,7 +401,7 @@ router.get('/checkout', async (req, res) => {
         var rzp1 = new Razorpay(options);
         rzp1.on('payment.failed', function (response){
           isLaunching = false;
-          if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+          if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
           var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
           showError(reason);
           console.warn('[RAZORPAY] Payment failed:', reason);
@@ -406,7 +409,7 @@ router.get('/checkout', async (req, res) => {
         rzp1.open();
       } catch (e) {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
         showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + '). Please try again.');
         console.error('[RAZORPAY] Error opening modal:', e);
       }
@@ -414,7 +417,7 @@ router.get('/checkout', async (req, res) => {
       setTimeout(function() {
         isLaunching = false;
         if (btn && btn.innerText.indexOf('Opening') !== -1) {
-          btn.innerText = 'Pay ₹1 with Razorpay';
+          btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
         }
       }, 4000);
     }
@@ -507,8 +510,9 @@ router.get('/payment-callback', async (req, res) => {
     .icon { font-size: 52px; margin-bottom: 12px; }
     h1 { color: #DC2626; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
     p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
-    .btn { display: inline-block; background: #DC2626; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35); transition: opacity 0.2s; }
+    .btn { display: block; width: 100%; background: #DC2626; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 20px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35); font-family: inherit; }
     .btn:active { opacity: 0.9; }
+    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -517,10 +521,22 @@ router.get('/payment-callback', async (req, res) => {
     <h1>Payment Not Verified</h1>
     <p>Razorpay se payment confirm nahi ho saka. Agar aapke account se amount deduct hua hai toh woh automatically refund ho jayega.</p>
     <p>Kripya Task Pilot app me wapas jaake dobara try karein.</p>
-    <div style="margin-top: 20px;">
-      <a href="taskpilot://payment-failed" class="btn">👉 Return to Task Pilot App</a>
+    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+      <button type="button" onclick="returnFailed()" class="btn">👉 Return to Task Pilot App</button>
+      <button type="button" onclick="window.close()" class="btn-sec">✕ Close Tab</button>
     </div>
   </div>
+  <script>
+    function returnFailed() {
+      try { window.location.href = 'intent://payment-failed#Intent;scheme=taskpilot;package=com.taskpilot.app;end'; } catch(e) {}
+      setTimeout(function() {
+        try { window.location.href = 'taskpilot://payment-failed'; } catch(e) {}
+      }, 300);
+      setTimeout(function() {
+        try { window.close(); } catch(e) {}
+      }, 800);
+    }
+  </script>
 </body>
 </html>`);
     }
@@ -552,7 +568,8 @@ router.get('/payment-callback', async (req, res) => {
     h1 { color: #B45309; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
     p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
     .ref-box { background: #F8FAFC; border-radius: 12px; padding: 12px; border: 1px solid #E2E8F0; font-size: 12px; color: #475569; margin-bottom: 20px; word-break: break-all; text-align: left; }
-    .btn { display: inline-block; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); }
+    .btn { display: block; width: 100%; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 20px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); font-family: inherit; }
+    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -564,10 +581,22 @@ router.get('/payment-callback', async (req, res) => {
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'N/A'}</div>
       <div><b>Order ID:</b> ${targetOrderId || 'N/A'}</div>
     </div>
-    <div style="margin-top: 10px;">
-      <a href="taskpilot://payment-success" class="btn">👉 Return to App & Verify</a>
+    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+      <button type="button" onclick="returnSuccess()" class="btn">👉 Return to App & Verify</button>
+      <button type="button" onclick="window.close()" class="btn-sec">✕ Close Tab</button>
     </div>
   </div>
+  <script>
+    function returnSuccess() {
+      try { window.location.href = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end'; } catch(e) {}
+      setTimeout(function() {
+        try { window.location.href = 'taskpilot://payment-success'; } catch(e) {}
+      }, 300);
+      setTimeout(function() {
+        try { window.close(); } catch(e) {}
+      }, 800);
+    }
+  </script>
 </body>
 </html>`);
     }
@@ -581,10 +610,10 @@ router.get('/payment-callback', async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 1.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 1.00,
+         plan_price = 399.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,
@@ -614,9 +643,12 @@ router.get('/payment-callback', async (req, res) => {
     .ref-box { background: linear-gradient(135deg, #FFF9F0 0%, #FEF3C7 100%); border-radius: 14px; padding: 14px; border: 1.5px solid #FDE68A; font-size: 12.5px; color: #78350F; margin-bottom: 20px; text-align: left; }
     .ref-box div { margin-bottom: 4px; }
     .ref-box div:last-child { margin-bottom: 0; }
-    .note { color: #475569; font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
-    .btn { display: inline-block; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 30px; border-radius: 14px; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); transition: background-color 0.2s; }
+    .note { color: #475569; font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
+    .btn { display: block; width: 100%; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 20px; border-radius: 14px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); transition: background-color 0.2s; font-family: inherit; }
     .btn:hover { background: #B38E46; }
+    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
+    .btn-sec:hover { background: #F1F5F9; }
+    .tip-box { margin-top: 18px; background: #FFF9F0; border: 1px solid #FDE68A; border-radius: 14px; padding: 12px 14px; font-size: 12px; color: #78350F; line-height: 1.5; text-align: left; }
   </style>
 </head>
 <body>
@@ -626,19 +658,54 @@ router.get('/payment-callback', async (req, res) => {
     <p>Aapka payment safalta-poorvak verify ho gaya hai. Task Pilot Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
     <div class="ref-box">
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
-      <div><b>Amount:</b> ₹1.00</div>
+      <div><b>Amount:</b> ₹399.00</div>
       <div><b>Validity:</b> 30 Days Unlimited Access</div>
     </div>
     <div class="note">
-      ✓ Aap ab is window ko band karke app me wapas jaa sakte hain.
+      ✓ Aap ab app me wapas jaa sakte hain. Pro features unlock hain!
     </div>
-    <div>
-      <a href="taskpilot://payment-success" class="btn">👉 Return to Task Pilot App</a>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <button type="button" id="btn-return" onclick="returnToApp()" class="btn">👉 Return to Task Pilot App</button>
+      <button type="button" onclick="closeTab()" class="btn-sec">✕ Close Tab (App Already Unlocked)</button>
+    </div>
+    <div class="tip-box">
+      ✨ <b>Tip:</b> Aapka Pro Plan pehle se activate ho chuka hai! Agar button se app na khule, toh aap is browser tab ko close karke ya Recent Apps se <b>Task Pilot</b> app par switch karein.
     </div>
   </div>
   <script>
+    function returnToApp() {
+      var btn = document.getElementById('btn-return');
+      if (btn) btn.innerText = 'Opening App... ⏳';
+
+      // Strategy 1: Android Intent URI format with package name (standard for modern Android Chrome to open app directly)
+      var intentUrl = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end';
+      // Strategy 2: Custom URI scheme
+      var customScheme = 'taskpilot://payment-success';
+
+      try {
+        window.location.href = intentUrl;
+      } catch (e) {}
+
+      setTimeout(function() {
+        try { window.location.href = customScheme; } catch (e) {}
+      }, 350);
+
+      setTimeout(function() {
+        try { window.close(); } catch (e) {}
+        if (btn) btn.innerText = '👉 Return to Task Pilot App';
+      }, 1000);
+    }
+
+    function closeTab() {
+      try { window.close(); } catch(e) {}
+      alert('Pro Plan is active! Please switch back to the Task Pilot app.');
+    }
+
+    // Auto-attempt return after 1.2s
     setTimeout(function() {
-      try { window.location.href = 'taskpilot://payment-success'; } catch(e) {}
+      try {
+        window.location.href = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end';
+      } catch(e) {}
     }, 1200);
   </script>
 </body>
@@ -770,10 +837,10 @@ router.post('/verify-payment', requireUser, async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 1.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 1.00,
+         plan_price = 399.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,

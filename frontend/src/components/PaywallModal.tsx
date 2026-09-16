@@ -264,7 +264,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
         useAppStore.getState().setSubscriptionInfo({
           status: res.status || 'active',
           currentPeriodEnd: res.currentPeriodEnd || null,
-          planPrice: res.planPrice || 1,
+          planPrice: res.planPrice || 399,
         });
       }
     }).catch(() => { });
@@ -355,12 +355,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <View style={styles.priceContainer}>
               <View style={styles.priceRow}>
                 <Text style={styles.currencySymbol}>₹</Text>
-                <Text style={styles.priceNumber}>1</Text>
+                <Text style={styles.priceNumber}>399</Text>
                 <Text style={styles.pricePeriod}>{isHinglish ? ' / mahina' : ' / month'}</Text>
               </View>
               <View style={styles.offerBadge}>
                 <Text style={styles.offerBadgeText}>
-                  🔥 50% LIMITED DISCOUNT
+                  🔥 50% LIMITED DISCOUNT (₹799 → ₹399)
                 </Text>
               </View>
             </View>
@@ -435,7 +435,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               ) : (
                 <>
                   <Text style={styles.primaryPayBtnText}>
-                    💳 Pay ₹1 with Razorpay
+                    💳 Pay ₹399 with Razorpay
                   </Text>
                   <Text style={styles.primaryPayBtnSub}>
                     {isHinglish
