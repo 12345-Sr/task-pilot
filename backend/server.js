@@ -128,7 +128,7 @@ app.get('/api/db-status', async (req, res) => {
 const adminDir = require('fs').existsSync(path.join(__dirname, '../admin'))
   ? path.join(__dirname, '../admin')
   : path.join(__dirname, '../admin-panel');
-app.use('/admin', express.static(adminDir));
+app.use('/admin', express.static(adminDir, { dotfiles: 'allow' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);

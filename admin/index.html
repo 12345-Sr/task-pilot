@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="env.js"></script>
 <style>
   :root {
     --bg-main: #F8FAFC;
@@ -2220,11 +2221,48 @@
 </div>
 
 <script>
-let API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
-  ? `${window.location.origin}/api`
-  : 'http://localhost:4000/api';
+// Priority 1: env.js / window.__ADMIN_ENV__
+// Priority 2: Origin host /api
+// Priority 3: Localhost:4000/api
+let API_BASE = (window.__ADMIN_ENV__ && window.__ADMIN_ENV__.API_BASE_URL)
+  ? window.__ADMIN_ENV__.API_BASE_URL
+  : ((window.location.protocol.startsWith('http') && window.location.host)
+    ? `${window.location.origin}/api`
+    : 'http://localhost:4000/api');
 let TOKEN = null;
 let cachedUsers = [];
+
+// Priority 4: Dynamically fetch & parse admin/.env if available
+(async function loadDotEnv() {
+  try {
+    const res = await fetch('.env');
+    if (res.ok) {
+      const text = await res.text();
+      const env = {};
+      text.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const idx = trimmed.indexOf('=');
+          if (idx !== -1) {
+            env[trimmed.slice(0, idx).trim()] = trimmed.slice(idx + 1).trim();
+          }
+        }
+      });
+      const customUrl = env.API_BASE_URL || env.VITE_API_URL || env.REACT_APP_API_URL;
+      if (customUrl) {
+        API_BASE = customUrl.replace(/\/+$/, '');
+        const settingsApi = document.getElementById('settingsApiBaseFull');
+        if (settingsApi) settingsApi.value = API_BASE;
+      }
+      if (env.ADMIN_DEFAULT_EMAIL && document.getElementById('adminEmail')) {
+        document.getElementById('adminEmail').value = env.ADMIN_DEFAULT_EMAIL;
+      }
+      if (env.ADMIN_DEFAULT_PASSWORD && document.getElementById('adminPassword')) {
+        document.getElementById('adminPassword').value = env.ADMIN_DEFAULT_PASSWORD;
+      }
+    }
+  } catch (e) {}
+})();
 
 // Initial setup of inputs
 const apiInput = document.getElementById('apiBase');
