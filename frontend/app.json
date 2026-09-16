@@ -7,12 +7,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#EDF2F4",
+    "icon": "./assets/icon.png",
     "android": {
       "package": "com.taskpilot.app",
       "versionCode": 3,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#EDF2F4"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
       }
     },
     "ios": {
