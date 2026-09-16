@@ -360,7 +360,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               </View>
               <View style={styles.offerBadge}>
                 <Text style={styles.offerBadgeText}>
-                  🔥 50% LIMITED DISCOUNT (₹799 → ₹399)
+                  🔥 50% LIMITED DISCOUNT
                 </Text>
               </View>
             </View>
