@@ -182,6 +182,9 @@ router.post('/create-order', requireUser, async (req, res) => {
       });
     }
 
+    const host = req.get('host') || 'task-pilot-api.onrender.com';
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
+
     let paymentLinkUrl = null;
     try {
       if (rzp.paymentLink) {
@@ -216,8 +219,6 @@ router.post('/create-order', requireUser, async (req, res) => {
       console.warn('[RAZORPAY] Payment link creation skipped/failed:', plinkErr.message);
     }
 
-    const host = req.get('host') || 'task-pilot-api.onrender.com';
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
     const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&plink=${encodeURIComponent(paymentLinkUrl || '')}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
