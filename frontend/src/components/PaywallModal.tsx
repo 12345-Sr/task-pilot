@@ -34,6 +34,7 @@ interface OrderData {
   amountPaise: number;
   currency: string;
   checkoutUrl?: string;
+  paymentLinkUrl?: string;
   planTitle: string;
   validity: string;
 }
@@ -183,7 +184,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handleOpenRazorpayCheckout = async () => {
-    if (!orderData?.checkoutUrl) {
+    const targetUrl = orderData?.paymentLinkUrl || orderData?.checkoutUrl;
+    if (!targetUrl) {
       // No real order was created (backend order creation failed) — retry instead of
       // opening a checkout page with no key_id/order_id, which can never succeed.
       Alert.alert(
@@ -197,7 +199,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
     setLaunchingGateway(true);
     try {
-      await Linking.openURL(orderData.checkoutUrl);
+      await Linking.openURL(targetUrl);
     } catch (err) {
       Alert.alert(
         isHinglish ? 'Browser Nahi Khula' : 'Could Not Open Browser',

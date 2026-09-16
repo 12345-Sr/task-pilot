@@ -182,9 +182,43 @@ router.post('/create-order', requireUser, async (req, res) => {
       });
     }
 
+    let paymentLinkUrl = null;
+    try {
+      if (rzp.paymentLink) {
+        const uRes = await db.query('SELECT name, email, phone FROM users WHERE id = $1', [req.userId]).catch(() => ({ rows: [] }));
+        const u = uRes.rows[0] || {};
+        const plink = await rzp.paymentLink.create({
+          amount: amountPaise,
+          currency: 'INR',
+          accept_partial: false,
+          reference_id: order.id,
+          description: 'Task Pilot Pro (30 Days)',
+          customer: {
+            name: u.name || 'Task Pilot User',
+            email: u.email || 'user@taskpilot.app',
+            contact: u.phone || undefined,
+          },
+          notify: { sms: false, email: false },
+          reminder_enable: false,
+          callback_url: `${protocol}://${host}/api/subscription/payment-callback?user_id=${encodeURIComponent(req.userId)}`,
+          callback_method: 'get',
+          notes: {
+            userId: String(req.userId),
+            orderId: order.id,
+            plan: 'pro_monthly',
+          },
+        });
+        if (plink && plink.short_url) {
+          paymentLinkUrl = plink.short_url;
+        }
+      }
+    } catch (plinkErr) {
+      console.warn('[RAZORPAY] Payment link creation skipped/failed:', plinkErr.message);
+    }
+
     const host = req.get('host') || 'task-pilot-api.onrender.com';
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
-    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
+    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&plink=${encodeURIComponent(paymentLinkUrl || '')}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=1.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
@@ -211,6 +245,7 @@ router.post('/create-order', requireUser, async (req, res) => {
       amountPaise,
       currency: 'INR',
       checkoutUrl,
+      paymentLinkUrl,
       upiUrl,
       qrImageUrl,
       merchantVpa,
@@ -228,7 +263,7 @@ router.post('/create-order', requireUser, async (req, res) => {
 // Renders the official Razorpay Standard Checkout modal with all payment methods (Cards, UPI, Netbanking, Wallets)
 router.get('/checkout', async (req, res) => {
   try {
-    const { order_id, user_id } = req.query;
+    const { order_id, user_id, plink } = req.query;
     // SECURITY: never trust a key_id from the query string on this public,
     // unauthenticated route — always use the server's own configured key,
     // otherwise anyone could point the checkout page at an arbitrary key.
@@ -275,7 +310,10 @@ router.get('/checkout', async (req, res) => {
     .methods-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
     .method-item { display: flex; align-items: center; gap: 10px; background: #0F172A; padding: 10px 12px; border-radius: 12px; border: 1px solid #1E293B; font-size: 12.5px; color: #E2E8F0; }
     .method-item b { color: #FFFFFF; }
-    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
+    .btn-upi-instant { display: flex; align-items: center; justify-content: center; gap: 8px; background: #10B981; color: #FFFFFF; text-decoration: none; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 800; width: 100%; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); margin-bottom: 10px; }
+    .btn-upi-instant:hover { opacity: 0.94; }
+    .btn-upi-instant:active { transform: scale(0.98); }
+    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 14px; border-radius: 12px; font-size: 14.5px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
     .btn-pay:hover { opacity: 0.94; }
     .test-guide { background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 14px; text-align: left; font-size: 12px; color: #CBD5E1; margin-bottom: 16px; line-height: 1.6; }
     .test-guide-title { color: #10B981; font-weight: 800; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
@@ -298,27 +336,29 @@ router.get('/checkout', async (req, res) => {
     ${isTestMode ? `
     <div class="test-guide">
       <div class="test-guide-title">🧪 Razorpay TEST MODE — GPay will NOT open</div>
-      <div>You are using a <b>rzp_test_</b> key. In test mode, Razorpay never talks to real banks or real UPI apps — clicking a payment method always shows a fake internal "success/failure" screen instead of opening GPay/PhonePe. This is expected, not a bug.</div>
-      <div style="margin-top:6px;">• <b>UPI:</b> Enter <code>success@razorpay</code> as UPI ID, then click the green Success button on Razorpay's own test screen.</div>
+      <div>You are using a <b>rzp_test_</b> key. In test mode, Razorpay never talks to real banks or real UPI apps.</div>
+      <div style="margin-top:6px;">• <b>UPI:</b> Enter <code>success@razorpay</code> as UPI ID.</div>
       <div>• <b>Card:</b> <code>4111 1111 1111 1111</code>, Expiry: <code>12/28</code>, CVV: <code>123</code>, OTP: any.</div>
-      <div style="margin-top:6px;">To actually redirect into GPay for real, this backend must be running with your <b>rzp_live_...</b> key (set RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET on your server and redeploy).</div>
     </div>
-    ` : `
-    <div class="test-guide" style="border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.08);">
-      <div class="test-guide-title" style="color:#E5C378;">📱 To open GPay/PhonePe automatically</div>
-      <div>Tap the <b>app icon</b> (Google Pay / PhonePe logo) shown under UPI — that's "Intent" flow and switches you into the app directly.</div>
-      <div style="margin-top:4px;">If you instead type your UPI ID into the box and hit Pay ("Collect" flow), Razorpay does <b>not</b> redirect anywhere — it silently sends a payment request, and you must manually open GPay yourself to approve it. That's normal UPI behavior, not a failure.</div>
-    </div>
-    `}
+    ` : ''}
 
     <div class="methods-list">
-      <div class="method-item">💳 <span><b>Debit & Credit Cards</b> (Visa, Mastercard, RuPay)</span></div>
       <div class="method-item">📱 <span><b>UPI & QR</b> (Google Pay, PhonePe, Paytm, Any UPI)</span></div>
+      <div class="method-item">💳 <span><b>Debit & Credit Cards</b> (Visa, Mastercard, RuPay)</span></div>
       <div class="method-item">🏦 <span><b>Net Banking</b> (SBI, HDFC, ICICI, Axis & 50+ Banks)</span></div>
       <div class="method-item">👛 <span><b>Wallets & Pay Later</b> (Paytm, Mobikwik, ICICI PayLater)</span></div>
     </div>
 
-    <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay</button>
+    ${plink ? `
+    <a href="${plink}" class="btn-upi-instant">
+      ⚡ Pay via UPI App (Google Pay / PhonePe)
+    </a>
+    <div style="font-size: 11.5px; color: #94A3B8; margin: -4px 0 14px; text-align: center;">
+      Recommended: Direct UPI app switch with zero delay
+    </div>
+    ` : ''}
+
+    <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay (All Methods)</button>
 
     <div id="error-banner" style="display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
 
@@ -351,11 +391,9 @@ router.get('/checkout', async (req, res) => {
       var btn = document.getElementById('rzp-button');
       if (btn) btn.innerText = 'Opening Razorpay... ⏳';
 
-      // checkout.js failed to load (blocked, offline, ad-blocker, slow network, etc.)
-      // This used to fail completely silently, which looks exactly like "nothing happens".
       if (typeof Razorpay === 'undefined') {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay (All Methods)';
         showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
         return;
       }
@@ -378,34 +416,6 @@ router.get('/checkout', async (req, res) => {
         theme: {
           color: '#C5A059'
         },
-        // Push UPI "Intent" apps (GPay/PhonePe icons that redirect automatically)
-        // to the top so users aren't defaulting into the "enter UPI ID" Collect
-        // flow, which never redirects anywhere by design.
-        config: {
-          display: {
-            blocks: {
-              upi_intent_block: {
-                name: 'Pay using UPI apps',
-                instruments: [
-                  { method: 'upi', flows: ['intent'] }
-                ]
-              },
-              other_methods_block: {
-                name: 'Other payment methods',
-                instruments: [
-                  { method: 'upi', flows: ['collect', 'qr'] },
-                  { method: 'card' },
-                  { method: 'netbanking' },
-                  { method: 'wallet' }
-                ]
-              }
-            },
-            sequence: ['block.upi_intent_block', 'block.other_methods_block'],
-            preferences: {
-              show_default_blocks: false
-            }
-          }
-        },
         handler: function (response) {
           isLaunching = false;
           window.location.href = '/api/subscription/payment-callback?razorpay_payment_id=' + encodeURIComponent(response.razorpay_payment_id || '') +
@@ -416,7 +426,7 @@ router.get('/checkout', async (req, res) => {
         modal: {
           ondismiss: function() {
             isLaunching = false;
-            if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+            if (btn) btn.innerText = 'Pay ₹1 with Razorpay (All Methods)';
             console.log('Razorpay modal closed');
           }
         }
@@ -430,7 +440,7 @@ router.get('/checkout', async (req, res) => {
         var rzp1 = new Razorpay(options);
         rzp1.on('payment.failed', function (response){
           isLaunching = false;
-          if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+          if (btn) btn.innerText = 'Pay ₹1 with Razorpay (All Methods)';
           var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
           showError(reason);
           console.warn('[RAZORPAY] Payment failed:', reason);
@@ -438,14 +448,14 @@ router.get('/checkout', async (req, res) => {
         rzp1.open();
       } catch (e) {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay (All Methods)';
         showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + '). Please try again.');
         console.error('[RAZORPAY] Error opening modal:', e);
       }
 
       setTimeout(function() {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn) btn.innerText = 'Pay ₹1 with Razorpay (All Methods)';
       }, 4000);
     }
 
@@ -472,19 +482,32 @@ router.get('/checkout', async (req, res) => {
 // SECURITY: user_id is resolved from (1) query param, (2) order stored in DB. Never guesses.
 router.get('/payment-callback', async (req, res) => {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user_id } = req.query;
-    const targetOrderId = razorpay_order_id;
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      razorpay_payment_link_id,
+      razorpay_payment_link_reference_id,
+      razorpay_payment_link_status,
+      user_id
+    } = req.query;
+    const targetOrderId = razorpay_order_id || razorpay_payment_link_reference_id;
 
     let isVerified = false;
 
-    // 1. Verify cryptographic signature (Razorpay Standard Checkout provides this)
-    if (razorpay_signature && targetOrderId && razorpay_payment_id) {
+    // 1. If redirected from payment link with status = 'paid'
+    if (razorpay_payment_link_status === 'paid' && razorpay_payment_id) {
+      isVerified = true;
+    }
+
+    // 2. Verify cryptographic signature (Razorpay Standard Checkout provides this)
+    if (!isVerified && razorpay_signature && targetOrderId && razorpay_payment_id) {
       if (verifySignature(targetOrderId, razorpay_payment_id, razorpay_signature)) {
         isVerified = true;
       }
     }
 
-    // 2. If signature missing/failed, verify payment status directly with Razorpay API (.env credentials)
+    // 3. If signature missing/failed, verify payment status directly with Razorpay API (.env credentials)
     const rzpClient = getRzpInstance();
     if (!isVerified && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
       try {
@@ -663,8 +686,14 @@ router.post('/verify-payment', requireUser, async (req, res) => {
     if (rzpClient && resolvedOrderId) {
       const owns = await orderBelongsToUser(rzpClient, resolvedOrderId, req.userId);
       if (!owns) {
-        console.warn(`[VERIFY-PAYMENT] Ownership mismatch: user ${req.userId} tried to verify order ${resolvedOrderId} that does not belong to them.`);
-        return res.status(403).json({ error: 'This payment does not belong to your account.' });
+        const subRow = await db.query(
+          'SELECT user_id FROM subscriptions WHERE provider_subscription_id = $1 AND user_id = $2 LIMIT 1',
+          [resolvedOrderId, req.userId]
+        );
+        if (!subRow.rows[0]) {
+          console.warn(`[VERIFY-PAYMENT] Ownership mismatch: user ${req.userId} tried to verify order ${resolvedOrderId} that does not belong to them.`);
+          return res.status(403).json({ error: 'This payment does not belong to your account.' });
+        }
       }
     } else if (!rzpClient) {
       return res.status(500).json({ error: 'Razorpay is not configured on the server.' });
