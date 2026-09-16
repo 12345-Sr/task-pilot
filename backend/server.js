@@ -153,4 +153,19 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.error('[DB INIT] Error initializing database:', err);
   }
   scheduler.start();
+
+  // Keep-alive heartbeat for cloud platforms (pings /api/health every 10 mins to prevent cold-starts)
+  const https = require('https');
+  const http = require('http');
+  const keepAliveUrl = process.env.RENDER_EXTERNAL_URL || process.env.API_BASE_URL || 'https://task-pilot-api.onrender.com';
+  setInterval(() => {
+    try {
+      const client = keepAliveUrl.startsWith('https') ? https : http;
+      client.get(`${keepAliveUrl}/api/health`, (res) => {
+        // Keepalive ping received
+      }).on('error', () => {
+        // ignore network error
+      });
+    } catch (e) {}
+  }, 10 * 60 * 1000);
 });

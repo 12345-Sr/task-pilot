@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 1. Enforce HTTPS across the entire application (Disallows cleartext HTTP traffic) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- 2. Local development only (Permit cleartext only on loopback/emulator) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <!-- 3. Strict TLS & Certificate Pinning for Backend & Cloud APIs -->
+    <domain-config>
+        <domain includeSubdomains="true">onrender.com</domain>
+        <domain includeSubdomains="true">taskpilot.app</domain>
+        <pin-set expiration="2028-12-31">
+            <!-- Onrender Leaf Public Key Hash -->
+            <pin digest="SHA-256">fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=</pin>
+            <!-- Google Trust Services WE1 Intermediate CA -->
+            <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
+            <!-- Google Trust Services GTS Root R4 -->
+            <pin digest="SHA-256">mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=</pin>
+            <!-- ISRG Root X1 Backup CA -->
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
