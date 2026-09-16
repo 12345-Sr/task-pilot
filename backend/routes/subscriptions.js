@@ -263,64 +263,62 @@ router.get('/checkout', async (req, res) => {
   <title>Task Pilot Pro — Razorpay Checkout</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { background: #0B0F19; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-    .card { background: #161F30; border-radius: 24px; padding: 28px 22px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #283548; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); }
-    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: rgba(197, 160, 89, 0.15); color: #E5C378; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 14px; border: 1px solid rgba(197, 160, 89, 0.3); }
-    h1 { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 6px; }
-    p.sub { font-size: 13px; color: #94A3B8; margin-bottom: 16px; }
-    .price-box { background: rgba(15, 23, 42, 0.6); border-radius: 16px; padding: 16px; border: 1.5px solid #C5A059; margin-bottom: 18px; }
-    .price { font-size: 38px; font-weight: 900; color: #FFFFFF; }
-    .price span { color: #C5A059; }
-    .validity { font-size: 12px; color: #94A3B8; margin-top: 4px; font-weight: 600; }
+    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+    .card { background: #FFFFFF; border-radius: 24px; padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
+    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: #FFF9F0; color: #92400E; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 12px; border: 1px solid #FDE68A; }
+    h1 { font-size: 24px; font-weight: 900; color: #0F172A; margin-bottom: 4px; letter-spacing: -0.5px; }
+    h1 span { color: #C5A059; }
+    p.sub { font-size: 13px; color: #64748B; margin-bottom: 18px; line-height: 1.5; }
+    .price-box { background: linear-gradient(135deg, #FFF9F0 0%, #FEF3C7 100%); border-radius: 16px; padding: 16px; border: 1.5px solid #FDE68A; margin-bottom: 18px; }
+    .price-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+    .currency { font-size: 26px; font-weight: 900; color: #C5A059; }
+    .price { font-size: 42px; font-weight: 900; color: #0F172A; letter-spacing: -1px; }
+    .period { font-size: 14px; font-weight: 600; color: #64748B; margin-left: 4px; }
+    .validity { font-size: 12px; color: #78350F; margin-top: 6px; font-weight: 600; }
     .methods-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
-    .method-item { display: flex; align-items: center; gap: 10px; background: #0F172A; padding: 10px 12px; border-radius: 12px; border: 1px solid #1E293B; font-size: 12.5px; color: #E2E8F0; }
-    .method-item b { color: #FFFFFF; }
-    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
-    .btn-pay:hover { opacity: 0.94; }
-    .test-guide { background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 14px; text-align: left; font-size: 12px; color: #CBD5E1; margin-bottom: 16px; line-height: 1.6; }
-    .test-guide-title { color: #10B981; font-weight: 800; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-    .test-guide code { background: #0F172A; color: #38BDF8; padding: 2px 6px; border-radius: 6px; font-family: monospace; font-size: 11.5px; }
-    .security-note { margin-top: 10px; font-size: 11px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .method-item { display: flex; align-items: center; gap: 10px; background: #F8FAFC; padding: 11px 13px; border-radius: 12px; border: 1px solid #E2E8F0; font-size: 12.5px; color: #334155; }
+    .method-item b { color: #0F172A; font-weight: 700; }
+    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
+    .btn-pay:hover { background: #B38E46; }
+    .btn-pay:active { transform: scale(0.98); }
+    .test-guide { background: #FFFBEB; border: 1px dashed #F59E0B; border-radius: 14px; padding: 12px 14px; text-align: left; font-size: 12px; color: #78350F; margin-bottom: 16px; line-height: 1.5; }
+    .test-guide-title { color: #B45309; font-weight: 800; font-size: 12.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .security-note { margin-top: 10px; font-size: 11.5px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; }
   </style>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
   <div class="card">
     <div class="badge-top">🛡️ Razorpay Official Checkout</div>
-    <h1>Task Pilot Pro</h1>
-    <p class="sub">Sabhi payment methods accepted hain (Cards, UPI, NetBanking)</p>
+    <h1>Task Pilot <span>PRO</span></h1>
+    <p class="sub">Sabhi payment options enabled hain (UPI, Cards, NetBanking)</p>
 
     <div class="price-box">
-      <div class="price"><span>₹</span>1</div>
-      <div class="validity">30 dino ke liye unlimited tasks aur smart alerts access</div>
+      <div class="price-row">
+        <span class="currency">₹</span>
+        <span class="price">1</span>
+        <span class="period">/ month</span>
+      </div>
+      <div class="validity">30 dino ke liye unlimited tasks aur proactive alerts access</div>
     </div>
 
     ${isTestMode ? `
     <div class="test-guide">
-      <div class="test-guide-title">🧪 Razorpay TEST MODE — GPay will NOT open</div>
-      <div>You are using a <b>rzp_test_</b> key. In test mode, Razorpay never talks to real banks or real UPI apps — clicking a payment method always shows a fake internal "success/failure" screen instead of opening GPay/PhonePe. This is expected, not a bug.</div>
-      <div style="margin-top:6px;">• <b>UPI:</b> Enter <code>success@razorpay</code> as UPI ID, then click the green Success button on Razorpay's own test screen.</div>
-      <div>• <b>Card:</b> <code>4111 1111 1111 1111</code>, Expiry: <code>12/28</code>, CVV: <code>123</code>, OTP: any.</div>
-      <div style="margin-top:6px;">To actually redirect into GPay for real, this backend must be running with your <b>rzp_live_...</b> key (set RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET on your server and redeploy).</div>
+      <div class="test-guide-title">🧪 Razorpay Test Mode</div>
+      <div>Test Mode active hai. UPI ID me <code>success@razorpay</code> use karein.</div>
     </div>
-    ` : `
-    <div class="test-guide" style="border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.08);">
-      <div class="test-guide-title" style="color:#E5C378;">📱 To open GPay/PhonePe automatically</div>
-      <div>Tap the <b>app icon</b> (Google Pay / PhonePe logo) shown under UPI — that's "Intent" flow and switches you into the app directly.</div>
-      <div style="margin-top:4px;">If you instead type your UPI ID into the box and hit Pay ("Collect" flow), Razorpay does <b>not</b> redirect anywhere — it silently sends a payment request, and you must manually open GPay yourself to approve it. That's normal UPI behavior, not a failure.</div>
-    </div>
-    `}
+    ` : ''}
 
     <div class="methods-list">
-      <div class="method-item">💳 <span><b>Debit & Credit Cards</b> (Visa, Mastercard, RuPay)</span></div>
-      <div class="method-item">📱 <span><b>UPI & QR</b> (Google Pay, PhonePe, Paytm, Any UPI)</span></div>
+      <div class="method-item">📱 <span><b>UPI Apps</b> (Google Pay, PhonePe, Paytm, Any UPI)</span></div>
+      <div class="method-item">💳 <span><b>Cards</b> (Visa, Mastercard, RuPay Debit/Credit)</span></div>
       <div class="method-item">🏦 <span><b>Net Banking</b> (SBI, HDFC, ICICI, Axis & 50+ Banks)</span></div>
-      <div class="method-item">👛 <span><b>Wallets & Pay Later</b> (Paytm, Mobikwik, ICICI PayLater)</span></div>
+      <div class="method-item">👛 <span><b>Wallets</b> (Paytm, Mobikwik)</span></div>
     </div>
 
     <button id="rzp-button" class="btn-pay">Pay ₹1 with Razorpay</button>
 
-    <div id="error-banner" style="display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
+    <div id="error-banner" style="display:none; background: #FEF2F2; border: 1px solid #FCA5A5; color: #DC2626; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
 
     <div class="security-note">
       🔒 256-Bit SSL Secured by Razorpay India
@@ -351,8 +349,6 @@ router.get('/checkout', async (req, res) => {
       var btn = document.getElementById('rzp-button');
       if (btn) btn.innerText = 'Opening Razorpay... ⏳';
 
-      // checkout.js failed to load (blocked, offline, ad-blocker, slow network, etc.)
-      // This used to fail completely silently, which looks exactly like "nothing happens".
       if (typeof Razorpay === 'undefined') {
         isLaunching = false;
         if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
@@ -377,34 +373,6 @@ router.get('/checkout', async (req, res) => {
         },
         theme: {
           color: '#C5A059'
-        },
-        // Push UPI "Intent" apps (GPay/PhonePe icons that redirect automatically)
-        // to the top so users aren't defaulting into the "enter UPI ID" Collect
-        // flow, which never redirects anywhere by design.
-        config: {
-          display: {
-            blocks: {
-              upi_intent_block: {
-                name: 'Pay using UPI apps',
-                instruments: [
-                  { method: 'upi', flows: ['intent'] }
-                ]
-              },
-              other_methods_block: {
-                name: 'Other payment methods',
-                instruments: [
-                  { method: 'upi', flows: ['collect', 'qr'] },
-                  { method: 'card' },
-                  { method: 'netbanking' },
-                  { method: 'wallet' }
-                ]
-              }
-            },
-            sequence: ['block.upi_intent_block', 'block.other_methods_block'],
-            preferences: {
-              show_default_blocks: false
-            }
-          }
         },
         handler: function (response) {
           isLaunching = false;
@@ -445,7 +413,9 @@ router.get('/checkout', async (req, res) => {
 
       setTimeout(function() {
         isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹1 with Razorpay';
+        if (btn && btn.innerText.indexOf('Opening') !== -1) {
+          btn.innerText = 'Pay ₹1 with Razorpay';
+        }
       }, 4000);
     }
 
@@ -525,9 +495,34 @@ router.get('/payment-callback', async (req, res) => {
 
     if (!isVerified) {
       return res.status(400).send(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Payment Not Verified</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,sans-serif}body{background:#0B0F19;color:#FFF;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}.card{background:#161F30;border-radius:24px;padding:36px 24px;max-width:400px;width:100%;border:1.5px solid #EF4444;box-shadow:0 25px 50px -12px rgba(239,68,68,0.25)}.icon{font-size:56px;margin-bottom:14px}h1{color:#EF4444;font-size:22px;font-weight:800;margin-bottom:8px}p{color:#94A3B8;font-size:14px;margin-bottom:16px;line-height:1.6}</style>
-</head><body><div class="card"><div class="icon">⚠️</div><h1>Payment Not Verified</h1><p>Razorpay se payment confirm nahi ho saka. Agar aapke account se amount deduct hua hai toh woh automatically refund ho jayega.</p><p>Kripya Task Pilot app me wapas jaake dobara try karein.</p><div style="margin-top:16px"><a href="taskpilot://payment-failed" style="display:inline-block;background:#EF4444;color:#FFF;text-decoration:none;font-weight:800;font-size:14px;padding:12px 24px;border-radius:12px;">Return to App</a></div></div></body></html>`);
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Not Verified — Task Pilot</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
+    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FCA5A5; box-shadow: 0 20px 45px -12px rgba(239, 68, 68, 0.15), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
+    .icon { font-size: 52px; margin-bottom: 12px; }
+    h1 { color: #DC2626; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+    p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
+    .btn { display: inline-block; background: #DC2626; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35); transition: opacity 0.2s; }
+    .btn:active { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⚠️</div>
+    <h1>Payment Not Verified</h1>
+    <p>Razorpay se payment confirm nahi ho saka. Agar aapke account se amount deduct hua hai toh woh automatically refund ho jayega.</p>
+    <p>Kripya Task Pilot app me wapas jaake dobara try karein.</p>
+    <div style="margin-top: 20px;">
+      <a href="taskpilot://payment-failed" class="btn">👉 Return to Task Pilot App</a>
+    </div>
+  </div>
+</body>
+</html>`);
     }
 
     // SECURITY: Resolve user_id from (1) query param, (2) order stored in DB during create-order.
@@ -544,9 +539,37 @@ router.get('/payment-callback', async (req, res) => {
     if (!resolvedUserId) {
       console.error('[PAYMENT-CALLBACK] Could not resolve user_id for order:', targetOrderId, 'payment:', razorpay_payment_id);
       return res.status(400).send(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>User Not Found</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,sans-serif}body{background:#0B0F19;color:#FFF;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}.card{background:#161F30;border-radius:24px;padding:36px 24px;max-width:400px;width:100%;border:1.5px solid #F59E0B;box-shadow:0 25px 50px -12px rgba(245,158,11,0.25)}.icon{font-size:56px;margin-bottom:14px}h1{color:#F59E0B;font-size:22px;font-weight:800;margin-bottom:8px}p{color:#94A3B8;font-size:14px;margin-bottom:16px;line-height:1.6}</style>
-</head><body><div class="card"><div class="icon">⚠️</div><h1>Payment Received — Account Not Linked</h1><p>Payment Razorpay se confirm ho gaya hai, lekin aapka account identify nahi ho saka. Kripya app me wapas jaake "Verify Payment" button dabayein — woh aapke logged-in account se Pro activate karega.</p><p style="font-size:12px;color:#64748B">Payment ID: ${razorpay_payment_id || 'N/A'}<br>Order: ${targetOrderId || 'N/A'}</p><div style="margin-top:16px"><a href="taskpilot://payment-success" style="display:inline-block;background:#F59E0B;color:#FFF;text-decoration:none;font-weight:800;font-size:14px;padding:12px 24px;border-radius:12px;">Return to App & Verify</a></div></div></body></html>`);
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Not Linked — Task Pilot</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
+    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
+    .icon { font-size: 52px; margin-bottom: 12px; }
+    h1 { color: #B45309; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+    p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
+    .ref-box { background: #F8FAFC; border-radius: 12px; padding: 12px; border: 1px solid #E2E8F0; font-size: 12px; color: #475569; margin-bottom: 20px; word-break: break-all; text-align: left; }
+    .btn { display: inline-block; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⚠️</div>
+    <h1>Payment Received — Account Not Linked</h1>
+    <p>Payment Razorpay se confirm ho gaya hai, lekin aapka account identify nahi ho saka. Kripya app me wapas jaake "Verify Payment" button dabayein — woh aapke logged-in account se Pro activate karega.</p>
+    <div class="ref-box">
+      <div><b>Payment ID:</b> ${razorpay_payment_id || 'N/A'}</div>
+      <div><b>Order ID:</b> ${targetOrderId || 'N/A'}</div>
+    </div>
+    <div style="margin-top: 10px;">
+      <a href="taskpilot://payment-success" class="btn">👉 Return to App & Verify</a>
+    </div>
+  </div>
+</body>
+</html>`);
     }
 
     // Activate Pro for the resolved user
@@ -582,29 +605,35 @@ router.get('/payment-callback', async (req, res) => {
   <title>Payment Successful — Task Pilot Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #0B0F19; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; }
-    .card { background: #161F30; border-radius: 24px; padding: 36px 24px; max-width: 400px; width: 100%; border: 1.5px solid #10B981; box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25); }
-    .icon { font-size: 56px; margin-bottom: 14px; }
-    h1 { color: #10B981; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-    p { color: #94A3B8; font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
-    .ref-box { background: #0F172A; border-radius: 12px; padding: 12px; border: 1px solid #283548; font-size: 12px; color: #CBD5E1; margin-bottom: 24px; word-break: break-all; }
-    .note { color: #F8FAFC; font-size: 13px; font-weight: 600; line-height: 1.5; }
+    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
+    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.25), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
+    .icon { font-size: 56px; margin-bottom: 12px; }
+    h1 { color: #0F172A; font-size: 24px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; }
+    h1 span { color: #C5A059; }
+    p { color: #64748B; font-size: 13.5px; margin-bottom: 20px; line-height: 1.6; }
+    .ref-box { background: linear-gradient(135deg, #FFF9F0 0%, #FEF3C7 100%); border-radius: 14px; padding: 14px; border: 1.5px solid #FDE68A; font-size: 12.5px; color: #78350F; margin-bottom: 20px; text-align: left; }
+    .ref-box div { margin-bottom: 4px; }
+    .ref-box div:last-child { margin-bottom: 0; }
+    .note { color: #475569; font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+    .btn { display: inline-block; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 30px; border-radius: 14px; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); transition: background-color 0.2s; }
+    .btn:hover { background: #B38E46; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">🎉</div>
-    <h1>Payment Successful!</h1>
-    <p>Task Pilot Pro Plan 30 dino ke liye activate ho gaya hai! Sabhi features unlock hain.</p>
+    <h1>Task Pilot <span>PRO</span> Active!</h1>
+    <p>Aapka payment safalta-poorvak verify ho gaya hai. Task Pilot Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
     <div class="ref-box">
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
       <div><b>Amount:</b> ₹1.00</div>
+      <div><b>Validity:</b> 30 Days Unlimited Access</div>
     </div>
     <div class="note">
-      ✓ Aap ab is window ko band karke <b>Task Pilot app</b> par wapas jaa sakte hain.
+      ✓ Aap ab is window ko band karke app me wapas jaa sakte hain.
     </div>
-    <div style="margin-top: 20px;">
-      <a href="taskpilot://payment-success" style="display: inline-block; background: #10B981; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">👉 Return to Task Pilot App</a>
+    <div>
+      <a href="taskpilot://payment-success" class="btn">👉 Return to Task Pilot App</a>
     </div>
   </div>
   <script>
