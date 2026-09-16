@@ -1,7 +1,7 @@
 // TaskPilot Admin Dashboard Runtime Environment Config
 // Can be customized here or in admin/.env
 window.__ADMIN_ENV__ = {
-  API_BASE_URL: "https://task-pilot-api.onrender.com/api",
+  API_BASE_URL: "https://api-task-pilot.deificglobal.tech/api",
   LOCAL_API_URL: "http://localhost:4000/api",
   ADMIN_DEFAULT_EMAIL: "admin@taskpilot.com",
   ADMIN_DEFAULT_PASSWORD: "Admin@1234",

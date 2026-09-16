@@ -18,6 +18,7 @@
     <domain-config>
         <domain includeSubdomains="true">onrender.com</domain>
         <domain includeSubdomains="true">taskpilot.app</domain>
+        <domain includeSubdomains="true">deificglobal.tech</domain>
         <pin-set expiration="2028-12-31">
             <!-- Onrender Leaf Public Key Hash -->
             <pin digest="SHA-256">fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=</pin>
