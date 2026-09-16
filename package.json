@@ -4,8 +4,11 @@
   "private": true,
   "description": "Task Pilot - Root Workspace",
   "scripts": {
-    "start": "npm --prefix frontend start",
-    "frontend": "npm --prefix frontend run clean",
-    "backend": "npm --prefix backend run dev"
+    "start": "node backend/server.js",
+    "postinstall": "cd backend && npm install",
+    "build": "cd backend && npm install",
+    "backend": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "frontend": "npm --prefix frontend start"
   }
 }
