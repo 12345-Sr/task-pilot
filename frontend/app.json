@@ -16,9 +16,16 @@
     },
     "ios": {
       "bundleIdentifier": "com.taskpilot.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-    "extra": {},
+    "extra": {
+      "eas": {
+        "projectId": "2b753a6a-a251-4446-8430-1140d7413da6"
+      }
+    },
     "plugins": [
       "expo-status-bar",
       "expo-notifications"

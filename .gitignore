@@ -44,4 +44,6 @@ credentials.json
 *.apk
 frontend/android/app/build/
 frontend/android/.gradle/
+frontend/android/app/src/main/assets/
+frontend/ios-bundle/
 *.zip
