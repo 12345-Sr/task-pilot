@@ -633,11 +633,48 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
   }
   .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04);
+    border-color: #93C5FD;
+  }
+  .kpi-card:active {
+    transform: scale(0.985);
+  }
+  .kpi-card .kpi-arrow-indicator {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.2s ease;
+    font-weight: 700;
+  }
+  .kpi-card:hover .kpi-arrow-indicator {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--primary-blue);
+  }
+  .kpi-card-cta {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+  }
+  .kpi-card:hover .kpi-card-cta {
+    color: var(--primary-blue);
   }
   .kpi-card.kpi-refreshed {
     border-color: var(--primary-blue);
@@ -801,10 +838,17 @@
     align-items: center;
     text-align: center;
     gap: 8px;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
   }
   .lower-stat-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #93C5FD;
+  }
+  .lower-stat-card:active {
+    transform: scale(0.98);
   }
   .lower-icon {
     margin-bottom: 2px;
@@ -1224,7 +1268,8 @@
         <div class="kpi-top-grid">
           
           <!-- Card 1: Total Users -->
-          <div class="kpi-card" id="cardTotalUsers">
+          <div class="kpi-card" id="cardTotalUsers" role="button" tabindex="0" onclick="navigateToUsers()" title="Click to view all registered users in Users Directory">
+            <span class="kpi-arrow-indicator">→</span>
             <div class="kpi-left">
               <span class="kpi-title">Total Users</span>
               <span class="kpi-number" id="kpiTotalUsers">2</span>
@@ -1232,6 +1277,7 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                 +12% vs last month
               </span>
+              <span class="kpi-card-cta">View users directory →</span>
             </div>
             <div class="kpi-icon-container" style="background:#EFF6FF; color:#2563EB;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1244,7 +1290,8 @@
           </div>
 
           <!-- Card 2: Active Subscribers -->
-          <div class="kpi-card" id="cardActiveSubs">
+          <div class="kpi-card" id="cardActiveSubs" role="button" tabindex="0" onclick="navigateToActiveSubs()" title="Click to view all active paying subscribers">
+            <span class="kpi-arrow-indicator">→</span>
             <div class="kpi-left">
               <span class="kpi-title">Active Subscribers</span>
               <span class="kpi-number" id="kpiActiveSubs">2</span>
@@ -1252,6 +1299,7 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                 +8% vs last month
               </span>
+              <span class="kpi-card-cta">View active subscribers →</span>
             </div>
             <div class="kpi-icon-container" style="background:#EEF2FF; color:#4F46E5;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1262,13 +1310,15 @@
           </div>
 
           <!-- Card 3: Monthly Revenue (MRR) -->
-          <div class="kpi-card" id="cardMonthlyRev">
+          <div class="kpi-card" id="cardMonthlyRev" role="button" tabindex="0" onclick="navigateToMonthlyRevenue()" title="Click to view monthly recurring subscriptions & plans">
+            <span class="kpi-arrow-indicator">→</span>
             <div class="kpi-left">
               <span class="kpi-title">Monthly Revenue</span>
               <span class="kpi-number" id="kpiMonthlyRevenue">₹399.00</span>
               <span class="kpi-change-badge badge-neutral">
                 Live Subscriptions
               </span>
+              <span class="kpi-card-cta">View live subscriptions →</span>
             </div>
             <div class="kpi-icon-container" style="background:#ECFDF5; color:#059669;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1279,13 +1329,15 @@
           </div>
 
           <!-- Card 4: Total Revenue -->
-          <div class="kpi-card" id="cardTotalRev">
+          <div class="kpi-card" id="cardTotalRev" role="button" tabindex="0" onclick="navigateToTotalRevenue()" title="Click to view all-time payment records & packages">
+            <span class="kpi-arrow-indicator">→</span>
             <div class="kpi-left">
               <span class="kpi-title">Total Revenue</span>
               <span class="kpi-number" id="kpiTotalRevenue">₹399.00</span>
               <span class="kpi-change-badge badge-neutral">
                 All-time collected
               </span>
+              <span class="kpi-card-cta">View revenue breakdown →</span>
             </div>
             <div class="kpi-icon-container" style="background:#FEF3C7; color:#D97706;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1325,7 +1377,7 @@
         <!-- Lower Metric Row (4 Cards) -->
         <div class="kpi-lower-grid">
           <!-- Active Users -->
-          <div class="lower-stat-card">
+          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerActiveUsers()" title="Click to view registered users">
             <div class="lower-icon" style="color:#0284C7;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -1339,7 +1391,7 @@
           </div>
 
           <!-- Total Subscriptions -->
-          <div class="lower-stat-card">
+          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerTotalSubs()" title="Click to view subscriptions">
             <div class="lower-icon" style="color:#10B981;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
@@ -1351,7 +1403,7 @@
           </div>
 
           <!-- Total Tasks -->
-          <div class="lower-stat-card">
+          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerTasks()" title="Click to view tasks & reminders">
             <div class="lower-icon" style="color:#6366F1;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1366,7 +1418,7 @@
           </div>
 
           <!-- Conversion Rate -->
-          <div class="lower-stat-card">
+          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerActiveRatio()" title="Click to view subscription conversion details">
             <div class="lower-icon" style="color:#F59E0B;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
@@ -2106,6 +2158,66 @@ async function switchNav(navKey) {
   if (targetView === 'payments') await loadTasks();
   if (targetView === 'tickets') await loadTickets();
   if (targetView === 'settings') loadSavedSettings();
+}
+
+// KPI Card Click Navigation Handlers
+async function navigateToUsers() {
+  const count = document.getElementById('kpiTotalUsers')?.textContent || '';
+  showToast(`👥 Navigating to Users Directory (${count} Users)`);
+  await switchNav('users');
+}
+
+async function navigateToActiveSubs() {
+  const count = document.getElementById('kpiActiveSubs')?.textContent || '';
+  showToast(`💳 Navigating to Active Subscribers (${count} Active)`);
+  await switchNav('subs');
+  const filter = document.getElementById('subsStatusFilter');
+  if (filter) {
+    filter.value = 'active';
+    await loadSubs('active');
+  }
+}
+
+async function navigateToMonthlyRevenue() {
+  const rev = document.getElementById('kpiMonthlyRevenue')?.textContent || '';
+  showToast(`📈 Navigating to Monthly Revenue (${rev})`);
+  await switchNav('subs');
+  const filter = document.getElementById('subsStatusFilter');
+  if (filter) {
+    filter.value = '';
+    await loadSubs('');
+  }
+}
+
+async function navigateToTotalRevenue() {
+  const rev = document.getElementById('kpiTotalRevenue')?.textContent || '';
+  showToast(`💰 Navigating to Total Revenue (${rev})`);
+  await switchNav('subs');
+  const filter = document.getElementById('subsStatusFilter');
+  if (filter) {
+    filter.value = '';
+    await loadSubs('');
+  }
+}
+
+async function navigateToLowerActiveUsers() {
+  showToast('👥 Navigating to Active Users');
+  await switchNav('users');
+}
+
+async function navigateToLowerTotalSubs() {
+  showToast('💳 Navigating to Subscriptions');
+  await switchNav('subs');
+}
+
+async function navigateToLowerTasks() {
+  showToast('📋 Navigating to Tasks & Reminders');
+  await switchNav('payments');
+}
+
+async function navigateToLowerActiveRatio() {
+  showToast('📊 Navigating to Subscription Overview');
+  await switchNav('subs');
 }
 
 // Helper: fetch all tasks across users with fallback to /admin/users/:id
