@@ -4,11 +4,11 @@
   "private": true,
   "description": "Task Pilot - Root Workspace",
   "scripts": {
-    "start": "node backend/server.js",
-    "postinstall": "cd backend && npm install",
-    "build": "cd backend && npm install",
+    "start": "node admin-server.js",
+    "build": "echo 'Admin panel build complete'",
+    "admin": "node admin-server.js",
     "backend": "cd backend && npm start",
-    "dev": "cd backend && npm run dev",
+    "dev": "node admin-server.js",
     "frontend": "npm --prefix frontend start"
   }
 }

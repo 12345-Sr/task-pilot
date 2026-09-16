@@ -4,8 +4,8 @@ import Constants from 'expo-constants';
 
 // Dynamically discover host IP from Metro connection (e.g. 192.168.1.35)
 const metroIp = Constants?.expoConfig?.hostUri?.split(':')[0] || '192.168.1.35';
-// Live production cloud API on Render
-const CLOUD_API_URL = 'https://task-pilot-api.onrender.com/api';
+// Live production cloud API on paid VPS
+const CLOUD_API_URL = 'https://api-task-pilot.deificglobal.tech/api';
 
 // By default, connect to live production cloud backend.
 // If EXPO_PUBLIC_API_URL is explicitly set, prioritize that.
