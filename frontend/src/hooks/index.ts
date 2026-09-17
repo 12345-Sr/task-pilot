@@ -133,6 +133,9 @@ export function useCompleteTask() {
       const id = typeof args === 'string' ? args : args.id;
       const completed = typeof args === 'object' ? args.completed : undefined;
       const status = typeof args === 'object' ? args.status : undefined;
+      if (completed !== false) {
+        NotificationService.cancelTaskAlerts(id).catch(() => {});
+      }
       return tasksRepository.complete(id, completed, status);
     },
     onSuccess: (_, args) => {
@@ -150,7 +153,10 @@ export function useCompleteTask() {
 export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => tasksRepository.delete(id),
+    mutationFn: (id: string) => {
+      NotificationService.cancelTaskAlerts(id).catch(() => {});
+      return tasksRepository.delete(id);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });

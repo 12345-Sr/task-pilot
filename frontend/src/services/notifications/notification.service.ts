@@ -1,10 +1,16 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 import Constants from 'expo-constants';
+import notifee, {
+  AndroidCategory,
+  AndroidImportance,
+  AndroidVisibility,
+  TriggerType,
+  AlarmType,
+} from '@notifee/react-native';
 import { apiClient } from '../../api/client';
 
-// Configure how notifications appear when app is in foreground
-// Removed deprecated 'shouldShowAlert' to eliminate console warnings
+// Configure foreground appearance for standard expo notifications
 try {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -23,22 +29,49 @@ export class NotificationService {
   private static hasCustomChannel = false;
 
   /**
-   * Initializes notification channel (with graceful fallback for Expo Go)
-   * and requests user permissions.
+   * Initializes notification channels for both Notifee (Full-Screen Alarm Clock)
+   * and Expo Notifications with exact permissions.
    */
   static async init(): Promise<void> {
     if (this.isInitialized || Platform.OS === 'web') return;
 
-    // 1. Android Notification Channel setup with graceful catch for Expo Go Android
     if (Platform.OS === 'android') {
       try {
+        // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
+        await notifee.createChannel({
+          id: 'task-alarms-v2',
+          name: 'TaskPilot Alarm Clock',
+          description: 'High-visibility full screen alarms that ring at the exact scheduled second',
+          importance: AndroidImportance.HIGH,
+          visibility: AndroidVisibility.PUBLIC,
+          vibration: true,
+          vibrationPattern: [0, 600, 250, 600, 250, 600],
+          sound: 'default',
+          bypassDnd: true,
+          lights: true,
+          lightColor: '#16A34A',
+        });
+
+        // 2. 10-Minute Advance Warning Channel
+        await notifee.createChannel({
+          id: 'task-reminders',
+          name: 'TaskPilot 10m Warnings',
+          description: 'Advance reminders sent 10 minutes prior to task deadline',
+          importance: AndroidImportance.HIGH,
+          visibility: AndroidVisibility.PUBLIC,
+          vibration: true,
+          vibrationPattern: [0, 300, 200, 300],
+          sound: 'default',
+        });
+
+        // 3. Fallback channel for Expo Notifications
         await Notifications.setNotificationChannelAsync('task-alerts', {
           name: 'Task Alerts & Reminders',
           description: 'Timely reminders and deadline alerts for your tasks',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 500, 200, 500, 200, 500],
           sound: 'default',
-          lightColor: '#C5A059',
+          lightColor: '#16A34A',
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
           bypassDnd: true,
           enableLights: true,
@@ -46,32 +79,34 @@ export class NotificationService {
           showBadge: true,
         });
         this.hasCustomChannel = true;
-      } catch {
-        // Expo Go on Android doesn't support custom channel providers; system uses default channel safely
-        console.log('[NOTIF] Using default Android notification channel for Expo Go.');
-        this.hasCustomChannel = false;
+      } catch (err) {
+        console.warn('[NOTIF] Channel setup notice:', err);
       }
     }
 
-    // 2. Request user permissions (mandatory for Android 13+ and iOS)
+    // Request permissions
     try {
       await this.requestPermissions();
     } catch (e) {
       console.warn('Error requesting permissions:', e);
     }
 
-    // 3. Register push token with backend if available
+    // Register push token with backend if available
     try {
       await this.syncPushToken();
     } catch {}
 
     this.isInitialized = true;
-    console.log('NotificationService successfully initialized.');
+    console.log('[NOTIF] NotificationService initialized with exact alarm clock & full-screen support.');
   }
 
   static async requestPermissions(): Promise<boolean> {
     if (Platform.OS === 'web') return false;
     try {
+      // 1. Notifee permission request (Android 13+ POST_NOTIFICATIONS)
+      await notifee.requestPermission();
+
+      // 2. Expo notifications permission check
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== 'granted') {
@@ -93,8 +128,6 @@ export class NotificationService {
 
   static async getDevicePushToken(): Promise<string | null> {
     if (Platform.OS === 'web') return null;
-    // In Expo Go, push tokens (FCM & EAS remote tokens) require standalone development build or valid EAS UUID.
-    // Skip remote token retrieval in Expo Go to avoid unhandled rejection and show graceful status.
     if (Constants.appOwnership === 'expo' || Constants.executionEnvironment === 'storeClient') {
       console.log('[PUSH] Running in Expo Go: Remote push token skipped. Local alerts are active.');
       return null;
@@ -104,23 +137,17 @@ export class NotificationService {
       const granted = await this.requestPermissions();
       if (!granted) return null;
 
-      // 1. Try native FCM device push token first (Firebase Cloud Messaging)
       try {
         const deviceTokenData = await Notifications.getDevicePushTokenAsync();
         if (deviceTokenData?.data) {
-          console.log('[FCM] Native device push token retrieved:', deviceTokenData.data);
           return deviceTokenData.data;
         }
-      } catch (fcmErr) {
-        console.log('[FCM] Native device token not directly available, checking Expo token:', fcmErr);
-      }
+      } catch {}
 
-      // 2. Fallback to Expo push token if valid EAS UUID exists
       const projectId =
         Constants?.expoConfig?.extra?.eas?.projectId ??
         (Constants?.easConfig as any)?.projectId;
 
-      // Only pass projectId if it looks like a valid UUID (not dummy string)
       const isUUID = projectId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
 
       const tokenData = await Notifications.getExpoPushTokenAsync(
@@ -128,7 +155,6 @@ export class NotificationService {
       );
       return tokenData?.data || null;
     } catch (e) {
-      console.log('[PUSH] Remote token skipped (local device alerts active).', e);
       return null;
     }
   }
@@ -137,30 +163,27 @@ export class NotificationService {
     return this.getDevicePushToken();
   }
 
-  /**
-   * Syncs the device push token with the backend PostgreSQL database
-   */
   static async syncPushToken(): Promise<void> {
     try {
       const token = await this.getDevicePushToken();
       if (token) {
         await apiClient.patch('/auth/push-token', { pushToken: token }).catch(() => {});
-        console.log('[PUSH] Token synced with backend:', token);
       }
-    } catch {
-      // Ignored
-    }
+    } catch {}
   }
 
   /**
-   * Schedules:
-   * 1. Exact-Time Alert at the task deadline (Loud chime, vibration, banner)
-   * 2. 10-Minute Advance Warning (fires exactly 10 minutes before deadline if scheduled > 10m ahead)
+   * LEVEL 2 FULL-SCREEN ALARM & ZERO-DELAY EXACT TIME SCHEDULING:
+   * 1. Exact-Time Alarm using AlarmManager.setAlarmClock (Zero-Delay, millisecond precision, fires even in Doze mode)
+   * 2. Full-Screen Intent on lock screen (wakes screen, shows alarm view with Done & Snooze buttons)
+   * 3. Looping sound until dismissed or snoozed
+   * 4. 10-Minute Advance Warning
    */
   static async scheduleTaskAlerts(
     taskTitle: string,
     taskDate: string,
-    deadlineTime: string
+    deadlineTime: string,
+    taskId?: string | number
   ): Promise<boolean> {
     if (Platform.OS === 'web') return false;
 
@@ -175,69 +198,130 @@ export class NotificationService {
 
       const now = Date.now();
       const diffMs = deadlineDate.getTime() - now;
-      const diffSec = Math.round(diffMs / 1000);
 
-      console.log(`[ALERT SCHEDULING] "${taskTitle}" due at:`, deadlineDate, `(${diffSec}s from now)`);
+      console.log(`[EXACT ALARM] Scheduling "${taskTitle}" due at:`, deadlineDate, `(${Math.round(diffMs / 1000)}s from now)`);
 
-      if (diffSec <= 0) {
+      if (diffMs <= 0) {
         console.log('[ALERT] Target time is in the past, skipping future schedule.');
         return false;
       }
 
-      // 1. Exact-Time Deadline Alert
-      const exactTrigger: any = {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: Math.max(1, diffSec),
-        ...(this.hasCustomChannel ? { channelId: 'task-alerts' } : {}),
-      };
+      const cleanTaskId = String(taskId || Math.abs(Math.sin(deadlineDate.getTime()) * 1000000 | 0));
+      const alarmId = `alarm_${cleanTaskId}`;
+      const warningId = `warning_${cleanTaskId}`;
 
-      const notifId = await Notifications.scheduleNotificationAsync({
-        content: {
+      // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
+      // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
+      await notifee.createTriggerNotification(
+        {
+          id: alarmId,
           title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
           body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 500, 200, 500, 200, 500],
-          badge: 1,
+          android: {
+            channelId: 'task-alarms-v2',
+            category: AndroidCategory.ALARM,
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            loopSound: true,
+            ongoing: true,
+            autoCancel: false,
+            color: '#16A34A',
+            pressAction: {
+              id: 'default',
+              launchActivity: 'default',
+            },
+            fullScreenAction: {
+              id: 'default',
+              launchActivity: 'default',
+            },
+            actions: [
+              {
+                title: '✅ Poora Ho Gaya',
+                pressAction: { id: 'complete_task' },
+              },
+              {
+                title: '⏳ 5 Min Baad',
+                pressAction: { id: 'snooze_task' },
+              },
+            ],
+          },
+          data: {
+            taskId: cleanTaskId,
+            taskTitle,
+            deadlineTime,
+            type: 'EXACT_ALARM',
+          },
         },
-        trigger: exactTrigger,
-      });
+        {
+          type: TriggerType.TIMESTAMP,
+          timestamp: deadlineDate.getTime(),
+          alarmManager: {
+            type: AlarmType.SET_ALARM_CLOCK,
+          },
+        }
+      );
 
-      console.log(`[EXACT ALERT REGISTERED] Id: ${notifId} set for exact deadline (+${diffSec}s)`);
+      console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
 
-      // 2. 10-Minute Advance Reminder (fires exactly 10 minutes before deadline)
-      const tenMinBeforeSec = diffSec - 10 * 60;
-      if (tenMinBeforeSec > 10) {
-        const earlyTrigger: any = {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: tenMinBeforeSec,
-          ...(this.hasCustomChannel ? { channelId: 'task-alerts' } : {}),
-        };
-
-        const earlyId = await Notifications.scheduleNotificationAsync({
-          content: {
+      // 2. 10-Minute Advance Warning (fires exactly 10 minutes before deadline)
+      const tenMinBeforeMs = deadlineDate.getTime() - 10 * 60 * 1000;
+      if (tenMinBeforeMs > Date.now() + 10000) {
+        await notifee.createTriggerNotification(
+          {
+            id: warningId,
             title: `⏳ 10 Min Baaki: ${taskTitle}`,
             body: `Dhyan dein! "${taskTitle}" ke liye sirf 10 minute baaki hain (${deadlineTime}).`,
-            sound: 'default',
-            priority: Notifications.AndroidNotificationPriority.HIGH,
-            vibrate: [0, 300, 200, 300],
+            android: {
+              channelId: 'task-reminders',
+              category: AndroidCategory.REMINDER,
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              pressAction: {
+                id: 'default',
+                launchActivity: 'default',
+              },
+            },
+            data: {
+              taskId: cleanTaskId,
+              taskTitle,
+              type: 'ADVANCE_WARNING',
+            },
           },
-          trigger: earlyTrigger,
-        });
-
-        console.log(`[10-MIN ADVANCE ALERT REGISTERED] Id: ${earlyId} set for 10 min before (+${tenMinBeforeSec}s)`);
+          {
+            type: TriggerType.TIMESTAMP,
+            timestamp: tenMinBeforeMs,
+            alarmManager: {
+              type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
+            },
+          }
+        );
+        console.log(`[ADVANCE WARNING REGISTERED] Id: ${warningId} set for 10 min before`);
       }
 
       return true;
     } catch (err) {
-      console.error('Error scheduling task alert:', err);
+      console.error('Error scheduling task exact alarm:', err);
       return false;
     }
   }
 
   /**
+   * Cancels both exact alarm and 10m warning for a task
+   */
+  static async cancelTaskAlerts(taskId: string | number): Promise<void> {
+    if (Platform.OS === 'web') return;
+    try {
+      const cleanId = String(taskId);
+      await notifee.cancelNotification(`alarm_${cleanId}`);
+      await notifee.cancelNotification(`warning_${cleanId}`);
+      console.log(`[ALARM CANCELLED] For task ${cleanId}`);
+    } catch (e) {
+      console.warn('Error cancelling task alert:', e);
+    }
+  }
+
+  /**
    * Fires an immediate push notification confirming a task was added.
-   * Delivers immediate banner, sound, and vibration feedback.
    */
   static async sendTaskAddedNotification(
     taskTitle: string,
@@ -259,25 +343,18 @@ export class NotificationService {
         body += ` (⏰ Reminder: ${reminderTime})`;
       }
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
+      await notifee.displayNotification({
+        title,
+        body,
+        android: {
+          channelId: 'task-reminders',
+          importance: AndroidImportance.HIGH,
           sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          vibrate: [0, 250, 150, 250],
-          badge: 1,
-          data: {
-            type: 'TASK_ADDED',
-            title: taskTitle,
-            date: taskDate,
-            time: reminderTime,
-          },
+          color: '#16A34A',
+          pressAction: { id: 'default' },
         },
-        trigger: null, // null trigger schedules and fires IMMEDIATELY!
       });
 
-      console.log(`[NOTIF] Task added immediate notification delivered: "${taskTitle}"`);
       return true;
     } catch (err) {
       console.error('Error firing task added notification:', err);
@@ -286,8 +363,8 @@ export class NotificationService {
   }
 
   /**
-   * Fires an immediate push notification alerting a free user that their
-   * 3-task free tier is exhausted and Pro is required for new tasks/reminders.
+   * Fires an immediate notification alerting a free user that their
+   * 3-task free tier is exhausted.
    */
   static async sendQuotaLimitNotification(
     localizedTitle?: string,
@@ -302,22 +379,17 @@ export class NotificationService {
         localizedBody ||
         'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts!';
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
+      await notifee.displayNotification({
+        title,
+        body,
+        android: {
+          channelId: 'task-reminders',
+          importance: AndroidImportance.HIGH,
           sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 300, 200, 300],
-          badge: 1,
-          data: {
-            type: 'QUOTA_EXCEEDED',
-          },
+          pressAction: { id: 'default' },
         },
-        trigger: null,
       });
 
-      console.log('[NOTIF] Quota limit notification delivered');
       return true;
     } catch (err) {
       console.warn('[NOTIF] Error delivering quota limit notification:', err);
@@ -335,25 +407,38 @@ export class NotificationService {
   ): Promise<boolean> {
     try {
       await this.init();
-      const trigger: any =
-        Platform.OS === 'web'
-          ? null
-          : {
-              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-              seconds: Math.max(1, delaySeconds),
-              ...(this.hasCustomChannel ? { channelId: 'task-alerts' } : {}),
-            };
+      if (Platform.OS === 'web') return false;
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
+      if (delaySeconds <= 1) {
+        await notifee.displayNotification({
           title,
           body,
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          badge: 1,
-        },
-        trigger,
-      });
+          android: {
+            channelId: 'task-reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            pressAction: { id: 'default' },
+          },
+        });
+      } else {
+        await notifee.createTriggerNotification(
+          {
+            title,
+            body,
+            android: {
+              channelId: 'task-reminders',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              pressAction: { id: 'default' },
+            },
+          },
+          {
+            type: TriggerType.TIMESTAMP,
+            timestamp: Date.now() + delaySeconds * 1000,
+            alarmManager: { type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE },
+          }
+        );
+      }
       return true;
     } catch (err) {
       console.warn('[NOTIF] sendLocalNotification failed:', err);
@@ -362,44 +447,64 @@ export class NotificationService {
   }
 
   /**
-   * Fires a test alert in N seconds (default 5s) so the user can verify sound, banner, and vibration!
-   * Includes both system notification and an in-app alert backup.
+   * Fires a test full-screen alarm in N seconds (default 5s)
+   * so the user can verify sound, screen-wake, and action buttons immediately!
    */
   static async triggerTestAlert(seconds: number = 5): Promise<boolean> {
     try {
       await this.init();
 
-      const trigger: any = {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: Math.max(1, seconds),
-        ...(this.hasCustomChannel ? { channelId: 'task-alerts' } : {}),
-      };
+      const triggerTimestamp = Date.now() + seconds * 1000;
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '🔔 Alert Check: Kaam Kar Raha Hai!',
-          body: `Yeh test alert ${seconds} second baad baja hai. Aapke task alerts bilkul tayar hain! ⏰`,
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 500, 200, 500, 200, 500],
-          badge: 1,
+      await notifee.createTriggerNotification(
+        {
+          id: 'test_alarm_check',
+          title: '⏰ TEST ALARM: TaskPilot Alert!',
+          body: `Yeh test alarm ${seconds} second baad baja hai! Sound loop karega jab tak aap Poora ya Dismiss na dabayein.`,
+          android: {
+            channelId: 'task-alarms-v2',
+            category: AndroidCategory.ALARM,
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            loopSound: true,
+            ongoing: true,
+            autoCancel: false,
+            color: '#16A34A',
+            pressAction: {
+              id: 'default',
+              launchActivity: 'default',
+            },
+            fullScreenAction: {
+              id: 'default',
+              launchActivity: 'default',
+            },
+            actions: [
+              {
+                title: '✅ Poora Ho Gaya',
+                pressAction: { id: 'complete_task' },
+              },
+              {
+                title: '⏳ 5 Min Baad',
+                pressAction: { id: 'snooze_task' },
+              },
+            ],
+          },
+          data: {
+            taskId: 'test_task',
+            taskTitle: 'Test Task Alert',
+            type: 'TEST_ALARM',
+          },
         },
-        trigger,
-      });
+        {
+          type: TriggerType.TIMESTAMP,
+          timestamp: triggerTimestamp,
+          alarmManager: {
+            type: AlarmType.SET_ALARM_CLOCK,
+          },
+        }
+      );
 
-      // Also trigger backend push if online and token exists
-      apiClient.post('/auth/test-push').catch(() => {});
-
-      // In-app backup chime / confirmation when timer expires
-      setTimeout(() => {
-        Alert.alert(
-          '⏰ ALARM: Alert Successful!',
-          'Aapke phone par test alert safalta-poorvak trigger ho gaya hai! Task reminders theek samay par bajenge.',
-          [{ text: 'Theek Hai' }]
-        );
-      }, seconds * 1000);
-
-      console.log(`[TEST ALERT] Scheduled for ${seconds}s from now.`);
+      console.log(`[TEST EXACT ALARM] Scheduled for ${seconds}s from now.`);
       return true;
     } catch (err) {
       console.error('Error triggering test alert:', err);
@@ -408,7 +513,7 @@ export class NotificationService {
   }
 
   /**
-   * Robust Date parser supporting:
+   * Date parser supporting:
    * "2026-09-08", "aaj", "kal", "today", "tomorrow" and "09:30 AM", "05:40:00", or "17:40"
    */
   private static parseDateTime(dateStr: string, timeStr: string): Date | null {

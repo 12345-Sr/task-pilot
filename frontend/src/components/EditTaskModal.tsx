@@ -137,11 +137,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         onSuccess: async (updated: any) => {
           // Reschedule alert notifications
           if (reminderEnabled) {
+            await NotificationService.cancelTaskAlerts(task.id);
             await NotificationService.scheduleTaskAlerts(
               trimmedTitle,
               selectedDate,
-              reminderTime
+              reminderTime,
+              task.id
             );
+          } else {
+            await NotificationService.cancelTaskAlerts(task.id);
           }
 
           Alert.alert(

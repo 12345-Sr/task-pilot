@@ -151,7 +151,7 @@ export const AddTaskScreen: React.FC = () => {
 
           // 2. Schedule future deadline / alert if reminder is enabled
           if (reminderEnabled) {
-            await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime);
+            await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
           }
           const wasRepeated = repeatMonthly;
           setTitle('');
