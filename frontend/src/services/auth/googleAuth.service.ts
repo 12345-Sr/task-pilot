@@ -23,12 +23,11 @@ export const configureGoogleSignIn = () => {
     const config: any = {
       scopes: ['email', 'profile'],
       webClientId,
-      offlineAccess: true,
-      forceCodeForRefreshToken: false,
+      offlineAccess: false,
     };
     GoogleSignin.configure(config);
     isConfigured = true;
-    console.log('[GOOGLE SIGNIN] Configured with webClientId:', webClientId);
+    console.log('[GOOGLE SIGNIN] Configured with webClientId (offlineAccess=false):', webClientId);
   } catch (err) {
     console.warn('[GOOGLE SIGNIN] Configuration notice:', err);
   }
