@@ -10,7 +10,7 @@
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.taskpilot.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

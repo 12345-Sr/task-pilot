@@ -341,42 +341,6 @@ export const SettingsScreen: React.FC = () => {
               thumbColor={colors.surface}
             />
           </View>
-
-          {/* Test Alarm & Notification (5s) */}
-          <TouchableOpacity
-            style={styles.settingRow}
-            activeOpacity={0.7}
-            onPress={async () => {
-              Alert.alert(
-                isHindi ? '🔔 Alarm Test Shuru' : '🔔 Alarm Test Started',
-                isHindi
-                  ? 'Theek 5 second baad full-screen alarm aur alert bajega. Phone lock karke ya app band karke test karein!'
-                  : 'Alarm will ring in exactly 5 seconds. Lock your phone or leave the app to test!',
-                [{ text: 'OK' }]
-              );
-              await NotificationService.triggerTestAlert(5);
-            }}
-          >
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>⏰</Text>
-              <View>
-                <Text style={styles.settingLabel}>
-                  {isHindi ? 'Alarm & Alert Test Karein' : 'Test Alarm & Notification'}
-                </Text>
-                <Text style={styles.settingSubLabel}>
-                  {isHindi ? '5 second mein live alarm bajakar test karein' : 'Ring alarm in 5 seconds to test sound'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.settingRight}>
-              <View style={[styles.detailsBadgePill, { backgroundColor: '#FEF3C7' }]}>
-                <Text style={[styles.detailsBadgePillText, { color: '#B45309', fontWeight: '700' }]}>
-                  {isHindi ? 'Test 5s' : 'Test 5s'}
-                </Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
         {/* Support & Legal Section */}
