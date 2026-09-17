@@ -36,8 +36,8 @@ export class NotificationService {
     if (this.isInitialized || Platform.OS === 'web') return;
 
     if (Platform.OS === 'android') {
+      // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
       try {
-        // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
         await notifee.createChannel({
           id: 'task-alarms-v2',
           name: 'TaskPilot Alarm Clock',
@@ -45,31 +45,36 @@ export class NotificationService {
           importance: AndroidImportance.HIGH,
           visibility: AndroidVisibility.PUBLIC,
           vibration: true,
-          vibrationPattern: [0, 600, 250, 600, 250, 600],
           sound: 'default',
           bypassDnd: true,
           lights: true,
           lightColor: '#16A34A',
         });
+      } catch (err) {
+        console.warn('[NOTIF] task-alarms-v2 channel creation warning:', err);
+      }
 
-        // 2. 10-Minute Advance Warning Channel
+      // 2. Advance Warning & Task Added Channel
+      try {
         await notifee.createChannel({
           id: 'task-reminders',
-          name: 'TaskPilot 10m Warnings',
-          description: 'Advance reminders sent 10 minutes prior to task deadline',
+          name: 'TaskPilot Reminders',
+          description: 'Advance reminders and task added confirmations',
           importance: AndroidImportance.HIGH,
           visibility: AndroidVisibility.PUBLIC,
           vibration: true,
-          vibrationPattern: [0, 300, 200, 300],
           sound: 'default',
         });
+      } catch (err) {
+        console.warn('[NOTIF] task-reminders channel creation warning:', err);
+      }
 
-        // 3. Fallback channel for Expo Notifications
+      // 3. Fallback channel for Expo Notifications
+      try {
         await Notifications.setNotificationChannelAsync('task-alerts', {
           name: 'Task Alerts & Reminders',
           description: 'Timely reminders and deadline alerts for your tasks',
           importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 500, 200, 500, 200, 500],
           sound: 'default',
           lightColor: '#16A34A',
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -80,7 +85,7 @@ export class NotificationService {
         });
         this.hasCustomChannel = true;
       } catch (err) {
-        console.warn('[NOTIF] Channel setup notice:', err);
+        console.warn('[NOTIF] Expo fallback channel notice:', err);
       }
     }
 
@@ -97,7 +102,7 @@ export class NotificationService {
     } catch {}
 
     this.isInitialized = true;
-    console.log('[NOTIF] NotificationService initialized with exact alarm clock & full-screen support.');
+    console.log('[NOTIF] NotificationService successfully initialized.');
   }
 
   static async requestPermissions(): Promise<boolean> {
@@ -177,7 +182,7 @@ export class NotificationService {
    * 1. Exact-Time Alarm using AlarmManager.setAlarmClock (Zero-Delay, millisecond precision, fires even in Doze mode)
    * 2. Full-Screen Intent on lock screen (wakes screen, shows alarm view with Done & Snooze buttons)
    * 3. Looping sound until dismissed or snoozed
-   * 4. 10-Minute Advance Warning
+   * 4. Advance Warning (10 minutes before, or 2 minutes before if scheduled < 10m ahead)
    */
   static async scheduleTaskAlerts(
     taskTitle: string,
@@ -209,6 +214,21 @@ export class NotificationService {
       const cleanTaskId = String(taskId || Math.abs(Math.sin(deadlineDate.getTime()) * 1000000 | 0));
       const alarmId = `alarm_${cleanTaskId}`;
       const warningId = `warning_${cleanTaskId}`;
+
+      // Ensure channel exists
+      try {
+        await notifee.createChannel({
+          id: 'task-alarms-v2',
+          name: 'TaskPilot Alarm Clock',
+          importance: AndroidImportance.HIGH,
+          visibility: AndroidVisibility.PUBLIC,
+          vibration: true,
+          sound: 'default',
+          bypassDnd: true,
+          lights: true,
+          lightColor: '#16A34A',
+        });
+      } catch {}
 
       // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
       // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
@@ -263,14 +283,43 @@ export class NotificationService {
 
       console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
 
-      // 2. 10-Minute Advance Warning (fires exactly 10 minutes before deadline)
+      // 2. Intelligent Advance Warning:
+      // If task is scheduled > 10m away: warning fires 10 minutes prior
+      // If task is scheduled 3 to 10m away (e.g. quick testing): warning fires 2 minutes prior
       const tenMinBeforeMs = deadlineDate.getTime() - 10 * 60 * 1000;
-      if (tenMinBeforeMs > Date.now() + 10000) {
+      const twoMinBeforeMs = deadlineDate.getTime() - 2 * 60 * 1000;
+
+      let advanceMs = 0;
+      let warningTitle = '';
+      let warningBody = '';
+
+      if (tenMinBeforeMs > now + 15000) {
+        advanceMs = tenMinBeforeMs;
+        warningTitle = `⏳ 10 Min Baaki: ${taskTitle}`;
+        warningBody = `Dhyan dein! "${taskTitle}" ke liye sirf 10 minute baaki hain (${deadlineTime}).`;
+      } else if (twoMinBeforeMs > now + 15000) {
+        advanceMs = twoMinBeforeMs;
+        warningTitle = `⏳ 2 Min Baaki: ${taskTitle}`;
+        warningBody = `Dhyan dein! "${taskTitle}" ke liye sirf 2 minute baaki hain (${deadlineTime}).`;
+      }
+
+      if (advanceMs > 0) {
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskPilot Reminders',
+            importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
+            sound: 'default',
+          });
+        } catch {}
+
         await notifee.createTriggerNotification(
           {
             id: warningId,
-            title: `⏳ 10 Min Baaki: ${taskTitle}`,
-            body: `Dhyan dein! "${taskTitle}" ke liye sirf 10 minute baaki hain (${deadlineTime}).`,
+            title: warningTitle,
+            body: warningBody,
             android: {
               channelId: 'task-reminders',
               category: AndroidCategory.REMINDER,
@@ -289,13 +338,13 @@ export class NotificationService {
           },
           {
             type: TriggerType.TIMESTAMP,
-            timestamp: tenMinBeforeMs,
+            timestamp: advanceMs,
             alarmManager: {
               type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
             },
           }
         );
-        console.log(`[ADVANCE WARNING REGISTERED] Id: ${warningId} set for 10 min before`);
+        console.log(`[ADVANCE WARNING REGISTERED] Id: ${warningId} set for timestamp ${new Date(advanceMs).toLocaleTimeString()}`);
       }
 
       return true;
@@ -306,7 +355,7 @@ export class NotificationService {
   }
 
   /**
-   * Cancels both exact alarm and 10m warning for a task
+   * Cancels both exact alarm and warning for a task
    */
   static async cancelTaskAlerts(taskId: string | number): Promise<void> {
     if (Platform.OS === 'web') return;
@@ -322,6 +371,7 @@ export class NotificationService {
 
   /**
    * Fires an immediate push notification confirming a task was added.
+   * Uses dual delivery (Notifee + Expo fallback) to guarantee appearance!
    */
   static async sendTaskAddedNotification(
     taskTitle: string,
@@ -343,18 +393,56 @@ export class NotificationService {
         body += ` (⏰ Reminder: ${reminderTime})`;
       }
 
-      await notifee.displayNotification({
-        title,
-        body,
-        android: {
-          channelId: 'task-reminders',
-          importance: AndroidImportance.HIGH,
-          sound: 'default',
-          color: '#16A34A',
-          pressAction: { id: 'default' },
-        },
-      });
+      let delivered = false;
 
+      // 1. Try Notifee native notification
+      try {
+        await notifee.createChannel({
+          id: 'task-reminders',
+          name: 'TaskPilot Reminders',
+          importance: AndroidImportance.HIGH,
+          visibility: AndroidVisibility.PUBLIC,
+          vibration: true,
+          sound: 'default',
+        });
+
+        await notifee.displayNotification({
+          title,
+          body,
+          android: {
+            channelId: 'task-reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            color: '#16A34A',
+            pressAction: { id: 'default', launchActivity: 'default' },
+          },
+        });
+        delivered = true;
+      } catch (notifeeErr) {
+        console.warn('[NOTIF] Notifee display notice, attempting Expo fallback:', notifeeErr);
+      }
+
+      // 2. Fallback to Expo Notifications if needed
+      if (!delivered) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            badge: 1,
+            data: {
+              type: 'TASK_ADDED',
+              title: taskTitle,
+              date: taskDate,
+              time: reminderTime,
+            },
+          },
+          trigger: null,
+        });
+      }
+
+      console.log(`[NOTIF] Task added notification delivered for "${taskTitle}"`);
       return true;
     } catch (err) {
       console.error('Error firing task added notification:', err);
@@ -379,16 +467,35 @@ export class NotificationService {
         localizedBody ||
         'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts!';
 
-      await notifee.displayNotification({
-        title,
-        body,
-        android: {
-          channelId: 'task-reminders',
+      try {
+        await notifee.createChannel({
+          id: 'task-reminders',
+          name: 'TaskPilot Reminders',
           importance: AndroidImportance.HIGH,
           sound: 'default',
-          pressAction: { id: 'default' },
-        },
-      });
+        });
+        await notifee.displayNotification({
+          title,
+          body,
+          android: {
+            channelId: 'task-reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            pressAction: { id: 'default' },
+          },
+        });
+      } catch {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            badge: 1,
+          },
+          trigger: null,
+        });
+      }
 
       return true;
     } catch (err) {
@@ -455,6 +562,18 @@ export class NotificationService {
       await this.init();
 
       const triggerTimestamp = Date.now() + seconds * 1000;
+
+      await notifee.createChannel({
+        id: 'task-alarms-v2',
+        name: 'TaskPilot Alarm Clock',
+        importance: AndroidImportance.HIGH,
+        visibility: AndroidVisibility.PUBLIC,
+        vibration: true,
+        sound: 'default',
+        bypassDnd: true,
+        lights: true,
+        lightColor: '#16A34A',
+      });
 
       await notifee.createTriggerNotification(
         {
