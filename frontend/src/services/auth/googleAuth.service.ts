@@ -17,14 +17,20 @@ let isConfigured = false;
 export const configureGoogleSignIn = () => {
   if (isConfigured || !GoogleSignin) return;
   try {
-    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined;
-    GoogleSignin.configure({
+    const webClientId = (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '').trim() || undefined;
+    const config: any = {
       scopes: ['email', 'profile'],
-      webClientId,
-      offlineAccess: true,
-      forceCodeForRefreshToken: false,
-    });
+    };
+    if (webClientId) {
+      config.webClientId = webClientId;
+      config.offlineAccess = true;
+      config.forceCodeForRefreshToken = false;
+    } else {
+      config.offlineAccess = false;
+    }
+    GoogleSignin.configure(config);
     isConfigured = true;
+    console.log('[GOOGLE SIGNIN] Successfully configured. offlineAccess =', Boolean(webClientId));
   } catch (err) {
     console.warn('[GOOGLE SIGNIN] Configuration notice:', err);
   }
@@ -41,10 +47,6 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
 
     configureGoogleSignIn();
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-    try {
-      await GoogleSignin.signOut();
-    } catch {}
 
     const response = await GoogleSignin.signIn();
 
