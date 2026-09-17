@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -44,6 +45,7 @@ export const LoginScreen: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [showLangModal, setShowLangModal] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleErrorMsg, setGoogleErrorMsg] = useState('');
 
   const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
@@ -82,6 +84,7 @@ export const LoginScreen: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     setErrorMsg('');
+    setGoogleErrorMsg('');
     setIsGoogleLoading(true);
     try {
       const res = await signInWithGoogle();
@@ -90,11 +93,19 @@ export const LoginScreen: React.FC = () => {
           index: 0,
           routes: [{ name: 'Main' }],
         });
-      } else if (res.error && !res.error.toLowerCase().includes('cancel')) {
-        setErrorMsg(res.error);
+      } else {
+        const msg = res.error || 'Google sign-in could not be completed.';
+        setGoogleErrorMsg(msg);
+        Alert.alert(
+          language === 'hi' ? 'Google Sign-In Soochna' : 'Google Sign-In Notice',
+          msg,
+          [{ text: 'OK' }]
+        );
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Google sign-in failed');
+      const msg = err?.message || 'Google sign-in failed';
+      setGoogleErrorMsg(msg);
+      Alert.alert('Google Sign-In', msg, [{ text: 'OK' }]);
     } finally {
       setIsGoogleLoading(false);
     }
@@ -241,6 +252,12 @@ export const LoginScreen: React.FC = () => {
               loading={isGoogleLoading}
               text={language === 'hi' ? 'Google se Sign In karein' : 'Continue with Google'}
             />
+
+            {googleErrorMsg ? (
+              <View style={styles.googleErrorBox}>
+                <Text style={styles.googleErrorText}>⚠️ {googleErrorMsg}</Text>
+              </View>
+            ) : null}
           </View>
 
           {/* Bottom Switcher */}
@@ -588,6 +605,20 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: colors.primary,
+  },
+  googleErrorBox: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+  },
+  googleErrorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
   },
 });
 

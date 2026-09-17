@@ -17,8 +17,10 @@ let isConfigured = false;
 export const configureGoogleSignIn = () => {
   if (isConfigured || !GoogleSignin) return;
   try {
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined;
     GoogleSignin.configure({
       scopes: ['email', 'profile'],
+      webClientId,
       offlineAccess: true,
       forceCodeForRefreshToken: false,
     });
@@ -33,7 +35,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     if (!GoogleSignin) {
       return {
         success: false,
-        error: 'Google Sign-In requires the installed TaskPilot APK (not supported in Expo Go).',
+        error: 'Google Sign-In requires the installed TaskPilot APK (not supported inside Expo Go).',
       };
     }
 
@@ -45,8 +47,18 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     } catch {}
 
     const response = await GoogleSignin.signIn();
-    const user = (response as any)?.data?.user || (response as any)?.user || response;
-    const idToken = (response as any)?.data?.idToken || (response as any)?.idToken;
+
+    // Check v16 response types
+    if (response?.type === 'cancelled') {
+      return { success: false, error: 'Google sign-in was cancelled.' };
+    }
+    if (response?.type === 'noSavedCredentialFound') {
+      return { success: false, error: 'No saved Google credentials found on this device.' };
+    }
+
+    const data = (response as any)?.data || response;
+    const user = data?.user || data;
+    const idToken = data?.idToken;
 
     const email = user?.email;
     const name = user?.name || user?.givenName;
@@ -54,7 +66,11 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     const googleId = user?.id;
 
     if (!email && !idToken) {
-      return { success: false, error: 'Google account sign-in returned no email.' };
+      return {
+        success: false,
+        error:
+          'Could not retrieve Google account details. Please ensure Google Play Services is active or sign in with Email & Password.',
+      };
     }
 
     // Call backend API
@@ -80,17 +96,34 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
 
     return { success: false, error: 'Could not obtain session from server.' };
   } catch (error: any) {
-    if (statusCodes && error.code === statusCodes.SIGN_IN_CANCELLED) {
-      return { success: false, error: 'Google sign-in cancelled' };
-    } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
-      return { success: false, error: 'Google sign-in in progress' };
-    } else if (statusCodes && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return { success: false, error: 'Google Play Services is not available on this device' };
-    }
     console.warn('[GOOGLE SIGNIN ERROR]', error);
+
+    const errCode = String(error?.code || '');
+    const errMsg = String(error?.message || '');
+
+    // Google Play Services Developer Error (code 10): missing SHA-1 or Web Client ID in Firebase
+    if (errCode === '10' || errMsg.includes('DEVELOPER_ERROR') || errMsg.includes('10')) {
+      return {
+        success: false,
+        error:
+          'Firebase Google Sign-In setup required: Release SHA-1 (4A:72:CC:30:F9:8E:AA:EC:48:21:C3:C1:AD:7E:E8:9A:5C:68:C7:C0) must be added in Firebase Console for package com.taskpilot.app. Please use Email & Password to sign in now.',
+      };
+    }
+
+    if (statusCodes && (error.code === statusCodes.SIGN_IN_CANCELLED || errCode === '12501')) {
+      return { success: false, error: 'Google sign-in was cancelled.' };
+    } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
+      return { success: false, error: 'Google sign-in is in progress.' };
+    } else if (statusCodes && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      return { success: false, error: 'Google Play Services is not available on this device.' };
+    }
+
     return {
       success: false,
-      error: error?.response?.data?.error || error?.message || 'Google sign-in failed. Please try again.',
+      error:
+        error?.response?.data?.error ||
+        error?.message ||
+        'Google sign-in failed. Please try again or use Email & Password.',
     };
   }
 };
