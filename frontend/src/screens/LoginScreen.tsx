@@ -18,6 +18,8 @@ import { useAppStore } from '../store';
 import { t } from '../i18n';
 import BrandLogo from '../components/BrandLogo';
 import { useLogin } from '../hooks';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
+import { signInWithGoogle } from '../services/auth/googleAuth.service';
 
 const LANGUAGES = [
   { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
@@ -41,6 +43,7 @@ export const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showLangModal, setShowLangModal] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
@@ -75,6 +78,26 @@ export const LoginScreen: React.FC = () => {
         },
       }
     );
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMsg('');
+    setIsGoogleLoading(true);
+    try {
+      const res = await signInWithGoogle();
+      if (res.success) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      } else if (res.error && !res.error.toLowerCase().includes('cancel')) {
+        setErrorMsg(res.error);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Google sign-in failed');
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -204,6 +227,20 @@ export const LoginScreen: React.FC = () => {
                 </Text>
               )}
             </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{language === 'hi' ? 'ya' : 'or'}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign In Button */}
+            <GoogleSignInButton
+              onPress={handleGoogleLogin}
+              loading={isGoogleLoading}
+              text={language === 'hi' ? 'Google se Sign In karein' : 'Continue with Google'}
+            />
           </View>
 
           {/* Bottom Switcher */}
@@ -431,6 +468,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 4,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    paddingHorizontal: 12,
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   primaryButtonText: {
     color: '#FFFFFF',

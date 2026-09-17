@@ -1,33 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
+  ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { t } from '../i18n';
 
 export interface TimeSliderPickerProps {
   value: string; // e.g. "09:30 AM"
   onChange: (time: string) => void;
   language?: string;
-  selectedDate?: string; // e.g. "2026-09-11"
+  selectedDate?: string; // e.g. "2026-09-17"
   onValidationChange?: (isValid: boolean, errorMsg?: string) => void;
 }
 
-const ITEM_HEIGHT = 48;
-const VISIBLE_ITEMS = 3; // 1 above, 1 selected in center, 1 below
+const ITEM_HEIGHT = 44;
+const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')); // "01" .. "12"
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // "00" .. "59" (full 60-min precision)
+const PERIODS = ['AM', 'PM'] as const;
 
-const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')); // 00, 05, 10 ... 55
-const PERIODS = ['AM', 'PM'];
+const HOUR_OFFSETS = HOURS.map((_, i) => i * ITEM_HEIGHT);
+const MINUTE_OFFSETS = MINUTES.map((_, i) => i * ITEM_HEIGHT);
 
 /**
- * Calculates the next valid future time (now + 30 mins rounded to next 5-minute interval)
+ * Calculates the next valid future time (now + 30 mins rounded to nearest minute)
  */
 export const getNextValidFutureTime = (): { hourStr: string; minuteStr: string; period: string } => {
   const now = new Date();
@@ -36,7 +35,7 @@ export const getNextValidFutureTime = (): { hourStr: string; minuteStr: string; 
   const isPM = h >= 12;
   if (h > 12) h -= 12;
   if (h === 0) h = 12;
-  const m = (Math.ceil(now.getMinutes() / 5) * 5) % 60;
+  const m = now.getMinutes();
   return {
     hourStr: String(h).padStart(2, '0'),
     minuteStr: String(m).padStart(2, '0'),
@@ -60,12 +59,12 @@ export const isTimeInPast = (
   const d = String(now.getDate()).padStart(2, '0');
   const todayStr = `${y}-${m}-${d}`;
 
-  // If selected date is in the past (before today)
+  // If selected date is strictly before today
   if (dateStr < todayStr) return true;
-  // If selected date is in the future (after today), any time is allowed
+  // If selected date is strictly after today, any time is allowed
   if (dateStr > todayStr) return false;
 
-  // Selected date is TODAY — evaluate hours and minutes against current moment
+  // Selected date is TODAY — evaluate 24h hours and minutes against current moment
   let h = parseInt(hourStr, 10);
   if (period === 'PM' && h < 12) h += 12;
   if (period === 'AM' && h === 12) h = 0;
@@ -86,7 +85,6 @@ export const TimeSliderPicker: React.FC<TimeSliderPickerProps> = ({
   selectedDate,
   onValidationChange,
 }) => {
-  // Parse incoming value safely
   const parseTime = (str: string) => {
     try {
       const isPM = /pm/i.test(str);
@@ -96,10 +94,11 @@ export const TimeSliderPicker: React.FC<TimeSliderPickerProps> = ({
       let m = parseInt(parts[1], 10) || 0;
       if (h > 12) h = h % 12 || 12;
       if (h === 0) h = 12;
-      const roundedM = (Math.round(m / 5) * 5) % 60;
+      if (m < 0) m = 0;
+      if (m > 59) m = 59;
       return {
         hourStr: String(h).padStart(2, '0'),
-        minuteStr: String(roundedM).padStart(2, '0'),
+        minuteStr: String(m).padStart(2, '0'),
         period: isPM ? 'PM' : 'AM',
       };
     } catch {
@@ -112,30 +111,50 @@ export const TimeSliderPicker: React.FC<TimeSliderPickerProps> = ({
   const [selectedMinute, setSelectedMinute] = useState(initial.minuteStr);
   const [selectedPeriod, setSelectedPeriod] = useState(initial.period);
 
+  // Visual tracking state during scroll drag for instant 60fps highlighting
+  const [visualHour, setVisualHour] = useState(initial.hourStr);
+  const [visualMinute, setVisualMinute] = useState(initial.minuteStr);
+
   const hourScrollRef = useRef<ScrollView>(null);
   const minuteScrollRef = useRef<ScrollView>(null);
+  const isUserInteractingHour = useRef(false);
+  const isUserInteractingMinute = useRef(false);
 
-  // Evaluate if current selection is past
   const isPast = isTimeInPast(selectedHour, selectedMinute, selectedPeriod, selectedDate);
+  const suggested = getNextValidFutureTime();
 
-  // Sync with prop when value changes
+  const scrollToHour = useCallback((h: string, animated = false) => {
+    const idx = HOURS.indexOf(h);
+    if (idx !== -1 && hourScrollRef.current) {
+      hourScrollRef.current.scrollTo({ y: idx * ITEM_HEIGHT, animated });
+    }
+  }, []);
+
+  const scrollToMinute = useCallback((m: string, animated = false) => {
+    const idx = MINUTES.indexOf(m);
+    if (idx !== -1 && minuteScrollRef.current) {
+      minuteScrollRef.current.scrollTo({ y: idx * ITEM_HEIGHT, animated });
+    }
+  }, []);
+
+  // Sync scroll position when prop changes externally
   useEffect(() => {
     const p = parseTime(value);
     setSelectedHour(p.hourStr);
+    setVisualHour(p.hourStr);
     setSelectedMinute(p.minuteStr);
+    setVisualMinute(p.minuteStr);
     setSelectedPeriod(p.period);
 
-    const hIdx = HOURS.indexOf(p.hourStr);
-    if (hIdx !== -1 && hourScrollRef.current) {
-      hourScrollRef.current.scrollTo({ y: hIdx * ITEM_HEIGHT, animated: false });
-    }
-    const mIdx = MINUTES.indexOf(p.minuteStr);
-    if (mIdx !== -1 && minuteScrollRef.current) {
-      minuteScrollRef.current.scrollTo({ y: mIdx * ITEM_HEIGHT, animated: false });
-    }
-  }, [value]);
+    const timer = setTimeout(() => {
+      scrollToHour(p.hourStr, false);
+      scrollToMinute(p.minuteStr, false);
+    }, 60);
 
-  // Notify parent of validation status
+    return () => clearTimeout(timer);
+  }, [value, scrollToHour, scrollToMinute]);
+
+  // Validation callback
   useEffect(() => {
     onValidationChange?.(
       !isPast,
@@ -147,475 +166,584 @@ export const TimeSliderPicker: React.FC<TimeSliderPickerProps> = ({
     );
   }, [isPast, language, onValidationChange]);
 
-  const updateTime = (h: string, m: string, p: string) => {
+  const commitTime = (h: string, m: string, p: string) => {
     setSelectedHour(h);
+    setVisualHour(h);
     setSelectedMinute(m);
+    setVisualMinute(m);
     setSelectedPeriod(p);
     onChange(`${h}:${m} ${p}`);
   };
 
+  // Real-time highlight during hour scroll
   const handleHourScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     const idx = Math.max(0, Math.min(HOURS.length - 1, Math.round(y / ITEM_HEIGHT)));
-    const newHour = HOURS[idx];
-    if (newHour && newHour !== selectedHour) {
-      updateTime(newHour, selectedMinute, selectedPeriod);
+    const h = HOURS[idx];
+    if (h && h !== visualHour) {
+      setVisualHour(h);
     }
   };
 
+  // Commit on end of hour scroll
+  const handleHourScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    isUserInteractingHour.current = false;
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.max(0, Math.min(HOURS.length - 1, Math.round(y / ITEM_HEIGHT)));
+    const newHour = HOURS[idx];
+    if (newHour) {
+      commitTime(newHour, selectedMinute, selectedPeriod);
+    }
+  };
+
+  // Real-time highlight during minute scroll
   const handleMinuteScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     const idx = Math.max(0, Math.min(MINUTES.length - 1, Math.round(y / ITEM_HEIGHT)));
-    const newMin = MINUTES[idx];
-    if (newMin && newMin !== selectedMinute) {
-      updateTime(selectedHour, newMin, selectedPeriod);
+    const m = MINUTES[idx];
+    if (m && m !== visualMinute) {
+      setVisualMinute(m);
     }
   };
 
+  // Commit on end of minute scroll
+  const handleMinuteScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    isUserInteractingMinute.current = false;
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.max(0, Math.min(MINUTES.length - 1, Math.round(y / ITEM_HEIGHT)));
+    const newMin = MINUTES[idx];
+    if (newMin) {
+      commitTime(selectedHour, newMin, selectedPeriod);
+    }
+  };
+
+  // Direct tap on any item in wheel
   const selectHourDirect = (h: string, idx: number) => {
-    updateTime(h, selectedMinute, selectedPeriod);
+    commitTime(h, selectedMinute, selectedPeriod);
     hourScrollRef.current?.scrollTo({ y: idx * ITEM_HEIGHT, animated: true });
   };
 
   const selectMinuteDirect = (m: string, idx: number) => {
-    updateTime(selectedHour, m, selectedPeriod);
+    commitTime(selectedHour, m, selectedPeriod);
     minuteScrollRef.current?.scrollTo({ y: idx * ITEM_HEIGHT, animated: true });
   };
 
-  const handleSetNextFutureTime = () => {
-    const next = getNextValidFutureTime();
-    updateTime(next.hourStr, next.minuteStr, next.period);
-    const hIdx = HOURS.indexOf(next.hourStr);
-    if (hIdx !== -1) {
-      hourScrollRef.current?.scrollTo({ y: hIdx * ITEM_HEIGHT, animated: true });
-    }
-    const mIdx = MINUTES.indexOf(next.minuteStr);
-    if (mIdx !== -1) {
-      minuteScrollRef.current?.scrollTo({ y: mIdx * ITEM_HEIGHT, animated: true });
-    }
+  const handlePeriodChange = (p: 'AM' | 'PM') => {
+    commitTime(selectedHour, selectedMinute, p);
   };
 
-  const suggested = getNextValidFutureTime();
+  // Quick preset offsets from current moment
+  const applyQuickOffset = (minutesFromNow: number) => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + minutesFromNow);
+    let h = d.getHours();
+    const isPM = h >= 12;
+    if (h > 12) h -= 12;
+    if (h === 0) h = 12;
+    const m = d.getMinutes();
+    const hStr = String(h).padStart(2, '0');
+    const mStr = String(m).padStart(2, '0');
+    const pStr = isPM ? 'PM' : 'AM';
+
+    commitTime(hStr, mStr, pStr);
+    scrollToHour(hStr, true);
+    scrollToMinute(mStr, true);
+  };
+
+  const applyFixedTime = (h: string, m: string, p: 'AM' | 'PM') => {
+    commitTime(h, m, p);
+    scrollToHour(h, true);
+    scrollToMinute(m, true);
+  };
+
+  const handleAutoFix = () => {
+    const next = getNextValidFutureTime();
+    commitTime(next.hourStr, next.minuteStr, next.period);
+    scrollToHour(next.hourStr, true);
+    scrollToMinute(next.minuteStr, true);
+  };
 
   return (
     <View style={styles.container}>
-      {/* 1. Selected Time Banner */}
-      <View style={[styles.timePreviewCard, isPast && styles.timePreviewCardWarning]}>
-        <View style={styles.timePreviewLeft}>
-          <Text style={styles.timePreviewLabel} numberOfLines={1}>
-            {t(language, 'selected_time_label')}
-          </Text>
-          {isPast && (
-            <View style={styles.pastBadge}>
-              <Text style={styles.pastBadgeText}>⚠️ PAST TIME</Text>
-            </View>
-          )}
-        </View>
-        <Text style={[styles.timePreviewValue, isPast && styles.timePreviewValueWarning]}>
-          {selectedHour}:{selectedMinute} {selectedPeriod}
-        </Text>
-      </View>
-
-      {/* 1b. Past Time Error & 1-Tap Quick Fix */}
+      {/* 1. Sleek Compact Past-Time Banner */}
       {isPast && (
-        <View style={styles.pastWarningBanner}>
-          <Text style={styles.pastWarningText}>
-            {language === 'hi'
-              ? '⚠️ Beeta hua samay nahi chuna ja sakta. Kripya future time chunein.'
-              : '⚠️ Cannot pick a past time for today. Please select a future time.'}
-          </Text>
+        <View style={styles.pastBanner}>
+          <View style={styles.pastBannerLeft}>
+            <Text style={styles.pastBannerIcon}>⚠️</Text>
+            <Text style={styles.pastBannerText}>
+              {language === 'hi' ? 'Beeta hua samay chuna gaya hai' : 'Past time selected'}
+            </Text>
+          </View>
           <TouchableOpacity
-            style={styles.autoFixBtn}
-            onPress={handleSetNextFutureTime}
+            style={styles.fixBtn}
+            onPress={handleAutoFix}
             activeOpacity={0.8}
           >
-            <Text style={styles.autoFixBtnText}>
-              ⚡ {language === 'hi' ? 'Agle Samay Par Set Karein' : 'Set Next Valid Time'}:{' '}
-              {suggested.hourStr}:{suggested.minuteStr} {suggested.period}
+            <Text style={styles.fixBtnText}>
+              ⚡ {suggested.hourStr}:{suggested.minuteStr} {suggested.period}
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* 2. Column Titles Row */}
-      <View style={styles.headersRow}>
-        <View style={styles.headerColumn}>
-          <Text style={styles.headerLabel}>{t(language, 'hours_label')}</Text>
+      {/* 2. Premium Scrolling Clock Card */}
+      <View style={[styles.card, isPast && styles.cardPast]}>
+        {/* Column Labels */}
+        <View style={styles.columnLabelsRow}>
+          <Text style={styles.columnLabel}>{language === 'hi' ? 'GHANTA' : 'HOUR'}</Text>
+          <View style={styles.colonSpacer} />
+          <Text style={styles.columnLabel}>{language === 'hi' ? 'MINUTE' : 'MIN'}</Text>
+          <Text style={styles.columnLabelRight}>{language === 'hi' ? 'AM / PM' : 'PERIOD'}</Text>
         </View>
-        <View style={styles.headerColonSpacer} />
-        <View style={styles.headerColumn}>
-          <Text style={styles.headerLabel}>{t(language, 'minutes_label')}</Text>
-        </View>
-        <View style={styles.headerPeriodColumn}>
-          <Text style={styles.headerLabel}>{t(language, 'period_label')}</Text>
-        </View>
-      </View>
 
-      {/* 3. 3-Column Sliding Roller Box */}
-      <View style={[styles.sliderBox, isPast && styles.sliderBoxWarning]}>
-        {/* Highlight band behind the center row */}
-        <View
-          style={[styles.centerHighlightBand, isPast && styles.centerHighlightBandWarning]}
-          pointerEvents="none"
-        />
+        {/* Wheel Viewport */}
+        <View style={styles.wheelViewport}>
+          {/* Frosted Center Selection Pill */}
+          <View
+            style={[styles.centerHighlightPill, isPast && styles.centerHighlightPillPast]}
+            pointerEvents="none"
+          />
 
-        {/* Column 1: Hours Slider */}
-        <View style={styles.columnWrapper}>
-          <ScrollView
-            ref={hourScrollRef}
-            style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            snapToInterval={ITEM_HEIGHT}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            bounces={false}
-            onScrollEndDrag={handleHourScroll}
-            onMomentumScrollEnd={handleHourScroll}
-          >
-            {HOURS.map((h, idx) => {
-              const isSelected = selectedHour === h;
-              return (
-                <TouchableOpacity
-                  key={`hour-${h}`}
-                  style={styles.itemRow}
-                  onPress={() => selectHourDirect(h, idx)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.itemText,
-                      isSelected && styles.itemTextActive,
-                      isSelected && isPast && styles.itemTextWarning,
-                    ]}
+          {/* Top & Bottom Fade Overlays */}
+          <View style={styles.topFadeOverlay} pointerEvents="none" />
+          <View style={styles.bottomFadeOverlay} pointerEvents="none" />
+
+          <View style={styles.wheelsRow}>
+            {/* Hours Scrolling Wheel */}
+            <View style={styles.wheelColumn}>
+              <ScrollView
+                ref={hourScrollRef}
+                style={styles.wheelScroll}
+                contentContainerStyle={styles.wheelScrollContent}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={true}
+                snapToOffsets={HOUR_OFFSETS}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                bounces={false}
+                scrollEventThrottle={16}
+                onScrollBeginDrag={() => {
+                  isUserInteractingHour.current = true;
+                }}
+                onScroll={handleHourScroll}
+                onMomentumScrollEnd={handleHourScrollEnd}
+                onScrollEndDrag={handleHourScrollEnd}
+                onLayout={() => scrollToHour(selectedHour, false)}
+              >
+                {HOURS.map((h, idx) => {
+                  const isCenter = visualHour === h;
+                  return (
+                    <TouchableOpacity
+                      key={`hour-${h}`}
+                      style={styles.itemRow}
+                      onPress={() => selectHourDirect(h, idx)}
+                      activeOpacity={0.65}
+                    >
+                      <Text
+                        style={[
+                          styles.itemText,
+                          isCenter && styles.itemTextSelected,
+                          isCenter && isPast && styles.itemTextPast,
+                        ]}
+                      >
+                        {h}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Colon Separator */}
+            <View style={styles.colonWrap} pointerEvents="none">
+              <Text style={[styles.colonText, isPast && styles.colonTextPast]}>:</Text>
+            </View>
+
+            {/* Minutes Scrolling Wheel */}
+            <View style={styles.wheelColumn}>
+              <ScrollView
+                ref={minuteScrollRef}
+                style={styles.wheelScroll}
+                contentContainerStyle={styles.wheelScrollContent}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={true}
+                snapToOffsets={MINUTE_OFFSETS}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                bounces={false}
+                scrollEventThrottle={16}
+                onScrollBeginDrag={() => {
+                  isUserInteractingMinute.current = true;
+                }}
+                onScroll={handleMinuteScroll}
+                onMomentumScrollEnd={handleMinuteScrollEnd}
+                onScrollEndDrag={handleMinuteScrollEnd}
+                onLayout={() => scrollToMinute(selectedMinute, false)}
+              >
+                {MINUTES.map((m, idx) => {
+                  const isCenter = visualMinute === m;
+                  return (
+                    <TouchableOpacity
+                      key={`min-${m}`}
+                      style={styles.itemRow}
+                      onPress={() => selectMinuteDirect(m, idx)}
+                      activeOpacity={0.65}
+                    >
+                      <Text
+                        style={[
+                          styles.itemText,
+                          isCenter && styles.itemTextSelected,
+                          isCenter && isPast && styles.itemTextPast,
+                        ]}
+                      >
+                        {m}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* AM / PM Segmented Control */}
+            <View style={styles.periodContainer}>
+              {PERIODS.map((p) => {
+                const active = selectedPeriod === p;
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[styles.periodBtn, active && styles.periodBtnActive]}
+                    onPress={() => handlePeriodChange(p)}
+                    activeOpacity={0.8}
                   >
-                    {h}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Separator Colon */}
-        <View style={styles.colonWrap}>
-          <Text style={[styles.colonText, isPast && styles.colonTextWarning]}>:</Text>
-        </View>
-
-        {/* Column 2: Minutes Slider */}
-        <View style={styles.columnWrapper}>
-          <ScrollView
-            ref={minuteScrollRef}
-            style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            snapToInterval={ITEM_HEIGHT}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            bounces={false}
-            onScrollEndDrag={handleMinuteScroll}
-            onMomentumScrollEnd={handleMinuteScroll}
-          >
-            {MINUTES.map((m, idx) => {
-              const isSelected = selectedMinute === m;
-              return (
-                <TouchableOpacity
-                  key={`min-${m}`}
-                  style={styles.itemRow}
-                  onPress={() => selectMinuteDirect(m, idx)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.itemText,
-                      isSelected && styles.itemTextActive,
-                      isSelected && isPast && styles.itemTextWarning,
-                    ]}
-                  >
-                    {m}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Column 3: AM / PM Selector */}
-        <View style={styles.periodColumn}>
-          <View style={styles.periodPillWrap}>
-            {PERIODS.map((p) => {
-              const isSelected = selectedPeriod === p;
-              return (
-                <TouchableOpacity
-                  key={p}
-                  style={[
-                    styles.periodPill,
-                    isSelected && styles.periodPillActive,
-                    isSelected && isPast && styles.periodPillWarning,
-                  ]}
-                  onPress={() => updateTime(selectedHour, selectedMinute, p)}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.periodPillText,
-                      isSelected && styles.periodPillTextActive,
-                    ]}
-                  >
-                    {p}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+                    <Text style={[styles.periodText, active && styles.periodTextActive]}>
+                      {p}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* 4. Slide Hint */}
-      <Text style={styles.slideHint}>
-        {t(language, 'slide_time_hint')}
-      </Text>
+        {/* Subtle Divider */}
+        <View style={styles.cardDivider} />
+
+        {/* Quick Presets Row */}
+        <View style={styles.presetSection}>
+          <Text style={styles.presetHeading}>
+            {language === 'hi' ? '⚡ 1-Tap Samay:' : '⚡ Quick Presets:'}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.presetsRow}
+          >
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyQuickOffset(15)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>+15 min</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyQuickOffset(30)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>+30 min</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyQuickOffset(60)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>+1 hr</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyFixedTime('09', '00', 'AM')}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>9:00 AM</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyFixedTime('02', '00', 'PM')}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>2:00 PM</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyFixedTime('06', '00', 'PM')}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>6:00 PM</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.presetChip}
+              onPress={() => applyFixedTime('09', '00', 'PM')}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.presetChipText}>9:00 PM</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    alignItems: 'center',
     marginVertical: 4,
   },
-  timePreviewCard: {
+  pastBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: '#FDF7EC',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#EBD8B3',
-    marginBottom: 8,
-  },
-  timePreviewCardWarning: {
     backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
-  },
-  timePreviewLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  },
-  timePreviewLabel: {
-    flexShrink: 1,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  pastBadge: {
-    flexShrink: 0,
-    backgroundColor: '#FEE2E2',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  pastBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#DC2626',
-  },
-  timePreviewValue: {
-    flexShrink: 0,
-    fontSize: 22,
-    fontWeight: '900',
-    color: colors.primary, // #C5A059 Champagne Camel Gold
-    letterSpacing: 0.5,
-  },
-  timePreviewValueWarning: {
-    color: '#DC2626',
-  },
-  pastWarningBanner: {
-    width: '100%',
-    backgroundColor: '#FEF2F2',
-    borderRadius: 12,
-    padding: 10,
     borderWidth: 1,
     borderColor: '#FCA5A5',
-    marginBottom: 10,
-    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
   },
-  pastWarningText: {
+  pastBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  pastBannerIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  pastBannerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#B91C1C',
-    textAlign: 'center',
+    color: '#DC2626',
+    flexShrink: 1,
   },
-  autoFixBtn: {
+  fixBtn: {
     backgroundColor: '#DC2626',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    alignItems: 'center',
   },
-  autoFixBtnText: {
-    fontSize: 12,
-    fontWeight: '800',
+  fixBtnText: {
     color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
-  headersRow: {
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardPast: {
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FFFBFB',
+  },
+  columnLabelsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     marginBottom: 6,
   },
-  headerColumn: {
+  columnLabel: {
     flex: 1,
-    alignItems: 'center',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
   },
-  headerColonSpacer: {
+  colonSpacer: {
     width: 20,
   },
-  headerPeriodColumn: {
-    width: 72,
-    alignItems: 'center',
-  },
-  headerLabel: {
+  columnLabelRight: {
+    width: 76,
+    textAlign: 'center',
     fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+    marginLeft: 8,
   },
-  sliderBox: {
+  wheelViewport: {
+    height: ITEM_HEIGHT * 3, // 132px (shows exactly 3 rows: above, center, below)
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  centerHighlightPill: {
+    position: 'absolute',
+    left: 4,
+    right: 88,
+    top: ITEM_HEIGHT, // Exactly center row (44px)
+    height: ITEM_HEIGHT,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    borderWidth: 1.2,
+    borderColor: '#CBD5E1',
+  },
+  centerHighlightPillPast: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  topFadeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 88,
+    height: ITEM_HEIGHT * 0.85,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    zIndex: 2,
+  },
+  bottomFadeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 88,
+    height: ITEM_HEIGHT * 0.85,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    zIndex: 2,
+  },
+  wheelsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: ITEM_HEIGHT * VISIBLE_ITEMS,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 8,
-    position: 'relative',
-    width: '100%',
-    overflow: 'hidden',
+    height: ITEM_HEIGHT * 3,
   },
-  sliderBoxWarning: {
-    borderColor: '#FCA5A5',
-  },
-  centerHighlightBand: {
-    position: 'absolute',
-    top: ITEM_HEIGHT,
-    left: 8,
-    right: 8,
-    height: ITEM_HEIGHT,
-    backgroundColor: '#FDF7EC',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  centerHighlightBandWarning: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
-  },
-  columnWrapper: {
+  wheelColumn: {
     flex: 1,
-    height: '100%',
-    alignItems: 'center',
+    height: ITEM_HEIGHT * 3,
   },
-  scrollList: {
-    width: '100%',
-    height: '100%',
+  wheelScroll: {
+    flex: 1,
   },
-  scrollContent: {
-    paddingVertical: ITEM_HEIGHT,
+  wheelScrollContent: {
+    paddingVertical: ITEM_HEIGHT, // Top & bottom 44px padding so index 0 & last index reach exact center
   },
   itemRow: {
     height: ITEM_HEIGHT,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   itemText: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
     color: '#94A3B8',
+    opacity: 0.45,
   },
-  itemTextActive: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#825B15',
+  itemTextSelected: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0F172A',
+    opacity: 1,
+    letterSpacing: 0.5,
   },
-  itemTextWarning: {
+  itemTextPast: {
     color: '#DC2626',
   },
   colonWrap: {
     width: 20,
-    justifyContent: 'center',
+    height: ITEM_HEIGHT,
     alignItems: 'center',
-    height: ITEM_HEIGHT * VISIBLE_ITEMS,
+    justifyContent: 'center',
+    zIndex: 3,
   },
   colonText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '900',
-    color: colors.primary,
+    color: '#334155',
+    lineHeight: 30,
   },
-  colonTextWarning: {
+  colonTextPast: {
     color: '#DC2626',
   },
-  periodColumn: {
-    width: 72,
-    height: '100%',
+  periodContainer: {
+    width: 76,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginLeft: 8,
+  },
+  periodBtn: {
+    paddingVertical: 9,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  periodPillWrap: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 3,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    width: '100%',
-  },
-  periodPill: {
-    paddingVertical: 7,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  periodPillActive: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+  periodBtnActive: {
+    backgroundColor: '#0F172A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
     elevation: 2,
   },
-  periodPillWarning: {
-    backgroundColor: '#DC2626',
-    shadowColor: '#DC2626',
-  },
-  periodPillText: {
+  periodText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#64748B',
   },
-  periodPillTextActive: {
+  periodTextActive: {
     color: '#FFFFFF',
+    fontWeight: '800',
   },
-  slideHint: {
-    fontSize: 11.5,
-    fontWeight: '600',
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 10,
+  },
+  presetSection: {
+    marginTop: 2,
+  },
+  presetHeading: {
+    fontSize: 11,
+    fontWeight: '700',
     color: '#64748B',
-    marginTop: 8,
-    marginBottom: 4,
-    textAlign: 'center',
-    paddingHorizontal: 16,
-    lineHeight: 16,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  presetsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 8,
+  },
+  presetChip: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  presetChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
   },
 });
 

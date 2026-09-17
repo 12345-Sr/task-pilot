@@ -102,8 +102,10 @@ export function useCreateTask() {
     onSuccess: (created: any) => {
       useAppStore.getState().recordTaskCreation(created?.targetDate || created?.date);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.SUBSCRIPTION });
     },
   });
 }

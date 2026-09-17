@@ -93,8 +93,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Deleting a created task does not restore the free creation quota.
   },
   getFreeUsage: (_dateStr, activeCount) => {
-    const lifetimeCount = get().freeLifetimeCreated || 0;
-    const used = Math.min(3, Math.max(lifetimeCount, typeof activeCount === 'number' ? activeCount : 0));
+    const count = typeof activeCount === 'number'
+      ? activeCount
+      : (get().freeLifetimeCreated || 0);
+    const used = Math.min(3, Math.max(0, count));
     return {
       used,
       total: 3,

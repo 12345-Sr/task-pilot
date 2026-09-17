@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,12 @@ export const AddTaskScreen: React.FC = () => {
   const { language, isPremium, paywallVisible, setPaywallVisible } = useAppStore();
   const { data: existingTasks } = useTodayTasks();
   const createTaskMutation = useCreateTask();
+
+  useEffect(() => {
+    if (Array.isArray(existingTasks)) {
+      useAppStore.getState().setFreeLifetimeCreated(existingTasks.length);
+    }
+  }, [existingTasks]);
 
   const getTodayStr = () => {
     const now = new Date();
@@ -84,7 +90,8 @@ export const AddTaskScreen: React.FC = () => {
       }
     }
 
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
+    const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage(undefined, taskCount);
     if (!isPremium && freeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -103,7 +110,8 @@ export const AddTaskScreen: React.FC = () => {
   const handleConfirmAndSave = () => {
     setIsConfirmModalVisible(false);
 
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
+    const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage(undefined, taskCount);
     if (!isPremium && freeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -136,7 +144,6 @@ export const AddTaskScreen: React.FC = () => {
       },
       {
         onSuccess: async (createdTask: any) => {
-          useAppStore.getState().recordTaskCreation(selectedDate);
           if (createdTask?.id && taskDesc) {
             useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
           }
@@ -616,22 +623,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
     marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   alertNoteIcon: {
-    fontSize: 18,
+    fontSize: 14,
   },
   alertNoteText: {
     flex: 1,
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontWeight: '500',
+    color: '#64748B',
     lineHeight: 16,
   },
   boldTime: {

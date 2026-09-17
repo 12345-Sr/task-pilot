@@ -19,6 +19,8 @@ import { t } from '../i18n';
 import BrandLogo from '../components/BrandLogo';
 import { useRegister, useSendRegisterOtp } from '../hooks';
 import RobotCaptcha from '../components/RobotCaptcha';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
+import { signInWithGoogle } from '../services/auth/googleAuth.service';
 
 const LANGUAGES = [
   { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
@@ -53,6 +55,7 @@ export const SignupScreen: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [showLangModal, setShowLangModal] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // OTP Countdown Timer
   useEffect(() => {
@@ -71,7 +74,7 @@ export const SignupScreen: React.FC = () => {
     setErrorMsg('');
     setSuccessMsg('');
     if (!email.trim() || !email.includes('@')) {
-      setErrorMsg(language === 'hi' ? 'Kripya sahi Gmail/Email address darj karein' : 'Please enter a valid email address');
+      setErrorMsg(language === 'hi' ? 'Kripya sahi email address darj karein' : 'Please enter a valid email address');
       return;
     }
 
@@ -84,23 +87,26 @@ export const SignupScreen: React.FC = () => {
           if (data?.devOtp) {
             setOtp(String(data.devOtp));
           }
+          const defaultSuccess = language === 'hi'
+            ? '📧 6-digit OTP aapke mail inbox par bhej diya gaya hai! Kripya apna inbox check karein aur code darj karein.'
+            : '📧 6-digit verification code sent to your mail inbox! Please check your email and enter code below.';
+          const rawMsg = data?.message || defaultSuccess;
+          // Clean out any residual 'Gmail' mention if returned by older server
+          const cleanMsg = rawMsg.replace(/Gmail/gi, 'mail');
           setSuccessMsg(
             data?.devOtp
               ? (language === 'hi'
-                  ? `OTP Code: ${data.devOtp} (In-App verify). Check inbox or submit directly!`
-                  : `Verification code: ${data.devOtp}. Check email inbox or continue with code.`)
-              : (data?.message ||
-                  (language === 'hi'
-                    ? '📧 6-digit OTP aapke Gmail par bhej diya gaya hai! Kripya apna inbox check karein aur code darj karein.'
-                    : '📧 6-digit verification code sent to your Gmail inbox! Please check your email and enter code below.'))
+                ? `OTP Code: ${data.devOtp} (In-App verify). Check inbox or submit directly!`
+                : `Verification code: ${data.devOtp}. Check mail inbox or continue with code.`)
+              : cleanMsg
           );
         },
         onError: (err: any) => {
           setErrorMsg(
             err?.error ||
-              err?.response?.data?.error ||
-              err?.message ||
-              (language === 'hi' ? 'OTP bhejne mein samasya aayi. Kripya dobara prayas karein.' : 'Failed to send OTP. Please try again.')
+            err?.response?.data?.error ||
+            err?.message ||
+            (language === 'hi' ? 'OTP bhejne mein samasya aayi. Kripya dobara prayas karein.' : 'Failed to send OTP. Please try again.')
           );
         },
       }
@@ -121,8 +127,8 @@ export const SignupScreen: React.FC = () => {
     if (!otp.trim() || otp.trim().length !== 6) {
       setErrorMsg(
         language === 'hi'
-          ? 'Kripya apne Gmail par aaya 6-digit OTP code darj karein'
-          : 'Please enter the 6-digit OTP code sent to your Gmail'
+          ? 'Kripya apne email par aaya 6-digit OTP code darj karein'
+          : 'Please enter the 6-digit OTP code sent to your email'
       );
       return;
     }
@@ -164,14 +170,34 @@ export const SignupScreen: React.FC = () => {
         onError: (err: any) => {
           setErrorMsg(
             err?.error ||
-              err?.message ||
-              err?.response?.data?.error ||
-              err?.response?.data?.message ||
-              t(language, 'registration_failed')
+            err?.message ||
+            err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            t(language, 'registration_failed')
           );
         },
       }
     );
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMsg('');
+    setIsGoogleLoading(true);
+    try {
+      const res = await signInWithGoogle();
+      if (res.success) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      } else if (res.error && !res.error.toLowerCase().includes('cancel')) {
+        setErrorMsg(res.error);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Google sign-in failed');
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -253,13 +279,13 @@ export const SignupScreen: React.FC = () => {
             {/* Email Field with Send OTP Button */}
             <View style={styles.fieldGroup}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>{language === 'hi' ? 'Gmail / Email ID' : 'Gmail / Email Address'}</Text>
+                <Text style={styles.fieldLabel}>{language === 'hi' ? 'Email ID' : 'Email Address'}</Text>
                 {otpSent && <Text style={styles.otpDispatchedBadge}>✓ OTP Bheja Gaya</Text>}
               </View>
               <View style={styles.emailWrapper}>
                 <TextInput
                   style={styles.emailInput}
-                  placeholder="you@gmail.com"
+                  placeholder="name@example.com"
                   placeholderTextColor="#94A3B8"
                   value={email}
                   onChangeText={(text) => {
@@ -297,12 +323,12 @@ export const SignupScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Gmail 6-Digit OTP Field */}
+            {/* Email 6-Digit OTP Field */}
             {otpSent && (
               <View style={styles.otpSection}>
                 <View style={styles.otpHeaderRow}>
                   <Text style={styles.fieldLabel}>
-                    {language === 'hi' ? 'Gmail Par Aaya 6-Digit OTP' : '6-Digit Gmail Verification OTP'}
+                    {language === 'hi' ? 'Email Par Aaya 6-Digit OTP' : '6-Digit Email Verification OTP'}
                   </Text>
                   {otpCountdown > 0 ? (
                     <Text style={styles.otpTimerText}>⏱️ {otpCountdown}s bache</Text>
@@ -333,8 +359,8 @@ export const SignupScreen: React.FC = () => {
                 </View>
                 <Text style={styles.otpSubHint}>
                   {language === 'hi'
-                    ? 'Aapke Gmail par bheja gaya 6-digit suraksha code darj karein'
-                    : 'Enter 6-digit security code sent to your Gmail inbox'}
+                    ? 'Aapke email inbox par bheja gaya 6-digit suraksha code darj karein'
+                    : 'Enter 6-digit security code sent to your email inbox'}
                 </Text>
               </View>
             )}
@@ -434,6 +460,20 @@ export const SignupScreen: React.FC = () => {
                 </Text>
               )}
             </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{language === 'hi' ? 'ya' : 'or'}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign In Button */}
+            <GoogleSignInButton
+              onPress={handleGoogleLogin}
+              loading={isGoogleLoading}
+              text={language === 'hi' ? 'Google se Sign Up karein' : 'Sign up with Google'}
+            />
           </View>
 
           {/* Bottom Switcher */}
@@ -781,6 +821,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 4,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    paddingHorizontal: 12,
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   primaryButtonText: {
     color: '#FFFFFF',

@@ -195,7 +195,7 @@ router.post('/send-register-otp', async (req, res) => {
       console.log(`[AUTH] Registration OTP email successfully dispatched to ${trimmedEmail} via ${sendResult.provider} (OTP: ${otp})`);
       return res.json({
         ok: true,
-        message: 'Verification code has been sent to your Gmail inbox. Please check your emails.',
+        message: 'Verification code has been sent to your email inbox. Please check your emails.',
       });
     } catch (mailErr) {
       console.warn(`[AUTH] Email delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
@@ -310,6 +310,102 @@ router.post('/register', async (req, res) => {
   } catch (e) {
     console.error('Registration error:', e);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// POST /api/auth/google
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken, email, name, photoUrl, googleId } = req.body;
+    let verifiedEmail = email ? email.trim().toLowerCase() : null;
+    let verifiedName = name || 'TaskPilot User';
+    let verifiedGoogleId = googleId || null;
+    let verifiedAvatar = photoUrl || null;
+
+    // Verify token with Google's tokeninfo API if provided
+    if (idToken) {
+      try {
+        const https = require('https');
+        const tokenData = await new Promise((resolve, reject) => {
+          https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+              try {
+                if (res.statusCode === 200) {
+                  resolve(JSON.parse(data));
+                } else {
+                  resolve(null);
+                }
+              } catch (e) {
+                resolve(null);
+              }
+            });
+          }).on('error', (err) => {
+            console.warn('[GOOGLE AUTH] https error:', err.message);
+            resolve(null);
+          });
+        });
+
+        if (tokenData && tokenData.email) {
+          verifiedEmail = tokenData.email.trim().toLowerCase();
+          if (tokenData.name) verifiedName = tokenData.name;
+          if (tokenData.sub) verifiedGoogleId = tokenData.sub;
+          if (tokenData.picture) verifiedAvatar = tokenData.picture;
+        }
+      } catch (tokenErr) {
+        console.warn('[GOOGLE AUTH] Token verification notice:', tokenErr.message);
+      }
+    }
+
+    if (!verifiedEmail || !verifiedEmail.includes('@')) {
+      return res.status(400).json({ error: 'Valid Google email address is required' });
+    }
+
+    // Check if user exists by email
+    let userRes = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [verifiedEmail]);
+    let user = userRes.rows[0];
+
+    if (!user) {
+      // Register new user via Google
+      const dummyPasswordHash = await bcrypt.hash(`GOOGLE_OAUTH_${verifiedGoogleId || Date.now()}`, 10);
+      const insertRes = await db.query(
+        `INSERT INTO users (name, email, password_hash, language, install_date)
+         VALUES ($1, $2, $3, 'en', now())
+         RETURNING *`,
+        [verifiedName, verifiedEmail, dummyPasswordHash]
+      );
+      user = insertRes.rows[0];
+
+      // Auto-create free tier subscription
+      await db.query(
+        `INSERT INTO subscriptions (user_id, status, plan_price, currency)
+         VALUES ($1, 'free', 399.00, 'INR')
+         ON CONFLICT (user_id) DO NOTHING`,
+        [user.id]
+      );
+      console.log(`[GOOGLE AUTH] New user registered via Google: ${verifiedEmail} (${user.id})`);
+    } else {
+      if (user.is_active === false) {
+        return res.status(403).json({
+          error: 'Your account has been deactivated by administrator. Please contact support.',
+          isDeactivated: true,
+        });
+      }
+      console.log(`[GOOGLE AUTH] Existing user logged in via Google: ${verifiedEmail} (${user.id})`);
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    delete user.password_hash;
+
+    const subResult = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [user.id]);
+    const sub = subResult.rows[0];
+    const isPremium = sub?.status === 'active';
+
+    res.json({ token, user: { ...user, isPremium }, isPremium, subscription: sub || null });
+  } catch (err) {
+    console.error('[GOOGLE AUTH ERROR]', err);
+    res.status(500).json({ error: 'Google authentication failed' });
   }
 });
 

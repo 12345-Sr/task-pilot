@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -36,11 +36,19 @@ export const TodayScreen: React.FC = () => {
     setPaywallVisible,
     setPremiumStatusVisible,
     getFreeUsage,
+    setFreeLifetimeCreated,
   } = useAppStore();
   const { data: user } = useUserProfile();
   useSubscription();
   const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
   const completeMutation = useCompleteTask();
+
+  // Self-heal/sync store quota with actual tasks count from server
+  useEffect(() => {
+    if (Array.isArray(tasks)) {
+      setFreeLifetimeCreated(tasks.length);
+    }
+  }, [tasks, setFreeLifetimeCreated]);
 
   const [selectedDay, setSelectedDay] = useState<'today' | 'scheduled'>('today');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -53,7 +61,8 @@ export const TodayScreen: React.FC = () => {
   };
 
   const handleAddTaskPress = () => {
-    const { used: currentFreeUsed } = getFreeUsage();
+    const taskCount = Array.isArray(tasks) ? tasks.length : undefined;
+    const { used: currentFreeUsed } = getFreeUsage(undefined, taskCount);
     if (!isPremium && currentFreeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -167,7 +176,8 @@ export const TodayScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           ) : (() => {
-            const { used: freeUsed, remaining: freeRemaining } = getFreeUsage();
+            const taskCount = Array.isArray(tasks) ? tasks.length : undefined;
+            const { used: freeUsed, remaining: freeRemaining } = getFreeUsage(undefined, taskCount);
             return (
               <TouchableOpacity
                 style={styles.trialBannerMini}

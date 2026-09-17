@@ -1,14 +1,26 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 import Constants from 'expo-constants';
-import notifee, {
-  AndroidCategory,
-  AndroidImportance,
-  AndroidVisibility,
-  TriggerType,
-  AlarmType,
-} from '@notifee/react-native';
 import { apiClient } from '../../api/client';
+
+let notifee: any = null;
+let AndroidCategory: any = { ALARM: 'alarm' };
+let AndroidImportance: any = { HIGH: 4, DEFAULT: 3 };
+let AndroidVisibility: any = { PUBLIC: 1 };
+let TriggerType: any = { TIMESTAMP: 0 };
+let AlarmType: any = { SET_ALARM_CLOCK: 0, SET_EXACT_AND_ALLOW_WHILE_IDLE: 1 };
+
+try {
+  const notifeeModule = require('@notifee/react-native');
+  notifee = notifeeModule.default || notifeeModule;
+  if (notifeeModule.AndroidCategory) AndroidCategory = notifeeModule.AndroidCategory;
+  if (notifeeModule.AndroidImportance) AndroidImportance = notifeeModule.AndroidImportance;
+  if (notifeeModule.AndroidVisibility) AndroidVisibility = notifeeModule.AndroidVisibility;
+  if (notifeeModule.TriggerType) TriggerType = notifeeModule.TriggerType;
+  if (notifeeModule.AlarmType) AlarmType = notifeeModule.AlarmType;
+} catch (e) {
+  console.log('[NOTIFEE] Running in Expo Go without Notifee native module. Using Expo Notifications.');
+}
 
 // Configure foreground appearance for standard expo notifications
 try {
@@ -36,37 +48,39 @@ export class NotificationService {
     if (this.isInitialized || Platform.OS === 'web') return;
 
     if (Platform.OS === 'android') {
-      // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
-      try {
-        await notifee.createChannel({
-          id: 'task-alarms-v2',
-          name: 'TaskPilot Alarm Clock',
-          description: 'High-visibility full screen alarms that ring at the exact scheduled second',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          vibration: true,
-          sound: 'default',
-          bypassDnd: true,
-          lights: true,
-          lightColor: '#16A34A',
-        });
-      } catch (err) {
-        console.warn('[NOTIF] task-alarms-v2 channel creation warning:', err);
-      }
+      if (notifee) {
+        // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
+        try {
+          await notifee.createChannel({
+            id: 'task-alarms-v2',
+            name: 'TaskPilot Alarm Clock',
+            description: 'High-visibility full screen alarms that ring at the exact scheduled second',
+            importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
+            sound: 'default',
+            bypassDnd: true,
+            lights: true,
+            lightColor: '#16A34A',
+          });
+        } catch (err) {
+          console.warn('[NOTIF] task-alarms-v2 channel creation warning:', err);
+        }
 
-      // 2. Advance Warning & Task Added Channel
-      try {
-        await notifee.createChannel({
-          id: 'task-reminders',
-          name: 'TaskPilot Reminders',
-          description: 'Advance reminders and task added confirmations',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          vibration: true,
-          sound: 'default',
-        });
-      } catch (err) {
-        console.warn('[NOTIF] task-reminders channel creation warning:', err);
+        // 2. Advance Warning & Task Added Channel
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskPilot Reminders',
+            description: 'Advance reminders and task added confirmations',
+            importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
+            sound: 'default',
+          });
+        } catch (err) {
+          console.warn('[NOTIF] task-reminders channel creation warning:', err);
+        }
       }
 
       // 3. Fallback channel for Expo Notifications
@@ -109,7 +123,11 @@ export class NotificationService {
     if (Platform.OS === 'web') return false;
     try {
       // 1. Notifee permission request (Android 13+ POST_NOTIFICATIONS)
-      await notifee.requestPermission();
+      if (notifee) {
+        try {
+          await notifee.requestPermission();
+        } catch {}
+      }
 
       // 2. Expo notifications permission check
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -214,6 +232,24 @@ export class NotificationService {
       const cleanTaskId = String(taskId || Math.abs(Math.sin(deadlineDate.getTime()) * 1000000 | 0));
       const alarmId = `alarm_${cleanTaskId}`;
       const warningId = `warning_${cleanTaskId}`;
+
+      // If Notifee native module is not present (running in Expo Go), schedule with Expo Notifications!
+      if (!notifee) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
+            body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            data: { taskId: cleanTaskId, taskTitle, deadlineTime },
+          },
+          trigger: {
+            date: deadlineDate,
+          } as any,
+        });
+        console.log(`[EXPO NOTIF] Scheduled for ${deadlineDate.toISOString()}`);
+        return true;
+      }
 
       // Ensure channel exists
       try {
@@ -361,8 +397,11 @@ export class NotificationService {
     if (Platform.OS === 'web') return;
     try {
       const cleanId = String(taskId);
-      await notifee.cancelNotification(`alarm_${cleanId}`);
-      await notifee.cancelNotification(`warning_${cleanId}`);
+      if (notifee) {
+        await notifee.cancelNotification(`alarm_${cleanId}`).catch(() => {});
+        await notifee.cancelNotification(`warning_${cleanId}`).catch(() => {});
+      }
+      await Notifications.cancelScheduledNotificationAsync(`alarm_${cleanId}`).catch(() => {});
       console.log(`[ALARM CANCELLED] For task ${cleanId}`);
     } catch (e) {
       console.warn('Error cancelling task alert:', e);
@@ -395,31 +434,33 @@ export class NotificationService {
 
       let delivered = false;
 
-      // 1. Try Notifee native notification
-      try {
-        await notifee.createChannel({
-          id: 'task-reminders',
-          name: 'TaskPilot Reminders',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          vibration: true,
-          sound: 'default',
-        });
-
-        await notifee.displayNotification({
-          title,
-          body,
-          android: {
-            channelId: 'task-reminders',
+      // 1. Try Notifee native notification if present
+      if (notifee) {
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskPilot Reminders',
             importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
             sound: 'default',
-            color: '#16A34A',
-            pressAction: { id: 'default', launchActivity: 'default' },
-          },
-        });
-        delivered = true;
-      } catch (notifeeErr) {
-        console.warn('[NOTIF] Notifee display notice, attempting Expo fallback:', notifeeErr);
+          });
+
+          await notifee.displayNotification({
+            title,
+            body,
+            android: {
+              channelId: 'task-reminders',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              color: '#16A34A',
+              pressAction: { id: 'default', launchActivity: 'default' },
+            },
+          });
+          delivered = true;
+        } catch (notifeeErr) {
+          console.warn('[NOTIF] Notifee display notice, attempting Expo fallback:', notifeeErr);
+        }
       }
 
       // 2. Fallback to Expo Notifications if needed
@@ -467,35 +508,38 @@ export class NotificationService {
         localizedBody ||
         'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts!';
 
-      try {
-        await notifee.createChannel({
-          id: 'task-reminders',
-          name: 'TaskPilot Reminders',
-          importance: AndroidImportance.HIGH,
-          sound: 'default',
-        });
-        await notifee.displayNotification({
-          title,
-          body,
-          android: {
-            channelId: 'task-reminders',
+      if (notifee) {
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskPilot Reminders',
             importance: AndroidImportance.HIGH,
             sound: 'default',
-            pressAction: { id: 'default' },
-          },
-        });
-      } catch {
-        await Notifications.scheduleNotificationAsync({
-          content: {
+          });
+          await notifee.displayNotification({
             title,
             body,
-            sound: 'default',
-            priority: Notifications.AndroidNotificationPriority.MAX,
-            badge: 1,
-          },
-          trigger: null,
-        });
+            android: {
+              channelId: 'task-reminders',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              pressAction: { id: 'default' },
+            },
+          });
+          return true;
+        } catch {}
       }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          badge: 1,
+        },
+        trigger: null,
+      });
 
       return true;
     } catch (err) {
@@ -516,20 +560,9 @@ export class NotificationService {
       await this.init();
       if (Platform.OS === 'web') return false;
 
-      if (delaySeconds <= 1) {
-        await notifee.displayNotification({
-          title,
-          body,
-          android: {
-            channelId: 'task-reminders',
-            importance: AndroidImportance.HIGH,
-            sound: 'default',
-            pressAction: { id: 'default' },
-          },
-        });
-      } else {
-        await notifee.createTriggerNotification(
-          {
+      if (notifee) {
+        if (delaySeconds <= 1) {
+          await notifee.displayNotification({
             title,
             body,
             android: {
@@ -538,13 +571,31 @@ export class NotificationService {
               sound: 'default',
               pressAction: { id: 'default' },
             },
-          },
-          {
-            type: TriggerType.TIMESTAMP,
-            timestamp: Date.now() + delaySeconds * 1000,
-            alarmManager: { type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE },
-          }
-        );
+          });
+        } else {
+          await notifee.createTriggerNotification(
+            {
+              title,
+              body,
+              android: {
+                channelId: 'task-reminders',
+                importance: AndroidImportance.HIGH,
+                sound: 'default',
+                pressAction: { id: 'default' },
+              },
+            },
+            {
+              type: TriggerType.TIMESTAMP,
+              timestamp: Date.now() + delaySeconds * 1000,
+              alarmManager: { type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE },
+            }
+          );
+        }
+      } else {
+        await Notifications.scheduleNotificationAsync({
+          content: { title, body, sound: 'default' },
+          trigger: delaySeconds > 1 ? ({ seconds: delaySeconds } as any) : null,
+        });
       }
       return true;
     } catch (err) {
@@ -563,65 +614,76 @@ export class NotificationService {
 
       const triggerTimestamp = Date.now() + seconds * 1000;
 
-      await notifee.createChannel({
-        id: 'task-alarms-v2',
-        name: 'TaskPilot Alarm Clock',
-        importance: AndroidImportance.HIGH,
-        visibility: AndroidVisibility.PUBLIC,
-        vibration: true,
-        sound: 'default',
-        bypassDnd: true,
-        lights: true,
-        lightColor: '#16A34A',
-      });
+      if (notifee) {
+        await notifee.createChannel({
+          id: 'task-alarms-v2',
+          name: 'TaskPilot Alarm Clock',
+          importance: AndroidImportance.HIGH,
+          visibility: AndroidVisibility.PUBLIC,
+          vibration: true,
+          sound: 'default',
+          bypassDnd: true,
+          lights: true,
+          lightColor: '#16A34A',
+        });
 
-      await notifee.createTriggerNotification(
-        {
-          id: 'test_alarm_check',
-          title: '⏰ TEST ALARM: TaskPilot Alert!',
-          body: `Yeh test alarm ${seconds} second baad baja hai! Sound loop karega jab tak aap Poora ya Dismiss na dabayein.`,
-          android: {
-            channelId: 'task-alarms-v2',
-            category: AndroidCategory.ALARM,
-            importance: AndroidImportance.HIGH,
+        await notifee.createTriggerNotification(
+          {
+            id: 'test_alarm_check',
+            title: '⏰ TEST ALARM: TaskPilot Alert!',
+            body: `Yeh test alarm ${seconds} second baad baja hai! Sound loop karega jab tak aap Poora ya Dismiss na dabayein.`,
+            android: {
+              channelId: 'task-alarms-v2',
+              category: AndroidCategory.ALARM,
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              loopSound: true,
+              ongoing: true,
+              autoCancel: false,
+              color: '#16A34A',
+              pressAction: {
+                id: 'default',
+                launchActivity: 'default',
+              },
+              fullScreenAction: {
+                id: 'default',
+                launchActivity: 'default',
+              },
+              actions: [
+                {
+                  title: '✅ Poora Ho Gaya',
+                  pressAction: { id: 'complete_task' },
+                },
+                {
+                  title: '⏳ 5 Min Baad',
+                  pressAction: { id: 'snooze_task' },
+                },
+              ],
+            },
+            data: {
+              taskId: 'test_task',
+              taskTitle: 'Test Task Alert',
+              type: 'TEST_ALARM',
+            },
+          },
+          {
+            type: TriggerType.TIMESTAMP,
+            timestamp: triggerTimestamp,
+            alarmManager: {
+              type: AlarmType.SET_ALARM_CLOCK,
+            },
+          }
+        );
+      } else {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '⏰ TEST ALARM: TaskPilot Alert!',
+            body: `Yeh test alert ${seconds} second baad baja hai!`,
             sound: 'default',
-            loopSound: true,
-            ongoing: true,
-            autoCancel: false,
-            color: '#16A34A',
-            pressAction: {
-              id: 'default',
-              launchActivity: 'default',
-            },
-            fullScreenAction: {
-              id: 'default',
-              launchActivity: 'default',
-            },
-            actions: [
-              {
-                title: '✅ Poora Ho Gaya',
-                pressAction: { id: 'complete_task' },
-              },
-              {
-                title: '⏳ 5 Min Baad',
-                pressAction: { id: 'snooze_task' },
-              },
-            ],
           },
-          data: {
-            taskId: 'test_task',
-            taskTitle: 'Test Task Alert',
-            type: 'TEST_ALARM',
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: triggerTimestamp,
-          alarmManager: {
-            type: AlarmType.SET_ALARM_CLOCK,
-          },
-        }
-      );
+          trigger: { seconds } as any,
+        });
+      }
 
       console.log(`[TEST EXACT ALARM] Scheduled for ${seconds}s from now.`);
       return true;
