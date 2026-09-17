@@ -21,7 +21,6 @@ export const configureGoogleSignIn = () => {
       (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '').trim() ||
       '451260814957-ij9r529r75q3vv1safphprvnghhkrth1.apps.googleusercontent.com';
     const config: any = {
-      scopes: ['email', 'profile'],
       webClientId,
       offlineAccess: false,
     };

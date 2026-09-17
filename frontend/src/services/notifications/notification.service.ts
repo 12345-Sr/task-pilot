@@ -4,11 +4,17 @@ import Constants from 'expo-constants';
 import { apiClient } from '../../api/client';
 
 let notifee: any = null;
-let AndroidCategory: any = { ALARM: 'alarm' };
-let AndroidImportance: any = { HIGH: 4, DEFAULT: 3 };
+let AndroidCategory: any = { ALARM: 'alarm', REMINDER: 'reminder' };
+let AndroidImportance: any = { HIGH: 4, DEFAULT: 3, MAX: 4 };
 let AndroidVisibility: any = { PUBLIC: 1 };
-let TriggerType: any = { TIMESTAMP: 0 };
-let AlarmType: any = { SET_ALARM_CLOCK: 0, SET_EXACT_AND_ALLOW_WHILE_IDLE: 1 };
+let TriggerType: any = { TIMESTAMP: 0, INTERVAL: 1 };
+let AlarmType: any = {
+  SET: 0,
+  SET_AND_ALLOW_WHILE_IDLE: 1,
+  SET_EXACT: 2,
+  SET_EXACT_AND_ALLOW_WHILE_IDLE: 3,
+  SET_ALARM_CLOCK: 4,
+};
 
 try {
   const notifeeModule = require('@notifee/react-native');
@@ -233,89 +239,95 @@ export class NotificationService {
       const alarmId = `alarm_${cleanTaskId}`;
       const warningId = `warning_${cleanTaskId}`;
 
-      // If Notifee native module is not present (running in Expo Go), schedule with Expo Notifications!
-      if (!notifee) {
+      // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
+      // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
+      if (notifee) {
+        try {
+          await notifee.createChannel({
+            id: 'task-alarms-v2',
+            name: 'TaskPilot Alarm Clock',
+            importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
+            sound: 'default',
+            bypassDnd: true,
+            lights: true,
+            lightColor: '#16A34A',
+          });
+
+          await notifee.createTriggerNotification(
+            {
+              id: alarmId,
+              title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
+              body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
+              android: {
+                channelId: 'task-alarms-v2',
+                category: AndroidCategory.ALARM,
+                importance: AndroidImportance.HIGH,
+                sound: 'default',
+                loopSound: true,
+                ongoing: true,
+                autoCancel: false,
+                color: '#16A34A',
+                pressAction: {
+                  id: 'default',
+                  launchActivity: 'default',
+                },
+                fullScreenAction: {
+                  id: 'default',
+                  launchActivity: 'default',
+                },
+                actions: [
+                  {
+                    title: '✅ Poora Ho Gaya',
+                    pressAction: { id: 'complete_task' },
+                  },
+                  {
+                    title: '⏳ 5 Min Baad',
+                    pressAction: { id: 'snooze_task' },
+                  },
+                ],
+              },
+              data: {
+                taskId: cleanTaskId,
+                taskTitle,
+                deadlineTime,
+                type: 'EXACT_ALARM',
+              },
+            },
+            {
+              type: TriggerType.TIMESTAMP,
+              timestamp: deadlineDate.getTime(),
+              alarmManager: {
+                type: AlarmType.SET_ALARM_CLOCK,
+              },
+            }
+          );
+          console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
+        } catch (notifeeErr) {
+          console.warn('[NOTIF] Notifee trigger notice, proceeding with Expo dual delivery:', notifeeErr);
+        }
+      }
+
+      // 2. DUAL DELIVERY: Guarantee alarm delivery via Expo Notifications backup
+      try {
         await Notifications.scheduleNotificationAsync({
+          identifier: alarmId,
           content: {
             title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
             body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
             sound: 'default',
             priority: Notifications.AndroidNotificationPriority.MAX,
-            data: { taskId: cleanTaskId, taskTitle, deadlineTime },
+            data: { taskId: cleanTaskId, taskTitle, deadlineTime, type: 'EXACT_ALARM' },
           },
           trigger: {
             date: deadlineDate,
           } as any,
         });
-        console.log(`[EXPO NOTIF] Scheduled for ${deadlineDate.toISOString()}`);
-        return true;
+        console.log(`[EXPO NOTIF] Dual scheduled for ${deadlineDate.toISOString()}`);
+      } catch (expoErr) {
+        console.warn('[NOTIF] Expo schedule fallback notice:', expoErr);
       }
-
-      // Ensure channel exists
-      try {
-        await notifee.createChannel({
-          id: 'task-alarms-v2',
-          name: 'TaskPilot Alarm Clock',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          vibration: true,
-          sound: 'default',
-          bypassDnd: true,
-          lights: true,
-          lightColor: '#16A34A',
-        });
-      } catch {}
-
-      // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
-      // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
-      await notifee.createTriggerNotification(
-        {
-          id: alarmId,
-          title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
-          body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
-          android: {
-            channelId: 'task-alarms-v2',
-            category: AndroidCategory.ALARM,
-            importance: AndroidImportance.HIGH,
-            sound: 'default',
-            loopSound: true,
-            ongoing: true,
-            autoCancel: false,
-            color: '#16A34A',
-            pressAction: {
-              id: 'default',
-              launchActivity: 'default',
-            },
-            fullScreenAction: {
-              id: 'default',
-              launchActivity: 'default',
-            },
-            actions: [
-              {
-                title: '✅ Poora Ho Gaya',
-                pressAction: { id: 'complete_task' },
-              },
-              {
-                title: '⏳ 5 Min Baad',
-                pressAction: { id: 'snooze_task' },
-              },
-            ],
-          },
-          data: {
-            taskId: cleanTaskId,
-            taskTitle,
-            deadlineTime,
-            type: 'EXACT_ALARM',
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: deadlineDate.getTime(),
-          alarmManager: {
-            type: AlarmType.SET_ALARM_CLOCK,
-          },
-        }
-      );
 
       console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
 
@@ -674,18 +686,25 @@ export class NotificationService {
             },
           }
         );
-      } else {
+        console.log(`[TEST EXACT ALARM] Notifee scheduled for ${seconds}s from now.`);
+      }
+
+      // Always also trigger via Expo Notifications for dual guarantee
+      try {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: '⏰ TEST ALARM: TaskPilot Alert!',
             body: `Yeh test alert ${seconds} second baad baja hai!`,
             sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.MAX,
           },
           trigger: { seconds } as any,
         });
+        console.log(`[TEST EXPO NOTIF] Dual scheduled for ${seconds}s.`);
+      } catch (e) {
+        console.warn('[TEST ALARM] Expo notice:', e);
       }
 
-      console.log(`[TEST EXACT ALARM] Scheduled for ${seconds}s from now.`);
       return true;
     } catch (err) {
       console.error('Error triggering test alert:', err);

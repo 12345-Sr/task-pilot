@@ -70,13 +70,28 @@ export const LoginScreen: React.FC = () => {
           });
         },
         onError: (err: any) => {
-          setErrorMsg(
+          const rawErr =
             err?.error ||
-              err?.message ||
-              err?.response?.data?.error ||
-              err?.response?.data?.message ||
-              t(language, 'login_failed')
-          );
+            err?.message ||
+            err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            t(language, 'login_failed');
+          setErrorMsg(rawErr);
+          if (rawErr.toLowerCase().includes('invalid email or password') || rawErr.toLowerCase().includes('not found')) {
+            Alert.alert(
+              language === 'hi' ? 'Account Nahi Mila' : 'Account Not Found',
+              language === 'hi'
+                ? `Is email (${email.trim()}) se account nahi mila ya password galat hai. Kya aap Naya Account banana chahte hain?`
+                : `No account found for ${email.trim()} or password incorrect. Would you like to create a new account?`,
+              [
+                { text: language === 'hi' ? 'Dobara Check Karein' : 'Try Again', style: 'cancel' },
+                {
+                  text: language === 'hi' ? 'Naya Account Banayein' : 'Sign Up Now',
+                  onPress: () => navigation.navigate('Signup', { email: email.trim() }),
+                },
+              ]
+            );
+          }
         },
       }
     );
@@ -99,13 +114,29 @@ export const LoginScreen: React.FC = () => {
         Alert.alert(
           language === 'hi' ? 'Google Sign-In Soochna' : 'Google Sign-In Notice',
           msg,
-          [{ text: 'OK' }]
+          [
+            { text: 'OK', style: 'cancel' },
+            {
+              text: language === 'hi' ? 'Email se Sign Up karein' : 'Sign Up with Email',
+              onPress: () => navigation.navigate('Signup'),
+            },
+          ]
         );
       }
     } catch (err: any) {
       const msg = err?.message || 'Google sign-in failed';
       setGoogleErrorMsg(msg);
-      Alert.alert('Google Sign-In', msg, [{ text: 'OK' }]);
+      Alert.alert(
+        'Google Sign-In',
+        msg,
+        [
+          { text: 'OK', style: 'cancel' },
+          {
+            text: language === 'hi' ? 'Email se Sign Up karein' : 'Sign Up with Email',
+            onPress: () => navigation.navigate('Signup'),
+          },
+        ]
+      );
     } finally {
       setIsGoogleLoading(false);
     }
@@ -156,9 +187,22 @@ export const LoginScreen: React.FC = () => {
 
           {/* Floating White Card */}
           <View style={styles.card}>
-            <Text style={styles.cardHeading}>
-              {language === 'hi' ? 'Login Karein' : 'Sign In'}
-            </Text>
+            {/* Top Mode Switcher */}
+            <View style={styles.tabToggleRow}>
+              <View style={[styles.tabToggleBtn, styles.tabToggleActive]}>
+                <Text style={styles.tabToggleActiveText}>
+                  {language === 'hi' ? 'Login Karein' : 'Sign In'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.tabToggleBtn}
+                onPress={() => navigation.navigate('Signup', { email: email.trim() })}
+              >
+                <Text style={styles.tabToggleInactiveText}>
+                  {language === 'hi' ? 'Naya Account (Sign Up)' : 'New Account (Sign Up)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {errorMsg ? (
               <View style={styles.errorBox}>
@@ -396,6 +440,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 18,
     elevation: 3,
+  },
+  tabToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 18,
+  },
+  tabToggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  tabToggleActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabToggleActiveText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  tabToggleInactiveText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
   },
   cardHeading: {
     fontSize: 18,

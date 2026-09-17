@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
@@ -36,13 +36,14 @@ const LANGUAGES = [
 
 export const SignupScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { language, setLanguage } = useAppStore();
   const registerMutation = useRegister();
   const sendOtpMutation = useSendRegisterOtp();
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState((route?.params?.email || route?.params?.prefillEmail || '').trim());
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
