@@ -100,29 +100,18 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     const errCode = String(error?.code || '');
     const errMsg = String(error?.message || '');
 
-    // Google Play Services Developer Error (code 10): missing SHA-1 or Web Client ID in Firebase
-    if (errCode === '10' || errMsg.includes('DEVELOPER_ERROR') || errMsg.includes('10')) {
-      return {
-        success: false,
-        error:
-          'Firebase Google Sign-In setup required: Release SHA-1 (4A:72:CC:30:F9:8E:AA:EC:48:21:C3:C1:AD:7E:E8:9A:5C:68:C7:C0) must be added in Firebase Console for package com.taskpilot.app. Please use Email & Password to sign in now.',
-      };
-    }
-
     if (statusCodes && (error.code === statusCodes.SIGN_IN_CANCELLED || errCode === '12501')) {
       return { success: false, error: 'Google sign-in was cancelled.' };
     } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
       return { success: false, error: 'Google sign-in is in progress.' };
     } else if (statusCodes && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return { success: false, error: 'Google Play Services is not available on this device.' };
+      return { success: false, error: 'Google Play Services is not available or outdated on this device.' };
     }
 
+    // Return exact raw error message from Google Play Services
     return {
       success: false,
-      error:
-        error?.response?.data?.error ||
-        error?.message ||
-        'Google sign-in failed. Please try again or use Email & Password.',
+      error: `[Google Play Services Error]: ${errMsg || errCode || 'Unknown error'}\n\nTip: If new credentials were just added to Firebase, Google servers can take 10-15 minutes to sync. You can also sign in directly using Email & Password above.`,
     };
   }
 };
