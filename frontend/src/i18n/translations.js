@@ -1,4 +1,4 @@
-// Task Pilot — translation strings for all 8 supported languages.
+// TaskAlert — translation strings for all 8 supported languages.
 // Reused verbatim (copy) from the approved web demo so tone/voice stays consistent.
 export const FREE_DAILY_LIMIT = 3;
 export const PRICE = 399; // ₹399/month per product spec
@@ -16,7 +16,7 @@ export const LANGUAGES = [
 
 export const T = {
   hi: {
-    eyebrow: 'Task Pilot', title: 'Aapka Reminder Saathi', sub: 'Subah briefing · Time se pehle alert · Shaam ko confirmation',
+    eyebrow: 'TaskAlert', title: 'Aapka Reminder Saathi', sub: 'Subah briefing · Time se pehle alert · Shaam ko confirmation',
     navAdd: '+ Naya Kaam', navToday: 'Aaj Ke Kaam', navEvening: 'Shaam Check', navProgress: 'Progress',
     lblTitle: 'Kaam ka naam', titlePh: 'Jaise: Client ko report bhejna', lblDate: 'Tareekh', lblTime: 'Samay (deadline)',
     lblPriority: 'Priority', important: '🔴 Zaroori', medium: '🟡 Medium', addBtn: 'Kaam Jodo',
@@ -44,7 +44,7 @@ export const T = {
     pickLang: 'Apni bhasha chunein',
   },
   en: {
-    eyebrow: 'Task Pilot', title: 'Your Reminder Companion', sub: 'Morning briefing · Alerts before deadline · Evening confirmation',
+    eyebrow: 'TaskAlert', title: 'Your Reminder Companion', sub: 'Morning briefing · Alerts before deadline · Evening confirmation',
     navAdd: '+ New Task', navToday: "Today's Tasks", navEvening: 'Evening Check', navProgress: 'Progress',
     lblTitle: 'Task name', titlePh: 'e.g. Send report to client', lblDate: 'Date', lblTime: 'Deadline time',
     lblPriority: 'Priority', important: '🔴 Important', medium: '🟡 Medium', addBtn: 'Add Task',

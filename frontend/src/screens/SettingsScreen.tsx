@@ -164,7 +164,7 @@ export const SettingsScreen: React.FC = () => {
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.proActiveBannerTitle}>
-                  {isHindi ? 'Task Pilot Pro Active' : 'Task Pilot Pro Active'}
+                  {isHindi ? 'TaskAlert Pro Active' : 'TaskAlert Pro Active'}
                 </Text>
                 <View style={styles.activePillSmall}>
                   <Text style={styles.activePillSmallText}>ACTIVE ✓</Text>
@@ -193,7 +193,7 @@ export const SettingsScreen: React.FC = () => {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.proBannerTitle}>
-                {isHindi ? 'Task Pilot Pro Upgrade Karein' : 'Upgrade to Task Pilot Pro'}
+                {isHindi ? 'TaskAlert Pro Upgrade Karein' : 'Upgrade to TaskAlert Pro'}
               </Text>
               <Text style={styles.proBannerSub}>
                 {isHindi
@@ -257,7 +257,7 @@ export const SettingsScreen: React.FC = () => {
                 <Text style={styles.settingIcon}>⚡</Text>
                 <View>
                   <Text style={styles.settingLabel}>
-                    {isHindi ? 'Upgrade to Task Pilot Pro' : 'Upgrade to Task Pilot Pro'}
+                    {isHindi ? 'Upgrade to TaskAlert Pro' : 'Upgrade to TaskAlert Pro'}
                   </Text>
                   <Text style={styles.settingSubLabel}>
                     {isHindi ? '₹399/mahina • Unlimited daily reminders paayein' : '₹399/month • Unlock unlimited reminders'}
@@ -419,7 +419,7 @@ export const SettingsScreen: React.FC = () => {
               <Text style={{ color: '#EAB308' }}>Pilot</Text>
             </Text>
             <Text style={styles.appTagline}>"{t(language, 'tagline')}"</Text>
-            <Text style={styles.appVersion}>Version 1.0.1 (Task Pilot Production)</Text>
+            <Text style={styles.appVersion}>Version 1.0.1 (TaskAlert Production)</Text>
           </View>
         </View>
 

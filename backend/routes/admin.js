@@ -7,7 +7,7 @@ const { requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 // Explicit manually written fallback admin credentials (always allowed, zero DB dependency)
-const MANUAL_ADMIN_EMAIL = 'admin@taskpilot.com';
+const MANUAL_ADMIN_EMAIL = 'admin@taskalert.com';
 const MANUAL_ADMIN_PASSWORD = 'Admin@1234';
 
 // Active Admin Credentials (in-memory state with runtime updates and DB persistence)
@@ -26,8 +26,8 @@ router.post('/login', async (req, res) => {
   const jwtSecret = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'secret';
 
   // 1. Check against default/manual admin credentials with flexible typing support
-  // Accepts: admin@taskpilot.com or admin, with Admin@1234, admin@1234, admin, or active changed password
-  const isDefaultEmail = (cleanEmail === 'admin@taskpilot.com' || cleanEmail === 'admin' || cleanEmail === activeAdminEmail);
+  // Accepts: admin@taskalert.com or admin, with Admin@1234, admin@1234, admin, or active changed password
+  const isDefaultEmail = (cleanEmail === 'admin@taskalert.com' || cleanEmail === 'admin' || cleanEmail === activeAdminEmail);
   const isDefaultPassword = (
     cleanPass === 'Admin@1234' ||
     cleanPass.toLowerCase() === 'admin@1234' ||

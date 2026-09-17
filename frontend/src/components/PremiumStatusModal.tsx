@@ -173,8 +173,8 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
 
             <Text style={styles.heroTitle}>
               {isPremium
-                ? 'Task Pilot Pro Member'
-                : (isHinglish ? 'Task Pilot Free Tier' : 'Task Pilot Free Tier')}
+                ? 'TaskAlert Pro Member'
+                : (isHinglish ? 'TaskAlert Free Tier' : 'TaskAlert Free Tier')}
             </Text>
             <Text style={styles.heroSubtitle}>
               {isPremium
@@ -215,7 +215,7 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
                   {isHinglish ? 'Plan Ka Naam' : 'Plan Name'}
                 </Text>
                 <Text style={styles.planInfoVal}>
-                  {isPremium ? 'Task Pilot Pro (₹399/mo)' : 'Task Pilot Free Tier'}
+                  {isPremium ? 'TaskAlert Pro (₹399/mo)' : 'TaskAlert Free Tier'}
                 </Text>
               </View>
               <View style={styles.planInfoRow}>

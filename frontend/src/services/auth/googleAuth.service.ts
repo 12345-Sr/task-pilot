@@ -37,7 +37,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     if (!GoogleSignin) {
       return {
         success: false,
-        error: 'Google Sign-In requires the installed TaskPilot APK (not supported inside Expo Go).',
+        error: 'Google Sign-In requires the installed TaskAlert APK (not supported inside Expo Go).',
       };
     }
 

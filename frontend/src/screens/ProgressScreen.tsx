@@ -165,7 +165,7 @@ export const ProgressScreen: React.FC = () => {
               <Text style={styles.upgradeBannerEmoji}>👑</Text>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.proActiveBannerTitle}>
-                  {language === 'hi' ? 'Task Pilot Pro Member' : 'Task Pilot Pro Member'}
+                  {language === 'hi' ? 'TaskAlert Pro Member' : 'TaskAlert Pro Member'}
                 </Text>
                 <Text style={styles.proActiveBannerSubtitle}>
                   {language === 'hi'

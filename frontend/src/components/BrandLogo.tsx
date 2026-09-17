@@ -24,7 +24,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Official TaskPilot Origami Paper Plane Icon */}
+      {/* Official TaskAlert Origami Paper Plane Icon */}
       <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
         {/* Top-rear yellow fold/wing */}
         <Path d="M 22 18 L 44 19 L 29 38 Z" fill="#F59E0B" />

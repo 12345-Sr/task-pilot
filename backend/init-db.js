@@ -115,7 +115,7 @@ async function initDatabase(retries = 5, delayMs = 3000) {
       `);
 
       // Ensure default admin user exists and credentials are up to date
-      const defaultAdminEmail = (process.env.ADMIN_EMAIL || 'admin@taskpilot.com').trim().toLowerCase();
+      const defaultAdminEmail = (process.env.ADMIN_EMAIL || 'admin@taskalert.com').trim().toLowerCase();
       const defaultAdminPass = (process.env.ADMIN_PASSWORD || 'Admin@1234').trim();
       const adminHash = await bcrypt.hash(defaultAdminPass, 10);
       await db.query(

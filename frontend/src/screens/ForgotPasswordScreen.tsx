@@ -159,7 +159,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top navigation row with back button and single Task Pilot logo */}
+          {/* Top navigation row with back button and single TaskAlert logo */}
           <View style={styles.topNavRow}>
             <TouchableOpacity
               style={styles.backButton}

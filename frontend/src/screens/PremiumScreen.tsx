@@ -181,7 +181,7 @@ export const PremiumScreen: React.FC = () => {
 
         <Text style={styles.cancelAnytimeText}>
           {isPremium
-            ? (language === 'hi' ? 'Aapka Task Pilot Pro plan active hai.' : 'Your Task Pilot Pro plan is currently active.')
+            ? (language === 'hi' ? 'Aapka TaskAlert Pro plan active hai.' : 'Your TaskAlert Pro plan is currently active.')
             : (language === 'hi' ? 'Kabhi bhi cancel kar sakte hain.' : 'Cancel anytime with 1 tap.')}
         </Text>
       </ScrollView>

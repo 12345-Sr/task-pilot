@@ -34,7 +34,7 @@ const FEATURE_DATA: Record<
   }
 > = {
   hi: {
-    pillarsTitle: 'Task Pilot Kaise Kaam Karta Hai?',
+    pillarsTitle: 'TaskAlert Kaise Kaam Karta Hai?',
     trialBadge: '🎉 3 Din Ka Free Trial Shaamil Hai',
     trialSubtitle: 'Bina kisi credit card ke turant shuru karein',
     pillars: [
@@ -65,7 +65,7 @@ const FEATURE_DATA: Record<
     ],
   },
   en: {
-    pillarsTitle: 'How Task Pilot Works',
+    pillarsTitle: 'How TaskAlert Works',
     trialBadge: '🎉 3-Day Free Trial Included',
     trialSubtitle: 'Get started instantly • No credit card required',
     pillars: [
@@ -96,7 +96,7 @@ const FEATURE_DATA: Record<
     ],
   },
   mr: {
-    pillarsTitle: 'Task Pilot कसे काम करते?',
+    pillarsTitle: 'TaskAlert कसे काम करते?',
     trialBadge: '🎉 ३ दिवसांचा मोफत ट्रायल समाविष्ट',
     trialSubtitle: 'क्रेडिट कार्डची आवश्यकता नाही',
     pillars: [
@@ -127,7 +127,7 @@ const FEATURE_DATA: Record<
     ],
   },
   bn: {
-    pillarsTitle: 'Task Pilot কীভাবে কাজ করে?',
+    pillarsTitle: 'TaskAlert কীভাবে কাজ করে?',
     trialBadge: '🎉 ৩ দিনের ফ্রি ট্রায়াল অন্তর্ভুক্ত',
     trialSubtitle: 'ক্রেডিট কার্ডের প্রয়োজন নেই',
     pillars: [
@@ -158,7 +158,7 @@ const FEATURE_DATA: Record<
     ],
   },
   ta: {
-    pillarsTitle: 'Task Pilot எவ்வாறு செயல்படுகிறது?',
+    pillarsTitle: 'TaskAlert எவ்வாறு செயல்படுகிறது?',
     trialBadge: '🎉 3 நாள் இலவச சோதனை சேர்க்கப்பட்டுள்ளது',
     trialSubtitle: 'கிரெடிட் கார்டு தேவையில்லை',
     pillars: [
@@ -189,7 +189,7 @@ const FEATURE_DATA: Record<
     ],
   },
   te: {
-    pillarsTitle: 'Task Pilot ఎలా పనిచేస్తుంది?',
+    pillarsTitle: 'TaskAlert ఎలా పనిచేస్తుంది?',
     trialBadge: '🎉 3 రోజుల ఉచిత ట్రయల్ చేర్చబడింది',
     trialSubtitle: 'క్రెడిట్ కార్డ్ అవసరం లేదు',
     pillars: [
@@ -220,7 +220,7 @@ const FEATURE_DATA: Record<
     ],
   },
   gu: {
-    pillarsTitle: 'Task Pilot કેવી રીતે કામ કરે છે?',
+    pillarsTitle: 'TaskAlert કેવી રીતે કામ કરે છે?',
     trialBadge: '🎉 3 દિવસનો મફત ટ્રાયલ શામેલ છે',
     trialSubtitle: 'ક્રેડિટ કાર્ડ વિના તુરંત શરૂ કરો',
     pillars: [
@@ -251,7 +251,7 @@ const FEATURE_DATA: Record<
     ],
   },
   pa: {
-    pillarsTitle: 'Task Pilot ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ?',
+    pillarsTitle: 'TaskAlert ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ?',
     trialBadge: '🎉 3 ਦਿਨਾਂ ਦਾ ਮੁਫ਼ਤ ਟਰਾਇਲ ਸ਼ਾਮਲ ਹੈ',
     trialSubtitle: 'ਬਿਨਾਂ ਕ੍ਰੈਡਿਟ ਕਾਰਡ ਦੇ ਤੁਰੰਤ ਸ਼ੁਰੂ ਕਰੋ',
     pillars: [

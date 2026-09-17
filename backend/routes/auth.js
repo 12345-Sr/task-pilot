@@ -77,7 +77,7 @@ async function sendMailUnified({ to, subject, text, html }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'Task Pilot <onboarding@resend.dev>',
+        from: process.env.EMAIL_FROM || 'TaskAlert <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
@@ -107,7 +107,7 @@ async function sendMailUnified({ to, subject, text, html }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sender: { name: 'Task Pilot', email: senderEmail },
+        sender: { name: 'TaskAlert', email: senderEmail },
         to: [{ email: to }],
         subject,
         htmlContent: html,
@@ -129,7 +129,7 @@ async function sendMailUnified({ to, subject, text, html }) {
   const smtpUser = (process.env.SMTP_USER || '').trim();
   let fromAddress = process.env.EMAIL_FROM;
   if (!fromAddress || (smtpUser.toLowerCase().endsWith('@gmail.com') && !fromAddress.includes(smtpUser))) {
-    fromAddress = `"Task Pilot" <${smtpUser}>`;
+    fromAddress = `"TaskAlert" <${smtpUser}>`;
   }
   await transporter.sendMail({ from: fromAddress, to, subject, html, text });
   return { provider: 'smtp' };
@@ -178,11 +178,11 @@ router.post('/send-register-otp', async (req, res) => {
     try {
       const sendResult = await sendMailUnified({
         to: trimmedEmail,
-        subject: 'Task Pilot — Your Email Verification Code',
-        text: `Your Task Pilot email verification code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not create an account on Task Pilot, please ignore this email.`,
+        subject: 'TaskAlert — Your Email Verification Code',
+        text: `Your TaskAlert email verification code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not create an account on TaskAlert, please ignore this email.`,
         html: `<div style="font-family: 'Helvetica Neue', Arial, sans-serif; padding: 24px; color: #1E2246; max-width: 500px; margin: auto; border: 1px solid #ECEEF6; border-radius: 12px; background: #FFFFFF;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="color: #EA580C; margin: 0; font-size: 24px;">Task Pilot</h2>
+        <h2 style="color: #EA580C; margin: 0; font-size: 24px;">TaskAlert</h2>
         <p style="color: #64748B; font-size: 14px; margin: 4px 0 0 0;">Kal Ka Kaam, Aaj Set Karein</p>
       </div>
       <p style="font-size: 15px; line-height: 1.5; color: #334155;">Welcome! Please enter the 6-digit verification code below to verify your email address and finish creating your account:</p>
@@ -318,7 +318,7 @@ router.post('/google', async (req, res) => {
   try {
     const { idToken, email, name, photoUrl, googleId } = req.body;
     let verifiedEmail = email ? email.trim().toLowerCase() : null;
-    let verifiedName = name || 'TaskPilot User';
+    let verifiedName = name || 'TaskAlert User';
     let verifiedGoogleId = googleId || null;
     let verifiedAvatar = photoUrl || null;
 
@@ -467,11 +467,11 @@ router.post('/forgot-password', async (req, res) => {
     try {
       const sendResult = await sendMailUnified({
         to: trimmedEmail,
-        subject: 'Task Pilot — Password Reset Code',
-        text: `Your Task Pilot password reset code is: ${otp}\n\nThis code will expire in 15 minutes. If you did not request this, please ignore this email.`,
+        subject: 'TaskAlert — Password Reset Code',
+        text: `Your TaskAlert password reset code is: ${otp}\n\nThis code will expire in 15 minutes. If you did not request this, please ignore this email.`,
         html: `<div style="font-family: 'Helvetica Neue', Arial, sans-serif; padding: 24px; color: #1E2246; max-width: 500px; margin: auto; border: 1px solid #ECEEF6; border-radius: 12px;">
-      <h2 style="color: #EA580C; margin-top: 0;">Task Pilot Password Reset</h2>
-      <p style="font-size: 15px; line-height: 1.5;">A request was made to reset your Task Pilot password. Enter the code below in the app to set a new password:</p>
+      <h2 style="color: #EA580C; margin-top: 0;">TaskAlert Password Reset</h2>
+      <p style="font-size: 15px; line-height: 1.5;">A request was made to reset your TaskAlert password. Enter the code below in the app to set a new password:</p>
       <div style="text-align: center; margin: 28px 0;">
         <span style="letter-spacing: 6px; font-size: 32px; font-weight: bold; color: #0B0D1E; background: #F4F5F9; padding: 12px 24px; border-radius: 8px; border: 1px solid #E0E2EE; display: inline-block;">${otp}</span>
       </div>
@@ -642,7 +642,7 @@ router.post('/test-push', requireUser, async (req, res) => {
     const result = await sendPush(
       user.push_token,
       '🔔 Test Alert: System Active!',
-      'Aapka notification alert system successfully connect ho gaya hai! Task Pilot alerts bilkul tayar hain.',
+      'Aapka notification alert system successfully connect ho gaya hai! TaskAlert alerts bilkul tayar hain.',
       { type: 'test' }
     );
     res.json({ ok: true, result });

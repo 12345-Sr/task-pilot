@@ -37,10 +37,10 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 app.get('/', (req, res) => res.redirect('/admin'));
-app.get('/health', (req, res) => res.json({ ok: true, status: 'Task Pilot API is running', time: new Date().toISOString() }));
+app.get('/health', (req, res) => res.json({ ok: true, status: 'TaskAlert API is running', time: new Date().toISOString() }));
 app.get('/api', (req, res) => res.json({
   ok: true,
-  status: 'Task Pilot API is running',
+  status: 'TaskAlert API is running',
   endpoints: {
     health: '/api/health',
     auth: '/api/auth',
@@ -51,7 +51,7 @@ app.get('/api', (req, res) => res.json({
   },
   time: new Date().toISOString()
 }));
-app.get('/api/health', (req, res) => res.json({ ok: true, status: 'Task Pilot API is running', time: new Date().toISOString() }));
+app.get('/api/health', (req, res) => res.json({ ok: true, status: 'TaskAlert API is running', time: new Date().toISOString() }));
 
 const db = require('./db');
 
@@ -146,7 +146,7 @@ const initDatabase = require('./init-db');
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`Task Pilot API running on port ${PORT} (0.0.0.0)`);
+  console.log(`TaskAlert API running on port ${PORT} (0.0.0.0)`);
   try {
     await initDatabase();
   } catch (err) {

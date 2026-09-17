@@ -59,7 +59,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-alarms-v2',
-            name: 'TaskPilot Alarm Clock',
+            name: 'TaskAlert Alarm Clock',
             description: 'High-visibility full screen alarms that ring at the exact scheduled second',
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
@@ -77,7 +77,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-reminders',
-            name: 'TaskPilot Reminders',
+            name: 'TaskAlert Reminders',
             description: 'Advance reminders and task added confirmations',
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
@@ -245,7 +245,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-alarms-v2',
-            name: 'TaskPilot Alarm Clock',
+            name: 'TaskAlert Alarm Clock',
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
             vibration: true,
@@ -355,7 +355,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-reminders',
-            name: 'TaskPilot Reminders',
+            name: 'TaskAlert Reminders',
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
             vibration: true,
@@ -451,7 +451,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-reminders',
-            name: 'TaskPilot Reminders',
+            name: 'TaskAlert Reminders',
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
             vibration: true,
@@ -524,7 +524,7 @@ export class NotificationService {
         try {
           await notifee.createChannel({
             id: 'task-reminders',
-            name: 'TaskPilot Reminders',
+            name: 'TaskAlert Reminders',
             importance: AndroidImportance.HIGH,
             sound: 'default',
           });
@@ -629,7 +629,7 @@ export class NotificationService {
       if (notifee) {
         await notifee.createChannel({
           id: 'task-alarms-v2',
-          name: 'TaskPilot Alarm Clock',
+          name: 'TaskAlert Alarm Clock',
           importance: AndroidImportance.HIGH,
           visibility: AndroidVisibility.PUBLIC,
           vibration: true,
@@ -642,7 +642,7 @@ export class NotificationService {
         await notifee.createTriggerNotification(
           {
             id: 'test_alarm_check',
-            title: '⏰ TEST ALARM: TaskPilot Alert!',
+            title: '⏰ TEST ALARM: TaskAlert Alert!',
             body: `Yeh test alarm ${seconds} second baad baja hai! Sound loop karega jab tak aap Poora ya Dismiss na dabayein.`,
             android: {
               channelId: 'task-alarms-v2',
@@ -693,7 +693,7 @@ export class NotificationService {
       try {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: '⏰ TEST ALARM: TaskPilot Alert!',
+            title: '⏰ TEST ALARM: TaskAlert Alert!',
             body: `Yeh test alert ${seconds} second baad baja hai!`,
             sound: 'default',
             priority: Notifications.AndroidNotificationPriority.MAX,

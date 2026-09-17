@@ -272,16 +272,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     NotificationService.sendLocalNotification(
       isHinglish ? '🎉 Pro Plan Active Ho Gaya!' : '🎉 Pro Plan Activated!',
       isHinglish
-        ? 'Welcome to Task Pilot Pro! Unlimited reminders aur sabhi features ab unlock hain.'
-        : 'Welcome to Task Pilot Pro! Unlimited reminders and all pro features are now active.',
+        ? 'Welcome to TaskAlert Pro! Unlimited reminders aur sabhi features ab unlock hain.'
+        : 'Welcome to TaskAlert Pro! Unlimited reminders and all pro features are now active.',
       1
     );
 
     Alert.alert(
       isHinglish ? '🎉 Pro Plan Activate Ho Gaya!' : '🎉 Pro Plan Activated!',
       isHinglish
-        ? 'Aapka Task Pilot Pro subscription successfully activate ho gaya hai. Ab aap bina kisi limit ke tasks bana sakte hain!'
-        : 'Your Task Pilot Pro subscription is now active! Enjoy unlimited reminders and full productivity tools.',
+        ? 'Aapka TaskAlert Pro subscription successfully activate ho gaya hai. Ab aap bina kisi limit ke tasks bana sakte hain!'
+        : 'Your TaskAlert Pro subscription is now active! Enjoy unlimited reminders and full productivity tools.',
       [
         {
           text: isHinglish ? 'Details & Status Dekhein 👑' : 'View Pro Details 👑',
@@ -343,7 +343,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               <Text style={styles.crownEmoji}>👑</Text>
             </View>
             <Text style={styles.heroHeading}>
-              {isHinglish ? 'Task Pilot Pro Unlock Karein' : 'Unlock Task Pilot Pro'}
+              {isHinglish ? 'TaskAlert Pro Unlock Karein' : 'Unlock TaskAlert Pro'}
             </Text>
             <Text style={styles.heroSub}>
               {isHinglish

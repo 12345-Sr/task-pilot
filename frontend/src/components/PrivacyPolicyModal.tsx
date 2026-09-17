@@ -64,7 +64,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Task Pilot ("Task Pilot", "hum", "humein", ya "hamara") aapki privacy ki respect karta hai aur aapki details protect karne ke liye committed hai. Yeh Privacy Policy explain karti hai ki hum kaunsi information collect karte hain, use kaise use karte hain, aur aapke paas kya choices hain.
+                      TaskAlert ("TaskAlert", "hum", "humein", ya "hamara") aapki privacy ki respect karta hai aur aapki details protect karne ke liye committed hai. Yeh Privacy Policy explain karti hai ki hum kaunsi information collect karte hain, use kaise use karte hain, aur aapke paas kya choices hain.
                     </Text>
                   </View>
 
@@ -72,7 +72,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>1. Jo Information Hum Collect Karte Hain (Information We Collect)</Text>
                     <Text style={styles.paragraph}>
-                      Jab aap ek Task Pilot account banate aur use karte hain, toh hum yeh information collect aur store kar sakte hain:
+                      Jab aap ek TaskAlert account banate aur use karte hain, toh hum yeh information collect aur store kar sakte hain:
                     </Text>
                     <Text style={styles.subheading}>Account Information:</Text>
                     <Text style={styles.bulletPoint}>• Name (Aapka naam)</Text>
@@ -85,7 +85,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
 
                     <Text style={styles.subheading}>Task aur Reminder Information:</Text>
                     <Text style={styles.paragraph}>
-                      Hum Task Pilot ke andar aapke dwara banayi gayi information store karte hain:
+                      Hum TaskAlert ke andar aapke dwara banayi gayi information store karte hain:
                     </Text>
                     <Text style={styles.bulletPoint}>• Task names aur descriptions</Text>
                     <Text style={styles.bulletPoint}>• Scheduled dates</Text>
@@ -100,7 +100,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
 
                     <Text style={styles.subheading}>Device aur Notification Details:</Text>
                     <Text style={styles.paragraph}>
-                      Reminder notifications bhejne ke liye, hum aapke device ya account se associated device push-notification token collect aur store karte hain. Isse Task Pilot aapke device par timely alerts deliver kar pata hai.
+                      Reminder notifications bhejne ke liye, hum aapke device ya account se associated device push-notification token collect aur store karte hain. Isse TaskAlert aapke device par timely alerts deliver kar pata hai.
                     </Text>
                   </View>
 
@@ -131,13 +131,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>3. Aapka Task Data Kaise Use Hota Hai</Text>
                     <Text style={styles.paragraph}>
-                      Aapki task aur reminder details sirf Task Pilot ki features provide karne ke liye process aur store hoti hain.
+                      Aapki task aur reminder details sirf TaskAlert ki features provide karne ke liye process aur store hoti hain.
                     </Text>
                     <Text style={styles.paragraph}>
                       For example, tasks store hona zaroori hai taaki aap baad mein unhe access kar sakein aur timely reminders generate ho sakein.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Aapke tasks kabhi bhi publicly display nahi hote aur na hi doosre Task Pilot users ko dikhaye jaate hain.
+                      Aapke tasks kabhi bhi publicly display nahi hote aur na hi doosre TaskAlert users ko dikhaye jaate hain.
                     </Text>
                   </View>
 
@@ -145,7 +145,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>4. Account Authentication aur Security</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aapke account ko protect karne ke liye standard authentication mechanisms use karta hai.
+                      TaskAlert aapke account ko protect karne ke liye standard authentication mechanisms use karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Passwords plain-text ke bajaye salted cryptographic hash ke sath store kiye jaate hain.
@@ -162,7 +162,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>5. Notifications</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot reminders deliver karne ke liye push-notification services use karta hai. Notifications pane ke liye device par notification permission allow hona zaroori hai.
+                      TaskAlert reminders deliver karne ke liye push-notification services use karta hai. Notifications pane ke liye device par notification permission allow hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Notifications mein scheduled task ko identify karne ke liye zaroori details hoti hain.
@@ -176,7 +176,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>6. Third-Party Service Providers</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ko smoothly operate karne ke liye hum trusted third-party providers use karte hain:
+                      TaskAlert ko smoothly operate karne ke liye hum trusted third-party providers use karte hain:
                     </Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Payment processing:</Text> Razorpay</Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Push notifications:</Text> Expo aur/ya Firebase</Text>
@@ -192,13 +192,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>7. Payments</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot Pro purchase karne par payment processing Razorpay ya designated payment gateway ke through handle hoti hai.
+                      TaskAlert Pro purchase karne par payment processing Razorpay ya designated payment gateway ke through handle hoti hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Payment providers transaction process karne ke liye zaroori details collect karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aapke complete payment card details apne servers par store nahi karta. Payment records payment provider ki apni policies aur legal obligations ke anusar retain hote hain.
+                      TaskAlert aapke complete payment card details apne servers par store nahi karta. Payment records payment provider ki apni policies aur legal obligations ke anusar retain hote hain.
                     </Text>
                   </View>
 
@@ -208,7 +208,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                     <Text style={styles.paragraph}>
                       Hum aapki personal information ya tasks kabhi sell nahi karte. Information sirf zaroori situations mein disclose ho sakti hai, jaise:
                     </Text>
-                    <Text style={styles.bulletPoint}>• Service providers jo Task Pilot operate karne mein madad karte hain.</Text>
+                    <Text style={styles.bulletPoint}>• Service providers jo TaskAlert operate karne mein madad karte hain.</Text>
                     <Text style={styles.bulletPoint}>• Service ki security aur integrity protect karne ke liye.</Text>
                     <Text style={styles.bulletPoint}>• Fraud, abuse ya illegal activity investigate karne ke liye.</Text>
                     <Text style={styles.bulletPoint}>• Applicable laws, court orders ya government authorities ke legal requests comply karne ke liye.</Text>
@@ -232,7 +232,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                       Currently, app ke andar automatic self-service deletion option available nahi hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Agar aap apna account ya personal details delete karwana chahte hain, toh aap in-app Support ticket ya <Text style={styles.linkText}>support@taskpilot.com</Text> par request send kar sakte hain.
+                      Agar aap apna account ya personal details delete karwana chahte hain, toh aap in-app Support ticket ya <Text style={styles.linkText}>support@taskalert.com</Text> par request send kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
                       Valid deletion request receive hone aur identity verify karne ke baad hum legal guidelines ke mutabiq account delete kar dete hain.
@@ -258,7 +258,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>12. Children's Privacy</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot minors ya bachhon se knowingly personal data collect karne ke liye design nahi kiya gaya hai.
+                      TaskAlert minors ya bachhon se knowingly personal data collect karne ke liye design nahi kiya gaya hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Agar kisi minor ka data unauthorized tarike se collect ho gaya ho, toh parents ya guardians support channel ke through contact karke data delete karwa sakte hain.
@@ -269,7 +269,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>13. Cookies aur Tracking</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot core features ke liye personal information ya task details advertise karne ke liye tracking use nahi karta. Future mein tracking/analytics aane par policy update ki jayegi.
+                      TaskAlert core features ke liye personal information ya task details advertise karne ke liye tracking use nahi karta. Future mein tracking/analytics aane par policy update ki jayegi.
                     </Text>
                   </View>
 
@@ -284,7 +284,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                     <Text style={styles.bulletPoint}>• Account aur data delete karwane ka request.</Text>
                     <Text style={styles.bulletPoint}>• Data handling se related concerns ya queries raise karna.</Text>
                     <Text style={styles.paragraph}>
-                      Rights exercise karne ke liye Task Pilot support team se contact karein. Requests process karne se pehle identity verification zaroori ho sakti hai.
+                      Rights exercise karne ke liye TaskAlert support team se contact karein. Requests process karne se pehle identity verification zaroori ho sakti hai.
                     </Text>
                   </View>
 
@@ -303,7 +303,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      Agar is Privacy Policy ya apne data handling ke regarding aapka koi sawaal ya complaint hai, toh humse in-app support/tickets ya direct email <Text style={styles.linkText}>support@taskpilot.com</Text> par contact karein.
+                      Agar is Privacy Policy ya apne data handling ke regarding aapka koi sawaal ya complaint hai, toh humse in-app support/tickets ya direct email <Text style={styles.linkText}>support@taskalert.com</Text> par contact karein.
                     </Text>
                   </View>
                 </>
@@ -311,7 +311,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Task Pilot ("Task Pilot", "we", "us", or "our") respects your privacy and is committed to protecting the information you provide while using our task-management and productivity service. This Privacy Policy explains what information we collect, how we use it, how we protect it, and the choices available to you.
+                      TaskAlert ("TaskAlert", "we", "us", or "our") respects your privacy and is committed to protecting the information you provide while using our task-management and productivity service. This Privacy Policy explains what information we collect, how we use it, how we protect it, and the choices available to you.
                     </Text>
                   </View>
 
@@ -319,7 +319,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>1. Information We Collect</Text>
                     <Text style={styles.paragraph}>
-                      When you create and use a Task Pilot account, we may collect and store:
+                      When you create and use a TaskAlert account, we may collect and store:
                     </Text>
                     <Text style={styles.subheading}>Account Information</Text>
                     <Text style={styles.bulletPoint}>• Name</Text>
@@ -332,7 +332,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
 
                     <Text style={styles.subheading}>Task and Reminder Information</Text>
                     <Text style={styles.paragraph}>
-                      We collect and store information that you create within Task Pilot, including:
+                      We collect and store information that you create within TaskAlert, including:
                     </Text>
                     <Text style={styles.bulletPoint}>• Task names or descriptions</Text>
                     <Text style={styles.bulletPoint}>• Scheduled dates</Text>
@@ -347,7 +347,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
 
                     <Text style={styles.subheading}>Device and Notification Information</Text>
                     <Text style={styles.paragraph}>
-                      To provide reminder notifications, we may collect and store a device or push-notification token associated with your account or device. This allows Task Pilot to send relevant notifications to your device.
+                      To provide reminder notifications, we may collect and store a device or push-notification token associated with your account or device. This allows TaskAlert to send relevant notifications to your device.
                     </Text>
                   </View>
 
@@ -379,13 +379,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>3. How Your Task Data Is Used</Text>
                     <Text style={styles.paragraph}>
-                      Your task and reminder information is primarily processed and stored so that Task Pilot can provide the functionality you request.
+                      Your task and reminder information is primarily processed and stored so that TaskAlert can provide the functionality you request.
                     </Text>
                     <Text style={styles.paragraph}>
                       For example, we need to store your tasks so that you can access them later through your account and so that scheduled reminders can be generated.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Your tasks are not intended to be publicly displayed or made available to other Task Pilot users.
+                      Your tasks are not intended to be publicly displayed or made available to other TaskAlert users.
                     </Text>
                   </View>
 
@@ -393,7 +393,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>4. Account Authentication and Security</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot uses authentication mechanisms to protect your account.
+                      TaskAlert uses authentication mechanisms to protect your account.
                     </Text>
                     <Text style={styles.paragraph}>
                       Passwords are handled using password-hashing/security practices rather than being stored as readable plain-text passwords.
@@ -410,7 +410,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>5. Notifications</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may use push-notification services to deliver reminders to your device.
+                      TaskAlert may use push-notification services to deliver reminders to your device.
                     </Text>
                     <Text style={styles.paragraph}>
                       To receive notifications, you must provide the necessary notification permission on your device.
@@ -427,13 +427,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>6. Third-Party Service Providers</Text>
                     <Text style={styles.paragraph}>
-                      We may use third-party providers to help operate Task Pilot. These may include services for:
+                      We may use third-party providers to help operate TaskAlert. These may include services for:
                     </Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Payment processing:</Text> Razorpay</Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Push notifications:</Text> Expo and/or Firebase</Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Email delivery:</Text> Resend and/or Gmail</Text>
                     <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Hosting/server infrastructure:</Text> Applicable hosting and infrastructure providers</Text>
-                    <Text style={styles.bulletPoint}>• Other technical services required to operate and maintain Task Pilot</Text>
+                    <Text style={styles.bulletPoint}>• Other technical services required to operate and maintain TaskAlert</Text>
                     <Text style={styles.paragraph}>
                       These providers may process information on our behalf where necessary to provide their services. We do not sell your personal information to these providers for advertising purposes. Third-party providers may have their own privacy policies and terms governing their services.
                     </Text>
@@ -443,13 +443,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>7. Payments</Text>
                     <Text style={styles.paragraph}>
-                      When you purchase Task Pilot Pro, payment processing is handled through Razorpay or another payment provider made available by Task Pilot.
+                      When you purchase TaskAlert Pro, payment processing is handled through Razorpay or another payment provider made available by TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
                       Payment providers may collect information required to process your transaction.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot does not need to store your complete payment-card information in order to provide the subscription service. Payment information may also be retained by the applicable payment provider according to its own policies and legal obligations.
+                      TaskAlert does not need to store your complete payment-card information in order to provide the subscription service. Payment information may also be retained by the applicable payment provider according to its own policies and legal obligations.
                     </Text>
                   </View>
 
@@ -462,7 +462,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                     <Text style={styles.paragraph}>
                       We may disclose information only where reasonably necessary, including:
                     </Text>
-                    <Text style={styles.bulletPoint}>• To service providers that help us operate Task Pilot.</Text>
+                    <Text style={styles.bulletPoint}>• To service providers that help us operate TaskAlert.</Text>
                     <Text style={styles.bulletPoint}>• To protect the security and integrity of the Service.</Text>
                     <Text style={styles.bulletPoint}>• To investigate fraud, abuse, or unauthorized activity.</Text>
                     <Text style={styles.bulletPoint}>• To comply with applicable laws, regulations, legal processes, court orders, or valid requests from authorized government or law-enforcement authorities.</Text>
@@ -490,10 +490,10 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>10. Account Deletion</Text>
                     <Text style={styles.paragraph}>
-                      At present, Task Pilot does not provide a self-service account deletion option directly within the application.
+                      At present, TaskAlert does not provide a self-service account deletion option directly within the application.
                     </Text>
                     <Text style={styles.paragraph}>
-                      If you want to request deletion of your account or personal information, you may contact Task Pilot through the available support/contact channel.
+                      If you want to request deletion of your account or personal information, you may contact TaskAlert through the available support/contact channel.
                     </Text>
                     <Text style={styles.paragraph}>
                       After receiving a valid deletion request, we may verify the request and process the deletion in accordance with applicable law and our legitimate operational and legal requirements.
@@ -527,7 +527,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>12. Children's Privacy</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is not intended to be used for purposes that require us to knowingly collect personal information from children in violation of applicable law.
+                      TaskAlert is not intended to be used for purposes that require us to knowingly collect personal information from children in violation of applicable law.
                     </Text>
                     <Text style={styles.paragraph}>
                       If we become aware that we have collected personal information from a child in circumstances where such collection is not permitted, we may take appropriate steps to delete the information.
@@ -541,7 +541,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>13. Cookies and Tracking</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot's core task-management functionality does not require us to sell personal information or task content for advertising purposes.
+                      TaskAlert's core task-management functionality does not require us to sell personal information or task content for advertising purposes.
                     </Text>
                     <Text style={styles.paragraph}>
                       If analytics, cookies, identifiers, or similar technologies are introduced in the future, this Privacy Policy may be updated to explain their use where required by applicable law.
@@ -560,7 +560,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                     <Text style={styles.bulletPoint}>• Ask questions about how your information is processed.</Text>
                     <Text style={styles.bulletPoint}>• Raise privacy-related concerns or complaints.</Text>
                     <Text style={styles.paragraph}>
-                      To exercise applicable rights, contact us using the support/contact information provided by Task Pilot. We may need to verify your identity before processing certain requests.
+                      To exercise applicable rights, contact us using the support/contact information provided by TaskAlert. We may need to verify your identity before processing certain requests.
                     </Text>
                   </View>
 
@@ -579,7 +579,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      If you have questions, concerns, complaints, or requests relating to this Privacy Policy or the handling of your information, please contact us through the support/contact options provided by Task Pilot or directly via <Text style={styles.linkText}>support@taskpilot.com</Text>.
+                      If you have questions, concerns, complaints, or requests relating to this Privacy Policy or the handling of your information, please contact us through the support/contact options provided by TaskAlert or directly via <Text style={styles.linkText}>support@taskalert.com</Text>.
                     </Text>
                   </View>
                 </>

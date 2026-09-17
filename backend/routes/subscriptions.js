@@ -141,7 +141,7 @@ router.get('/status', requireUser, async (req, res) => {
 // Creates a Razorpay order and generates dynamic UPI QR details for the payment wall
 router.post('/create-order', requireUser, async (req, res) => {
   try {
-    // Original Task Pilot Pro monthly subscription fee: ₹399 (39900 paise)
+    // Original TaskAlert Pro monthly subscription fee: ₹399 (39900 paise)
     const planPriceInr = 399;
     const amountPaise = 39900;
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
@@ -186,7 +186,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('Task Pilot')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('Task Pilot Pro Plan')}`;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`;
 
     // Save pending intent in subscriptions table
@@ -213,7 +213,7 @@ router.post('/create-order', requireUser, async (req, res) => {
       upiUrl,
       qrImageUrl,
       merchantVpa,
-      planTitle: 'Task Pilot Pro Plan',
+      planTitle: 'TaskAlert Pro Plan',
       validity: '30 Days',
       acceptedMethods: ['card', 'upi', 'netbanking', 'wallet', 'paylater'],
     });
@@ -235,11 +235,11 @@ router.get('/checkout', async (req, res) => {
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
-    // Original Task Pilot Pro monthly subscription fee: ₹399 (39900 paise)
+    // Original TaskAlert Pro monthly subscription fee: ₹399 (39900 paise)
     const planPriceInr = 399;
     const amountPaise = 39900;
 
-    let userName = 'Task Pilot User';
+    let userName = 'TaskAlert User';
     let userEmail = 'user@taskpilot.app';
     let userPhone = '';
 
@@ -261,7 +261,7 @@ router.get('/checkout', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Task Pilot Pro — Razorpay Checkout</title>
+  <title>TaskAlert Pro — Razorpay Checkout</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
@@ -291,7 +291,7 @@ router.get('/checkout', async (req, res) => {
 <body>
   <div class="card">
     <div class="badge-top">🛡️ Razorpay Official Checkout</div>
-    <h1>Task Pilot <span>PRO</span></h1>
+    <h1>TaskAlert <span>PRO</span></h1>
     <p class="sub">Sabhi payment options enabled hain (UPI, Cards, NetBanking)</p>
 
     <div class="price-box">
@@ -361,7 +361,7 @@ router.get('/checkout', async (req, res) => {
         key: ${JSON.stringify(keyId)},
         amount: ${amountPaise},
         currency: 'INR',
-        name: 'Task Pilot Pro',
+        name: 'TaskAlert Pro',
         description: '30-Day Pro Subscription (Unlimited Tasks & Alerts)',
         retry: {
           enabled: true,
@@ -500,7 +500,7 @@ router.get('/payment-callback', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Not Verified — Task Pilot</title>
+  <title>Payment Not Verified — TaskAlert</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
@@ -518,9 +518,9 @@ router.get('/payment-callback', async (req, res) => {
     <div class="icon">⚠️</div>
     <h1>Payment Not Verified</h1>
     <p>Razorpay se payment confirm nahi ho saka. Agar aapke account se amount deduct hua hai toh woh automatically refund ho jayega.</p>
-    <p>Kripya Task Pilot app me wapas jaake dobara try karein.</p>
+    <p>Kripya TaskAlert app me wapas jaake dobara try karein.</p>
     <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-      <button type="button" onclick="returnFailed()" class="btn">👉 Return to Task Pilot App</button>
+      <button type="button" onclick="returnFailed()" class="btn">👉 Return to TaskAlert App</button>
       <button type="button" onclick="window.close()" class="btn-sec">✕ Close Tab</button>
     </div>
   </div>
@@ -557,7 +557,7 @@ router.get('/payment-callback', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account Not Linked — Task Pilot</title>
+  <title>Account Not Linked — TaskAlert</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
@@ -629,7 +629,7 @@ router.get('/payment-callback', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Successful — Task Pilot Pro</title>
+  <title>Payment Successful — TaskAlert Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
@@ -652,8 +652,8 @@ router.get('/payment-callback', async (req, res) => {
 <body>
   <div class="card">
     <div class="icon">🎉</div>
-    <h1>Task Pilot <span>PRO</span> Active!</h1>
-    <p>Aapka payment safalta-poorvak verify ho gaya hai. Task Pilot Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
+    <h1>TaskAlert <span>PRO</span> Active!</h1>
+    <p>Aapka payment safalta-poorvak verify ho gaya hai. TaskAlert Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
     <div class="ref-box">
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
       <div><b>Amount:</b> ₹399.00</div>
@@ -663,11 +663,11 @@ router.get('/payment-callback', async (req, res) => {
       ✓ Aap ab app me wapas jaa sakte hain. Pro features unlock hain!
     </div>
     <div style="display: flex; flex-direction: column; gap: 10px;">
-      <button type="button" id="btn-return" onclick="returnToApp()" class="btn">👉 Return to Task Pilot App</button>
+      <button type="button" id="btn-return" onclick="returnToApp()" class="btn">👉 Return to TaskAlert App</button>
       <button type="button" onclick="closeTab()" class="btn-sec">✕ Close Tab (App Already Unlocked)</button>
     </div>
     <div class="tip-box">
-      ✨ <b>Tip:</b> Aapka Pro Plan pehle se activate ho chuka hai! Agar button se app na khule, toh aap is browser tab ko close karke ya Recent Apps se <b>Task Pilot</b> app par switch karein.
+      ✨ <b>Tip:</b> Aapka Pro Plan pehle se activate ho chuka hai! Agar button se app na khule, toh aap is browser tab ko close karke ya Recent Apps se <b>TaskAlert</b> app par switch karein.
     </div>
   </div>
   <script>
@@ -690,13 +690,13 @@ router.get('/payment-callback', async (req, res) => {
 
       setTimeout(function() {
         try { window.close(); } catch (e) {}
-        if (btn) btn.innerText = '👉 Return to Task Pilot App';
+        if (btn) btn.innerText = '👉 Return to TaskAlert App';
       }, 1000);
     }
 
     function closeTab() {
       try { window.close(); } catch(e) {}
-      alert('Pro Plan is active! Please switch back to the Task Pilot app.');
+      alert('Pro Plan is active! Please switch back to the TaskAlert app.');
     }
 
     // Auto-attempt return after 1.2s
@@ -861,8 +861,8 @@ router.post('/verify-payment', requireUser, async (req, res) => {
           const { sendPush } = require('../scheduler');
           const title = lang === 'hi' ? '🎉 Pro Plan Activate Ho Gaya!' : '🎉 Pro Plan Activated!';
           const body = lang === 'hi'
-            ? 'Aapka Task Pilot Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
-            : 'Your Task Pilot Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
+            ? 'Aapka TaskAlert Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
+            : 'Your TaskAlert Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
           sendPush(token, title, body, { type: 'PRO_ACTIVATED' }).catch(() => { });
         }
       })

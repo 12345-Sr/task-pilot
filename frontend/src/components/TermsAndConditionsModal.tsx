@@ -64,21 +64,21 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Task Pilot mein aapka swagat hai. Yeh Terms & Conditions ("Terms") Task Pilot application aur related services ("Task Pilot", "hum", "humein", ya "hamara") ke access aur use ko govern karti hain. Account banakar ya Task Pilot use karke, aap in Terms ka palan karne ke liye agree karte hain. Agar aap in Terms se sahmat nahi hain, toh kripya Service ka use na karein.
+                      TaskAlert mein aapka swagat hai. Yeh Terms & Conditions ("Terms") TaskAlert application aur related services ("TaskAlert", "hum", "humein", ya "hamara") ke access aur use ko govern karti hain. Account banakar ya TaskAlert use karke, aap in Terms ka palan karne ke liye agree karte hain. Agar aap in Terms se sahmat nahi hain, toh kripya Service ka use na karein.
                     </Text>
                   </View>
 
                   {/* Section 1 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>1. Task Pilot Ke Baare Mein (About Task Pilot)</Text>
+                    <Text style={styles.sectionHeading}>1. TaskAlert Ke Baare Mein (About TaskAlert)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ek task-management aur productivity application hai jo users ko tasks aur reminders create, organize, schedule aur manage karne mein help karne ke liye design kiya gaya hai.
+                      TaskAlert ek task-management aur productivity application hai jo users ko tasks aur reminders create, organize, schedule aur manage karne mein help karne ke liye design kiya gaya hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ka use personal aur business dono purposes ke liye kiya ja sakta hai.
+                      TaskAlert ka use personal aur business dono purposes ke liye kiya ja sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ek productivity tool hai aur iska maksad professional, emergency, medical, legal, financial ya anya critical services ko replace karna nahi hai.
+                      TaskAlert ek productivity tool hai aur iska maksad professional, emergency, medical, legal, financial ya anya critical services ko replace karna nahi hai.
                     </Text>
                   </View>
 
@@ -86,19 +86,19 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>2. User Accounts</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot use karne ke liye, aapko ek account create karna hoga. Registration ke dauraan, aapko yeh details provide karni ho sakti hain:
+                      TaskAlert use karne ke liye, aapko ek account create karna hoga. Registration ke dauraan, aapko yeh details provide karni ho sakti hain:
                     </Text>
                     <Text style={styles.bulletPoint}>• Aapka naam</Text>
                     <Text style={styles.bulletPoint}>• Aapka email address</Text>
                     <Text style={styles.bulletPoint}>• Ek password</Text>
                     <Text style={styles.paragraph}>
-                      Aapka email address Task Pilot dwara provide kiye gaye verification process ke through verify hona zaroori hai.
+                      Aapka email address TaskAlert dwara provide kiye gaye verification process ke through verify hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Sahi details provide karne aur apne login credentials ki confidentiality maintain karne ke liye aap khud zimmedar hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Aapka Task Pilot account personal hai. Aapko apne login credentials kisi aur ke sath share nahi karne chahiye aur na hi unauthorized persons ko account access karne dena chahiye.
+                      Aapka TaskAlert account personal hai. Aapko apne login credentials kisi aur ke sath share nahi karne chahiye aur na hi unauthorized persons ko account access karne dena chahiye.
                     </Text>
                     <Text style={styles.paragraph}>
                       Apne account ke through hone wali sabhi activities ke liye aap responsible hain aur agar aapko lagta hai ki account unauthorized access hua hai, toh humein turant notify karein.
@@ -109,16 +109,16 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>3. Task aur Reminder Data</Text>
                     <Text style={styles.paragraph}>
-                      Users Task Pilot ke andar tasks aur reminders create, edit, schedule aur delete kar sakte hain.
+                      Users TaskAlert ke andar tasks aur reminders create, edit, schedule aur delete kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
                       Aap jo tasks aur content create aur submit karte hain, uska ownership aapke paas hi rehta hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aapki task information ko process aur store karta hai taaki Service task-management aur reminder functionality provide kar sake aur aap apne account se apni details access kar sakein.
+                      TaskAlert aapki task information ko process aur store karta hai taaki Service task-management aur reminder functionality provide kar sake aur aap apne account se apni details access kar sakein.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aapke task content ko sell nahi karta aur na hi advertising ke liye use karta hai.
+                      TaskAlert aapke task content ko sell nahi karta aur na hi advertising ke liye use karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Aapki task information publicly display nahi hoti aur na hi Service ke doosre users ke sath share ki jaati hai.
@@ -146,7 +146,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>5. Pro Subscription</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ₹399 mein 30 days ke liye Pro subscription offer karta hai.
+                      TaskAlert ₹399 mein 30 days ke liye Pro subscription offer karta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Pro subscription additional features provide karta hai, jinmein shamil hain:
@@ -171,13 +171,13 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>6. Payments</Text>
                     <Text style={styles.paragraph}>
-                      Pro subscriptions ke payments Razorpay ya Task Pilot dwara provide kiye gaye payment-processing partners ke through process hote hain.
+                      Pro subscriptions ke payments Razorpay ya TaskAlert dwara provide kiye gaye payment-processing partners ke through process hote hain.
                     </Text>
                     <Text style={styles.paragraph}>
                       Purchase karke, aap payment provider ko unki terms aur policies ke anusar transaction process karne ke liye authorize karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aapke complete payment-card details apne servers par store nahi karta.
+                      TaskAlert aapke complete payment-card details apne servers par store nahi karta.
                     </Text>
                   </View>
 
@@ -185,7 +185,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>7. Refund Policy</Text>
                     <Text style={styles.paragraph}>
-                      Sabhi Pro purchases non-refundable hain, siwaye wahan jahan applicable law ke mutabiq refund mandatory ho ya jahan Task Pilot technical payment issue ke liye corrective action lena decide kare.
+                      Sabhi Pro purchases non-refundable hain, siwaye wahan jahan applicable law ke mutabiq refund mandatory ho ya jahan TaskAlert technical payment issue ke liye corrective action lena decide kare.
                     </Text>
                     <Text style={styles.paragraph}>
                       Agar aapki payment successfully deduct ho gayi hai lekin technical issue ki wajah se Pro access activate nahi hua hai, toh aap in-app support ya ticket system ke through contact kar sakte hain.
@@ -199,7 +199,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>8. Notifications aur Reminders</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot scheduled tasks aur reminders se related notifications send kar sakta hai.
+                      TaskAlert scheduled tasks aur reminders se related notifications send kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Task settings ke according, reminder notifications send ki ja sakti hain:
@@ -210,7 +210,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       Notification delivery ke liye aapke device par notification permissions enabled hona zaroori hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot yeh guarantee nahi deta ki har notification hamesha exact time par ya deliver hogi hi.
+                      TaskAlert yeh guarantee nahi deta ki har notification hamesha exact time par ya deliver hogi hi.
                     </Text>
                     <Text style={styles.paragraph}>
                       Technical issues, device settings, OS restrictions, battery optimization, network issues ya 3rd-party service issues ke chalte notifications delay, interrupt ya miss ho sakti hain.
@@ -219,7 +219,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       Apne tasks ko monitor aur manage karne ke liye aap khud zimmedar hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ko emergency, medical, life-critical, hazardous ya legal situations ke liye sole reminder system ki tarah use nahi kiya jana chahiye jahan reminder miss hone se bada loss ho sake.
+                      TaskAlert ko emergency, medical, life-critical, hazardous ya legal situations ke liye sole reminder system ki tarah use nahi kiya jana chahiye jahan reminder miss hone se bada loss ho sake.
                     </Text>
                   </View>
 
@@ -227,7 +227,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>9. Acceptable Use (Sahi Upyog)</Text>
                     <Text style={styles.paragraph}>
-                      Aap Task Pilot ko sirf lawful purposes ke liye use karne par agree karte hain. Aapko yeh sab bilkul nahi karna chahiye:
+                      Aap TaskAlert ko sirf lawful purposes ke liye use karne par agree karte hain. Aapko yeh sab bilkul nahi karna chahiye:
                     </Text>
                     <Text style={styles.bulletPoint}>• Illegal activities ke liye use karna.</Text>
                     <Text style={styles.bulletPoint}>• Kisi doosre user ke account ya data ko unauthorized access karna.</Text>
@@ -248,9 +248,9 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>10. Intellectual Property (Baudhik Sampada)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot aur iski underlying technology Task Pilot ki ownership aur property hai. Isme shamil hain:
+                      TaskAlert aur iski underlying technology TaskAlert ki ownership aur property hai. Isme shamil hain:
                     </Text>
-                    <Text style={styles.bulletPoint}>• Task Pilot name</Text>
+                    <Text style={styles.bulletPoint}>• TaskAlert name</Text>
                     <Text style={styles.bulletPoint}>• Logo aur branding</Text>
                     <Text style={styles.bulletPoint}>• Application design aur UI</Text>
                     <Text style={styles.bulletPoint}>• Source code</Text>
@@ -260,7 +260,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       In Terms ke mutabiq Service use karne ke limited right ke alawa koi ownership rights aapko transfer nahi hote hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Aap bina hamari prior written permission ke Task Pilot ke kisi bhi part ko copy, reproduce, modify, distribute, sell, license ya derivative work nahi bana sakte.
+                      Aap bina hamari prior written permission ke TaskAlert ke kisi bhi part ko copy, reproduce, modify, distribute, sell, license ya derivative work nahi bana sakte.
                     </Text>
                     <Text style={styles.paragraph}>
                       Aapke dwara Service ke andar banaye content par aapka ownership barkarar rehta hai.
@@ -271,10 +271,10 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>11. Service Availability</Text>
                     <Text style={styles.paragraph}>
-                      Hum Task Pilot ko hamesha available aur reliable rakhne ka pura prayas karte hain, lekin hum yeh guarantee nahi dete ki Service hamesha available, uninterrupted, error-free, secure ya technical bugs se free rahegi.
+                      Hum TaskAlert ko hamesha available aur reliable rakhne ka pura prayas karte hain, lekin hum yeh guarantee nahi dete ki Service hamesha available, uninterrupted, error-free, secure ya technical bugs se free rahegi.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Maintenance, upgrades, server issues, security measures ya technical problems ke chalte Task Pilot temporarily unavailable ho sakta hai.
+                      Maintenance, upgrades, server issues, security measures ya technical problems ke chalte TaskAlert temporarily unavailable ho sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Hum zaroori hone par Service ke parts ko modify, update, improve, suspend ya discontinue kar sakte hain.
@@ -285,7 +285,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>12. Features aur Plans Mein Badlaav</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot Free ya Pro versions mein features add, modify, improve, restrict ya remove kar sakta hai.
+                      TaskAlert Free ya Pro versions mein features add, modify, improve, restrict ya remove kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Hum future mein naye plans, features ya pricing structures bhi introduce kar sakte hain.
@@ -299,7 +299,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>13. Third-Party Services</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot Service chalane ke liye third-party service providers par rely karta hai, jaise payment processing, email delivery, notifications, hosting aur server infrastructure.
+                      TaskAlert Service chalane ke liye third-party service providers par rely karta hai, jaise payment processing, email delivery, notifications, hosting aur server infrastructure.
                     </Text>
                     <Text style={styles.paragraph}>
                       In services mein Razorpay, Expo, Firebase, Resend, Gmail ya hosting providers shamil ho sakte hain.
@@ -308,7 +308,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       Third-party services ka use unke apne terms aur privacy policies ke anusar govern hota hai.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Third-party services ke kaaran hone wale interruptions ya failures ke liye Task Pilot solely responsible nahi hai.
+                      Third-party services ke kaaran hone wale interruptions ya failures ke liye TaskAlert solely responsible nahi hai.
                     </Text>
                   </View>
 
@@ -316,7 +316,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>14. Account Suspension aur Termination</Text>
                     <Text style={styles.paragraph}>
-                      Agar hume pata chalta hai ki aapne in Terms ka violation kiya hai ya fraudulent, abusive, illegal ya security-threatening activity ki hai, toh Task Pilot aapka account suspend ya terminate kar sakta hai.
+                      Agar hume pata chalta hai ki aapne in Terms ka violation kiya hai ya fraudulent, abusive, illegal ya security-threatening activity ki hai, toh TaskAlert aapka account suspend ya terminate kar sakta hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Yeh right Free aur Pro dono accounts par apply hota hai.
@@ -333,7 +333,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>15. Disclaimer (Aswikaran)</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ek productivity aur task-management tool ke taur par provide kiya jata hai.
+                      TaskAlert ek productivity aur task-management tool ke taur par provide kiya jata hai.
                     </Text>
                     <Text style={styles.paragraph}>
                       Hum yeh guarantee nahi dete ki:
@@ -344,7 +344,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                     <Text style={styles.bulletPoint}>• Service hamesha errors ya technical bugs se free rahegi.</Text>
                     <Text style={styles.bulletPoint}>• Data ya features kabhi temporarily unavailable nahi honge.</Text>
                     <Text style={styles.paragraph}>
-                      Aap Task Pilot ka use apne discretion aur risk par karte hain. Emergency, medical, legal ya critical matters ke liye ispar akele depend na karein.
+                      Aap TaskAlert ka use apne discretion aur risk par karte hain. Emergency, medical, legal ya critical matters ke liye ispar akele depend na karein.
                     </Text>
                   </View>
 
@@ -352,7 +352,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Limitation of Liability</Text>
                     <Text style={styles.paragraph}>
-                      Applicable law dwara permitted maximum extent tak, Task Pilot aur iske creators, employees ya affiliates indirect, incidental, consequential ya special damages ke liye liable nahi honge.
+                      Applicable law dwara permitted maximum extent tak, TaskAlert aur iske creators, employees ya affiliates indirect, incidental, consequential ya special damages ke liye liable nahi honge.
                     </Text>
                     <Text style={styles.paragraph}>
                       Isme missed, delayed ya failed notifications, service interruptions, technical failures ya network problems se hone wale losses shamil hain.
@@ -363,7 +363,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>17. Privacy Policy</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot ka use hamari Privacy Policy ke through bhi govern hota hai, jo batati hai ki hum personal information kaise collect, use aur protect karte hain.
+                      TaskAlert ka use hamari Privacy Policy ke through bhi govern hota hai, jo batati hai ki hum personal information kaise collect, use aur protect karte hain.
                     </Text>
                     <Text style={styles.paragraph}>
                       Hamari Privacy Policy in Terms ka ek part hai.
@@ -399,7 +399,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>20. Contact Us (Sampark Karein)</Text>
                     <Text style={styles.paragraph}>
-                      Agar in Terms ya Task Pilot ke regarding aapke koi questions, concerns, complaints ya support requests hain, toh aap in-app support/tickets ya hamare support email <Text style={styles.linkText}>support@taskpilot.com</Text> par contact kar sakte hain.
+                      Agar in Terms ya TaskAlert ke regarding aapke koi questions, concerns, complaints ya support requests hain, toh aap in-app support/tickets ya hamare support email <Text style={styles.linkText}>support@taskalert.com</Text> par contact kar sakte hain.
                     </Text>
                   </View>
                 </>
@@ -407,21 +407,21 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                 <>
                   <View style={styles.highlightBox}>
                     <Text style={styles.highlightText}>
-                      Welcome to Task Pilot. These Terms & Conditions ("Terms") govern your access to and use of the Task Pilot application and related services ("Task Pilot", "we", "us", or "our"). By creating an account or using Task Pilot, you agree to comply with these Terms. If you do not agree with these Terms, please do not use the Service.
+                      Welcome to TaskAlert. These Terms & Conditions ("Terms") govern your access to and use of the TaskAlert application and related services ("TaskAlert", "we", "us", or "our"). By creating an account or using TaskAlert, you agree to comply with these Terms. If you do not agree with these Terms, please do not use the Service.
                     </Text>
                   </View>
 
                   {/* Section 1 */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeading}>1. About Task Pilot</Text>
+                    <Text style={styles.sectionHeading}>1. About TaskAlert</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is a task-management and productivity application designed to help users create, organize, schedule, and manage tasks and reminders.
+                      TaskAlert is a task-management and productivity application designed to help users create, organize, schedule, and manage tasks and reminders.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may be used for both personal and business purposes.
+                      TaskAlert may be used for both personal and business purposes.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is a productivity tool and is not intended to replace professional, emergency, medical, legal, financial, or other critical services.
+                      TaskAlert is a productivity tool and is not intended to replace professional, emergency, medical, legal, financial, or other critical services.
                     </Text>
                   </View>
 
@@ -429,7 +429,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>2. User Accounts</Text>
                     <Text style={styles.paragraph}>
-                      To use Task Pilot, you must create an account.
+                      To use TaskAlert, you must create an account.
                     </Text>
                     <Text style={styles.paragraph}>
                       During registration, you may be required to provide:
@@ -438,13 +438,13 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                     <Text style={styles.bulletPoint}>• Your email address</Text>
                     <Text style={styles.bulletPoint}>• A password</Text>
                     <Text style={styles.paragraph}>
-                      Your email address must be verified using the verification process provided by Task Pilot.
+                      Your email address must be verified using the verification process provided by TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
                       You are responsible for providing accurate information and maintaining the confidentiality of your login credentials.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Your Task Pilot account is personal to you. You must not share your login credentials with others or allow unauthorized persons to access your account.
+                      Your TaskAlert account is personal to you. You must not share your login credentials with others or allow unauthorized persons to access your account.
                     </Text>
                     <Text style={styles.paragraph}>
                       You are responsible for activities performed through your account and should notify us if you believe your account has been accessed without authorization.
@@ -455,16 +455,16 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>3. Task and Reminder Data</Text>
                     <Text style={styles.paragraph}>
-                      Users may create, edit, schedule, and delete tasks and reminders within Task Pilot.
+                      Users may create, edit, schedule, and delete tasks and reminders within TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
-                      You retain ownership of the task and other content that you create and submit to Task Pilot.
+                      You retain ownership of the task and other content that you create and submit to TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot processes and stores your task information so that the Service can provide its task-management and reminder functionality and allow you to access your information when using your account.
+                      TaskAlert processes and stores your task information so that the Service can provide its task-management and reminder functionality and allow you to access your information when using your account.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot does not sell your task content or use it for advertising purposes.
+                      TaskAlert does not sell your task content or use it for advertising purposes.
                     </Text>
                     <Text style={styles.paragraph}>
                       Task information is not publicly displayed or shared with other users through the Service.
@@ -492,7 +492,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>5. Pro Subscription</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot offers a Pro subscription for ₹399 for 30 days.
+                      TaskAlert offers a Pro subscription for ₹399 for 30 days.
                     </Text>
                     <Text style={styles.paragraph}>
                       A Pro subscription provides additional functionality, including:
@@ -517,13 +517,13 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>6. Payments</Text>
                     <Text style={styles.paragraph}>
-                      Payments for Pro subscriptions are processed through Razorpay or other payment-processing services made available by Task Pilot.
+                      Payments for Pro subscriptions are processed through Razorpay or other payment-processing services made available by TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
                       By making a purchase, you authorize the applicable payment provider to process the transaction according to its applicable terms and policies.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot does not store your complete payment-card details on its own servers unless expressly stated otherwise.
+                      TaskAlert does not store your complete payment-card details on its own servers unless expressly stated otherwise.
                     </Text>
                   </View>
 
@@ -531,10 +531,10 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>7. Refund Policy</Text>
                     <Text style={styles.paragraph}>
-                      All Pro purchases are non-refundable, except where a refund is required by applicable law or where Task Pilot determines that a technical payment issue requires corrective action.
+                      All Pro purchases are non-refundable, except where a refund is required by applicable law or where TaskAlert determines that a technical payment issue requires corrective action.
                     </Text>
                     <Text style={styles.paragraph}>
-                      If your payment has been successfully deducted but your Pro access has not been activated due to a technical issue, you may contact Task Pilot through the available support or ticket system.
+                      If your payment has been successfully deducted but your Pro access has not been activated due to a technical issue, you may contact TaskAlert through the available support or ticket system.
                     </Text>
                     <Text style={styles.paragraph}>
                       We may investigate the transaction and, where appropriate, resolve the issue by activating the purchased service or taking another appropriate corrective action.
@@ -545,7 +545,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>8. Notifications and Reminders</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may send notifications relating to scheduled tasks and reminders.
+                      TaskAlert may send notifications relating to scheduled tasks and reminders.
                     </Text>
                     <Text style={styles.paragraph}>
                       Depending on the task settings, reminder notifications may be sent:
@@ -556,7 +556,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       Notification delivery requires the appropriate notification permissions on your device.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot does not guarantee that every notification will always be delivered exactly on time or delivered at all.
+                      TaskAlert does not guarantee that every notification will always be delivered exactly on time or delivered at all.
                     </Text>
                     <Text style={styles.paragraph}>
                       Notifications may be delayed, interrupted, or missed due to technical issues, device settings, operating-system restrictions, network conditions, third-party services, maintenance, or other circumstances outside our reasonable control.
@@ -565,7 +565,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       You remain responsible for monitoring and managing your tasks.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot should not be used as the sole system for emergency, medical, life-critical, hazardous, legal, or other situations where failure of a reminder could result in serious harm or loss.
+                      TaskAlert should not be used as the sole system for emergency, medical, life-critical, hazardous, legal, or other situations where failure of a reminder could result in serious harm or loss.
                     </Text>
                   </View>
 
@@ -573,12 +573,12 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>9. Acceptable Use</Text>
                     <Text style={styles.paragraph}>
-                      You agree to use Task Pilot only for lawful purposes.
+                      You agree to use TaskAlert only for lawful purposes.
                     </Text>
                     <Text style={styles.paragraph}>
                       You must not:
                     </Text>
-                    <Text style={styles.bulletPoint}>• Use Task Pilot for illegal activities.</Text>
+                    <Text style={styles.bulletPoint}>• Use TaskAlert for illegal activities.</Text>
                     <Text style={styles.bulletPoint}>• Attempt to access another user's account or information without authorization.</Text>
                     <Text style={styles.bulletPoint}>• Attempt to gain unauthorized access to our systems, servers, databases, or infrastructure.</Text>
                     <Text style={styles.bulletPoint}>• Hack, reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code of the Service.</Text>
@@ -597,12 +597,12 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>10. Intellectual Property</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot and its underlying technology are owned by or licensed to Task Pilot.
+                      TaskAlert and its underlying technology are owned by or licensed to TaskAlert.
                     </Text>
                     <Text style={styles.paragraph}>
                       This includes, without limitation:
                     </Text>
-                    <Text style={styles.bulletPoint}>• Task Pilot name</Text>
+                    <Text style={styles.bulletPoint}>• TaskAlert name</Text>
                     <Text style={styles.bulletPoint}>• Logo and branding</Text>
                     <Text style={styles.bulletPoint}>• Application design and user interface</Text>
                     <Text style={styles.bulletPoint}>• Source code</Text>
@@ -614,7 +614,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       Except for the limited right to use the Service in accordance with these Terms, no ownership rights are transferred to you.
                     </Text>
                     <Text style={styles.paragraph}>
-                      You may not copy, reproduce, modify, distribute, sell, license, reverse engineer, or create derivative works from any part of Task Pilot without our prior written permission.
+                      You may not copy, reproduce, modify, distribute, sell, license, reverse engineer, or create derivative works from any part of TaskAlert without our prior written permission.
                     </Text>
                     <Text style={styles.paragraph}>
                       Your ownership of content that you create within the Service remains unaffected.
@@ -625,7 +625,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>11. Service Availability</Text>
                     <Text style={styles.paragraph}>
-                      We aim to keep Task Pilot available and functional, but we do not guarantee that the Service will always be:
+                      We aim to keep TaskAlert available and functional, but we do not guarantee that the Service will always be:
                     </Text>
                     <Text style={styles.bulletPoint}>• Available</Text>
                     <Text style={styles.bulletPoint}>• Uninterrupted</Text>
@@ -633,7 +633,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                     <Text style={styles.bulletPoint}>• Secure</Text>
                     <Text style={styles.bulletPoint}>• Free from bugs or technical issues</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may occasionally be unavailable because of maintenance, upgrades, server issues, security measures, technical problems, or circumstances beyond our reasonable control.
+                      TaskAlert may occasionally be unavailable because of maintenance, upgrades, server issues, security measures, technical problems, or circumstances beyond our reasonable control.
                     </Text>
                     <Text style={styles.paragraph}>
                       We may modify, update, improve, suspend, or discontinue parts of the Service when reasonably necessary.
@@ -644,7 +644,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>12. Changes to Features and Plans</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may add, modify, improve, restrict, or remove features from the Free or Pro versions of the Service.
+                      TaskAlert may add, modify, improve, restrict, or remove features from the Free or Pro versions of the Service.
                     </Text>
                     <Text style={styles.paragraph}>
                       We may also introduce new plans, features, pricing structures, or functionality in the future.
@@ -658,16 +658,16 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>13. Third-Party Services</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may rely on third-party service providers to operate certain parts of the Service, including payment processing, email delivery, notifications, hosting, infrastructure, or other technical services.
+                      TaskAlert may rely on third-party service providers to operate certain parts of the Service, including payment processing, email delivery, notifications, hosting, infrastructure, or other technical services.
                     </Text>
                     <Text style={styles.paragraph}>
-                      These services may include providers such as Razorpay, Expo, Firebase, Resend, Gmail, hosting providers, or other services used by Task Pilot from time to time.
+                      These services may include providers such as Razorpay, Expo, Firebase, Resend, Gmail, hosting providers, or other services used by TaskAlert from time to time.
                     </Text>
                     <Text style={styles.paragraph}>
                       Your use of third-party services may also be subject to those providers' own terms and policies.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is not responsible for interruptions, failures, or limitations caused solely by third-party services.
+                      TaskAlert is not responsible for interruptions, failures, or limitations caused solely by third-party services.
                     </Text>
                   </View>
 
@@ -675,7 +675,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>14. Account Suspension and Termination</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot may suspend or terminate your account if we reasonably determine that you have violated these Terms or engaged in prohibited, fraudulent, abusive, illegal, or security-threatening activity.
+                      TaskAlert may suspend or terminate your account if we reasonably determine that you have violated these Terms or engaged in prohibited, fraudulent, abusive, illegal, or security-threatening activity.
                     </Text>
                     <Text style={styles.paragraph}>
                       This right applies to both Free and Pro accounts.
@@ -692,7 +692,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>15. Disclaimer</Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is provided as a productivity and task-management service.
+                      TaskAlert is provided as a productivity and task-management service.
                     </Text>
                     <Text style={styles.paragraph}>
                       We do not guarantee that:
@@ -703,10 +703,10 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                     <Text style={styles.bulletPoint}>• The Service will always be free from errors or technical problems.</Text>
                     <Text style={styles.bulletPoint}>• Data or functionality will never be temporarily unavailable.</Text>
                     <Text style={styles.paragraph}>
-                      You use Task Pilot at your own discretion and risk.
+                      You use TaskAlert at your own discretion and risk.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Task Pilot is not an emergency alert system and should not be relied upon for emergency, medical, legal, financial, safety-critical, or life-critical matters.
+                      TaskAlert is not an emergency alert system and should not be relied upon for emergency, medical, legal, financial, safety-critical, or life-critical matters.
                     </Text>
                   </View>
 
@@ -714,7 +714,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Limitation of Liability</Text>
                     <Text style={styles.paragraph}>
-                      To the maximum extent permitted by applicable law, Task Pilot and its owners, operators, employees, affiliates, and service providers will not be liable for indirect, incidental, consequential, special, or punitive damages arising from or related to your use of, or inability to use, the Service.
+                      To the maximum extent permitted by applicable law, TaskAlert and its owners, operators, employees, affiliates, and service providers will not be liable for indirect, incidental, consequential, special, or punitive damages arising from or related to your use of, or inability to use, the Service.
                     </Text>
                     <Text style={styles.paragraph}>
                       This includes, where permitted by law, losses resulting from missed, delayed, or failed notifications, task availability issues, service interruptions, technical failures, device issues, network problems, or reliance on the Service for critical matters.
@@ -728,7 +728,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>17. Privacy Policy</Text>
                     <Text style={styles.paragraph}>
-                      Your use of Task Pilot is also governed by our Privacy Policy, which explains how we collect, use, store, and protect personal information.
+                      Your use of TaskAlert is also governed by our Privacy Policy, which explains how we collect, use, store, and protect personal information.
                     </Text>
                     <Text style={styles.paragraph}>
                       Our Privacy Policy forms part of these Terms.
@@ -745,7 +745,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                       When we make changes, we may update the "Last Updated" date and, where appropriate, provide notice through the application or other reasonable means.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Your continued use of Task Pilot after updated Terms become effective constitutes acceptance of the revised Terms, to the extent permitted by applicable law.
+                      Your continued use of TaskAlert after updated Terms become effective constitutes acceptance of the revised Terms, to the extent permitted by applicable law.
                     </Text>
                   </View>
 
@@ -764,7 +764,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>20. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      If you have questions, concerns, complaints, or support requests regarding these Terms or Task Pilot, you may contact us through the support/contact options provided within the application or through our designated support contact at <Text style={styles.linkText}>support@taskpilot.com</Text>.
+                      If you have questions, concerns, complaints, or support requests regarding these Terms or TaskAlert, you may contact us through the support/contact options provided within the application or through our designated support contact at <Text style={styles.linkText}>support@taskalert.com</Text>.
                     </Text>
                   </View>
                 </>
