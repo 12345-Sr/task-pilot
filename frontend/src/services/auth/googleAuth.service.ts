@@ -97,7 +97,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     console.warn('[GOOGLE SIGNIN ERROR]', error);
 
     const errCode = String(error?.code || '');
-    const rawDetails =
+    let rawDetails =
       (typeof error === 'string' ? error : '') ||
       error?.response?.data?.error ||
       error?.response?.data?.message ||
@@ -105,6 +105,10 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
       error?.message ||
       (error?.code ? `Code ${error.code}` : '') ||
       '';
+
+    if (typeof rawDetails === 'string' && (rawDetails.includes('<!DOCTYPE') || rawDetails.includes('Cannot POST'))) {
+      rawDetails = 'Server update pending on backend. Please update backend or sign in with Email & Password.';
+    }
 
     if (
       (statusCodes && error?.code === statusCodes.SIGN_IN_CANCELLED) ||
