@@ -97,20 +97,36 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; error?: st
     console.warn('[GOOGLE SIGNIN ERROR]', error);
 
     const errCode = String(error?.code || '');
-    const errMsg = String(error?.message || '');
+    const rawDetails =
+      (typeof error === 'string' ? error : '') ||
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.error ||
+      error?.message ||
+      (error?.code ? `Code ${error.code}` : '') ||
+      '';
 
-    if (statusCodes && (error.code === statusCodes.SIGN_IN_CANCELLED || errCode === '12501')) {
+    if (
+      (statusCodes && error?.code === statusCodes.SIGN_IN_CANCELLED) ||
+      errCode === '12501' ||
+      rawDetails.toLowerCase().includes('cancel') ||
+      rawDetails.includes('12501')
+    ) {
       return { success: false, error: 'Google sign-in was cancelled.' };
-    } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
-      return { success: false, error: 'Google sign-in is in progress.' };
-    } else if (statusCodes && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+    } else if (statusCodes && error?.code === statusCodes.IN_PROGRESS) {
+      return { success: false, error: 'Google sign-in is already in progress.' };
+    } else if (statusCodes && error?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
       return { success: false, error: 'Google Play Services is not available or outdated on this device.' };
     }
 
-    // Return exact raw error message from Google Play Services
+    const cleanMsg =
+      rawDetails && rawDetails !== 'Unknown error'
+        ? `Google Sign-In: ${rawDetails}. Kripya Email & Password se continue karein.`
+        : 'Google Sign-In filhaal connect nahi ho pa raha hai. Kripya upar diye gaye Email & Password se Sign In / Sign Up karein.';
+
     return {
       success: false,
-      error: `[Google Play Services Error]: ${errMsg || errCode || 'Unknown error'}\n\nTip: If new credentials were just added to Firebase, Google servers can take 10-15 minutes to sync. You can also sign in directly using Email & Password above.`,
+      error: cleanMsg,
     };
   }
 };

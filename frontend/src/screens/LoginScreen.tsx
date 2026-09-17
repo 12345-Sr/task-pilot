@@ -187,22 +187,9 @@ export const LoginScreen: React.FC = () => {
 
           {/* Floating White Card */}
           <View style={styles.card}>
-            {/* Top Mode Switcher */}
-            <View style={styles.tabToggleRow}>
-              <View style={[styles.tabToggleBtn, styles.tabToggleActive]}>
-                <Text style={styles.tabToggleActiveText}>
-                  {language === 'hi' ? 'Login Karein' : 'Sign In'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.tabToggleBtn}
-                onPress={() => navigation.navigate('Signup', { email: email.trim() })}
-              >
-                <Text style={styles.tabToggleInactiveText}>
-                  {language === 'hi' ? 'Naya Account (Sign Up)' : 'New Account (Sign Up)'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.cardHeading}>
+              {language === 'hi' ? 'Login Karein' : 'Sign In'}
+            </Text>
 
             {errorMsg ? (
               <View style={styles.errorBox}>
@@ -441,38 +428,7 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 3,
   },
-  tabToggleRow: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 18,
-  },
-  tabToggleBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-  },
-  tabToggleActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabToggleActiveText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  tabToggleInactiveText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748B',
-  },
+
   cardHeading: {
     fontSize: 18,
     fontWeight: '700',
