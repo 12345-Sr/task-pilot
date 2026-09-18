@@ -320,7 +320,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             <BrandLogo size={24} showText={false} />
             <Text style={styles.headerBrandTitle}>
               <Text style={{ color: colors.textPrimary }}>Task</Text>
-              <Text style={{ color: colors.warning }}>Pilot</Text>
+              <Text style={{ color: colors.warning }}>Alert</Text>
               <Text style={{ color: colors.primary, fontWeight: '900' }}> PRO</Text>
             </Text>
           </View>

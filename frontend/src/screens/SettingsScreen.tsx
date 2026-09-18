@@ -416,10 +416,10 @@ export const SettingsScreen: React.FC = () => {
             <BrandLogo size={52} showText={false} />
             <Text style={styles.appName}>
               <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
             <Text style={styles.appTagline}>"{t(language, 'tagline')}"</Text>
-            <Text style={styles.appVersion}>Version 1.0.1 (TaskAlert Production)</Text>
+            <Text style={styles.appVersion}>Version 1.0.3 (TaskAlert Production)</Text>
           </View>
         </View>
 

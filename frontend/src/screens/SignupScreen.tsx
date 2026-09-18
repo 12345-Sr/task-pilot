@@ -230,7 +230,7 @@ export const SignupScreen: React.FC = () => {
             <BrandLogo size={32} showSun={true} />
             <Text style={styles.brandTitle}>
               <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
           </View>
 

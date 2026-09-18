@@ -129,7 +129,7 @@ export const TodayScreen: React.FC = () => {
             <BrandLogo size={32} showText={false} />
             <Text style={styles.brandBarTitle}>
               <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Pilot</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
           </View>
           <TouchableOpacity

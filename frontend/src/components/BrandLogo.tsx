@@ -19,7 +19,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 }) => {
   const isDark = variant === 'dark';
   const taskColor = isDark ? '#FFFFFF' : '#0F172A';
-  const pilotColor = '#EAB308';
+  const alertColor = '#EAB308';
   const subtextColor = isDark ? '#94A3B8' : colors.textSecondary;
 
   return (
@@ -54,7 +54,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <View style={styles.textContainer}>
           <Text style={styles.brandTitle}>
             <Text style={{ color: taskColor }}>Task</Text>
-            <Text style={{ color: pilotColor }}>Pilot</Text>
+            <Text style={{ color: alertColor }}>Alert</Text>
           </Text>
           {Boolean(subtitle) && (
             <Text style={[styles.brandSubtitle, { color: subtextColor }]} numberOfLines={1}>

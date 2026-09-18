@@ -329,7 +329,7 @@ export default function WelcomeScreen({ navigation }: any) {
           </View>
           <Text style={styles.brandTitle}>
             <Text style={{ color: '#0F172A' }}>Task</Text>
-            <Text style={{ color: '#EAB308' }}>Pilot</Text>
+            <Text style={{ color: '#EAB308' }}>Alert</Text>
           </Text>
           <View style={styles.taglineBadge}>
             <Text style={styles.brandTagline}>"{t(language, 'tagline')}"</Text>
