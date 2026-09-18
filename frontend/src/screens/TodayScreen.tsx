@@ -43,9 +43,9 @@ export const TodayScreen: React.FC = () => {
   const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
   const completeMutation = useCompleteTask();
 
-  // Self-heal/sync store quota with actual tasks count from server
+  // Sync store quota if tasks count is higher (monotonic, never decreases on delete)
   useEffect(() => {
-    if (Array.isArray(tasks)) {
+    if (Array.isArray(tasks) && tasks.length > 0) {
       setFreeLifetimeCreated(tasks.length);
     }
   }, [tasks, setFreeLifetimeCreated]);
@@ -61,8 +61,7 @@ export const TodayScreen: React.FC = () => {
   };
 
   const handleAddTaskPress = () => {
-    const taskCount = Array.isArray(tasks) ? tasks.length : undefined;
-    const { used: currentFreeUsed } = getFreeUsage(undefined, taskCount);
+    const { used: currentFreeUsed } = getFreeUsage();
     if (!isPremium && currentFreeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -176,8 +175,7 @@ export const TodayScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           ) : (() => {
-            const taskCount = Array.isArray(tasks) ? tasks.length : undefined;
-            const { used: freeUsed } = getFreeUsage(undefined, taskCount);
+            const { used: freeUsed } = getFreeUsage();
             return (
               <View style={styles.freeQuotaCard}>
                 <View style={styles.freeQuotaHeader}>

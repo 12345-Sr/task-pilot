@@ -68,7 +68,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPremiumStatusVisible: (premiumStatusVisible) => set({ premiumStatusVisible }),
   setSelectedTaskId: (selectedTaskId) => set({ selectedTaskId }),
   setFreeLifetimeCreated: (count) =>
-    set({ freeLifetimeCreated: Math.min(3, Math.max(0, count)) }),
+    set((state) => ({
+      // Monotonic: lifetime creation count NEVER decreases when a task is deleted
+      freeLifetimeCreated: Math.min(3, Math.max(state.freeLifetimeCreated || 0, count || 0)),
+    })),
   setTaskDescription: (key, description) =>
     set((state) => ({
       taskDescriptions: {
@@ -81,7 +84,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const key = (dateStr || today).slice(0, 10);
     set((state) => ({
-      freeLifetimeCreated: Math.min(3, (state.freeLifetimeCreated || 0) + 1),
+      freeLifetimeCreated: Math.min(3, Math.max(1, (state.freeLifetimeCreated || 0) + 1)),
       freeUsageByDate: {
         ...state.freeUsageByDate,
         [key]: Math.min(3, (state.freeUsageByDate[key] || 0) + 1),
@@ -90,12 +93,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   recordTaskDeletion: (_dateStr) => {
     // Free users receive only 3 lifetime tasks total.
-    // Deleting a created task does not restore the free creation quota.
+    // Deleting a created task does NOT restore the free creation quota or reduce task count.
   },
   getFreeUsage: (_dateStr, activeCount) => {
-    const count = typeof activeCount === 'number'
-      ? activeCount
-      : (get().freeLifetimeCreated || 0);
+    const currentRecorded = get().freeLifetimeCreated || 0;
+    // Lifetime creation count is strictly monotonic: deleting a task does not reduce it
+    const count = Math.max(currentRecorded, typeof activeCount === 'number' ? activeCount : 0);
     const used = Math.min(3, Math.max(0, count));
     return {
       used,

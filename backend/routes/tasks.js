@@ -50,25 +50,22 @@ async function getAccessStatus(userId) {
 
   if (sub.status === 'active') return { allowed: true, sub };
 
-  if (sub.status === 'free') {
-    const countR = await db.query(
-      'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
-      [userId]
-    );
-    const dbTotal = countR.rows[0]?.c || 0;
-    const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
-    const allowed = lifetimeUsed < FREE_DAILY_LIMIT;
-    return {
-      allowed,
-      sub,
-      used: Math.min(FREE_DAILY_LIMIT, lifetimeUsed),
-      lifetimeUsed,
-      limit: FREE_DAILY_LIMIT,
-      reason: allowed ? null : 'free_limit_reached',
-    };
-  }
-
-  return { allowed: false, sub, reason: sub.status }; // cancelled / past_due
+  // All non-active plans (free, expired, cancelled) redeem to free tier: strictly 3 tasks limit
+  const countR = await db.query(
+    'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
+    [userId]
+  );
+  const dbTotal = countR.rows[0]?.c || 0;
+  const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
+  const allowed = lifetimeUsed < FREE_DAILY_LIMIT;
+  return {
+    allowed,
+    sub,
+    used: Math.min(FREE_DAILY_LIMIT, lifetimeUsed),
+    lifetimeUsed,
+    limit: FREE_DAILY_LIMIT,
+    reason: allowed ? null : 'free_limit_reached',
+  };
 }
 
 // GET /api/tasks?date=YYYY-MM-DD  (omit date to get all user tasks)
@@ -91,7 +88,17 @@ router.get('/', requireUser, async (req, res) => {
         `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND (t.deleted_at IS NULL) ORDER BY t.task_date ASC, t.task_time ASC`,
         [req.userId]
       );
-    }
+    let lifetimeCreated = 0;
+    try {
+      const subR = await db.query('SELECT status, lifetime_tasks_created FROM subscriptions WHERE user_id = $1', [req.userId]);
+      const countR = await db.query('SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1', [req.userId]);
+      lifetimeCreated = Math.max(subR.rows[0]?.lifetime_tasks_created || 0, countR.rows[0]?.c || 0);
+    } catch (e) {}
+
+    res.json({
+      tasks: result.rows,
+      lifetime_tasks_created: lifetimeCreated,
+    });
   } catch (e) {
     if (date) {
       result = await db.query(
@@ -104,8 +111,8 @@ router.get('/', requireUser, async (req, res) => {
         [req.userId]
       );
     }
+    res.json({ tasks: result.rows, lifetime_tasks_created: result.rows.length });
   }
-  res.json({ tasks: result.rows });
 });
 
 function normalizeDate(d) {
@@ -209,7 +216,12 @@ router.post('/', requireUser, async (req, res, next) => {
 
     // Safely increment lifetime_tasks_created count for this user
     db.query(
-      `UPDATE subscriptions SET lifetime_tasks_created = GREATEST(COALESCE(lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)), updated_at = now() WHERE user_id = $1`,
+      `INSERT INTO subscriptions (user_id, status, lifetime_tasks_created)
+       VALUES ($1, 'free', 1)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         lifetime_tasks_created = GREATEST(COALESCE(subscriptions.lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)),
+         updated_at = now()`,
       [req.userId]
     ).catch(() => {});
 
@@ -404,6 +416,11 @@ router.delete('/:id', requireUser, async (req, res) => {
       'UPDATE tasks SET deleted_at = now() WHERE id = $1 AND user_id = $2 RETURNING id',
       [id, req.userId]
     );
+    // Deleting a task does NOT reset or reduce the lifetime created count
+    db.query(
+      `UPDATE subscriptions SET lifetime_tasks_created = GREATEST(COALESCE(lifetime_tasks_created, 0), 1), updated_at = now() WHERE user_id = $1`,
+      [req.userId]
+    ).catch(() => {});
     if (!result.rows.length) {
       const hardResult = await db.query(
         'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',

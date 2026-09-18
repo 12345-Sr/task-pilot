@@ -96,6 +96,9 @@ export class RemoteTasksRepository implements TasksRepository {
       const now = new Date();
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const res: any = await apiClient.get(`/tasks?date=${today}`);
+      if (typeof res?.lifetime_tasks_created === 'number') {
+        useAppStore.getState().setFreeLifetimeCreated(res.lifetime_tasks_created);
+      }
       const list = res?.tasks ?? res?.data ?? (Array.isArray(res) ? res : []);
       if (Array.isArray(list)) {
         return list.map(mapDbTask);
@@ -109,6 +112,9 @@ export class RemoteTasksRepository implements TasksRepository {
   async getAll(): Promise<Task[]> {
     try {
       const res: any = await apiClient.get('/tasks');
+      if (typeof res?.lifetime_tasks_created === 'number') {
+        useAppStore.getState().setFreeLifetimeCreated(res.lifetime_tasks_created);
+      }
       const list = res?.tasks ?? res?.data ?? (Array.isArray(res) ? res : []);
       if (Array.isArray(list)) {
         return list.map(mapDbTask);

@@ -33,14 +33,7 @@ export const AddTaskScreen: React.FC = () => {
   const { data: existingTasks } = useTodayTasks();
   const createTaskMutation = useCreateTask();
 
-  const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
-  const { used: freeUsed } = getFreeUsage(undefined, taskCount);
-
-  useEffect(() => {
-    if (Array.isArray(existingTasks)) {
-      useAppStore.getState().setFreeLifetimeCreated(existingTasks.length);
-    }
-  }, [existingTasks]);
+  const { used: freeUsed } = getFreeUsage();
 
   const getTodayStr = () => {
     const now = new Date();
@@ -93,8 +86,7 @@ export const AddTaskScreen: React.FC = () => {
       }
     }
 
-    const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage(undefined, taskCount);
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
     if (!isPremium && freeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -113,8 +105,7 @@ export const AddTaskScreen: React.FC = () => {
   const handleConfirmAndSave = () => {
     setIsConfirmModalVisible(false);
 
-    const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage(undefined, taskCount);
+    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
     if (!isPremium && freeUsed >= 3) {
       NotificationService.sendQuotaLimitNotification(
         language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
@@ -147,6 +138,9 @@ export const AddTaskScreen: React.FC = () => {
       },
       {
         onSuccess: async (createdTask: any) => {
+          // Record task creation for lifetime counter
+          useAppStore.getState().recordTaskCreation(selectedDate);
+
           if (createdTask?.id && taskDesc) {
             useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
           }

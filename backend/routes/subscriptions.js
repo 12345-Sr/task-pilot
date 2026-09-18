@@ -112,7 +112,7 @@ router.get('/status', requireUser, async (req, res) => {
   }
 
   let dailyUsed = null;
-  if (sub.status === 'free') {
+  if (sub.status !== 'active') {
     const countR = await db.query(
       'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
       [req.userId]
@@ -126,7 +126,7 @@ router.get('/status', requireUser, async (req, res) => {
     status: sub.status,
     isPremium: sub.status === 'active',
     dailyUsed,
-    dailyLimit: sub.status === 'free' ? FREE_DAILY_LIMIT : null,
+    dailyLimit: sub.status !== 'active' ? FREE_DAILY_LIMIT : null,
     planPrice: sub.plan_price,
     currency: sub.currency,
     currentPeriodEnd: sub.current_period_end,
