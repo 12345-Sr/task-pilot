@@ -21,6 +21,7 @@ import EveningScreen from '../screens/EveningScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import PremiumScreen from '../screens/PremiumScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import TaskHistoryScreen from '../screens/TaskHistoryScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   Main: undefined;
   AddTask: undefined;
   TaskDetail: { taskId: string };
+  TaskHistory: undefined;
   Premium: undefined;
   Settings: undefined;
 };
@@ -140,6 +142,7 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="AddTask" component={AddTaskScreen} />
         <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+        <Stack.Screen name="TaskHistory" component={TaskHistoryScreen} />
         <Stack.Screen
           name="Premium"
           component={PremiumScreen}

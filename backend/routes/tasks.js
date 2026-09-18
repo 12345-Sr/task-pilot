@@ -327,6 +327,77 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
   }
 });
 
+// GET /api/tasks/history — full task creation history for user with stats
+router.get('/history', requireUser, async (req, res) => {
+  try {
+    const { status, search, limit = 100, offset = 0 } = req.query;
+
+    let query = `
+      SELECT t.*,
+             COALESCE((SELECT COUNT(*)::int FROM notification_log nl WHERE nl.task_id = t.id), 0) AS alert_count,
+             EXISTS(SELECT 1 FROM notification_log nl WHERE nl.task_id = t.id) AS first_alert_sent
+      FROM tasks t
+      WHERE t.user_id = $1
+    `;
+    const params = [req.userId];
+    let pIdx = 2;
+
+    if (status && status !== 'all') {
+      if (status === 'done' || status === 'completed') {
+        query += ` AND t.status = 'done'`;
+      } else if (status === 'missed') {
+        query += ` AND t.status = 'missed'`;
+      } else if (status === 'pending' || status === 'active') {
+        query += ` AND (t.status IS NULL OR t.status = 'pending')`;
+      }
+    }
+
+    if (search && search.trim()) {
+      query += ` AND (t.title ILIKE $${pIdx} OR COALESCE(t.description, '') ILIKE $${pIdx} OR COALESCE(t.notes, '') ILIKE $${pIdx})`;
+      params.push(`%${search.trim()}%`);
+      pIdx++;
+    }
+
+    query += ` ORDER BY t.created_at DESC NULLS LAST, t.task_date DESC, t.task_time DESC`;
+    query += ` LIMIT $${pIdx++} OFFSET $${pIdx++}`;
+    params.push(Number(limit) || 100, Number(offset) || 0);
+
+    const result = await db.query(query, params);
+
+    // Compute overall history stats for user
+    const statsR = await db.query(`
+      SELECT
+        COUNT(*)::int AS total_created,
+        COUNT(*) FILTER (WHERE status = 'done')::int AS total_completed,
+        COUNT(*) FILTER (WHERE status = 'missed')::int AS total_missed,
+        COUNT(*) FILTER (WHERE (status IS NULL OR status = 'pending') AND (deleted_at IS NULL))::int AS active_tasks,
+        COUNT(*) FILTER (WHERE priority = 'important')::int AS important_tasks
+      FROM tasks
+      WHERE user_id = $1
+    `, [req.userId]);
+
+    const stats = statsR.rows[0] || {};
+    const totalCreated = stats.total_created || 0;
+    const totalCompleted = stats.total_completed || 0;
+    const completionRate = totalCreated > 0 ? Math.round((totalCompleted / totalCreated) * 100) : 0;
+
+    res.json({
+      tasks: result.rows,
+      stats: {
+        totalCreated,
+        totalCompleted,
+        totalMissed: stats.total_missed || 0,
+        activeTasks: stats.active_tasks || 0,
+        importantTasks: stats.important_tasks || 0,
+        completionRate,
+      },
+    });
+  } catch (err) {
+    console.error('Error fetching task history:', err);
+    res.status(500).json({ error: 'Failed to fetch task history', details: err.message });
+  }
+});
+
 // GET /api/tasks/:id
 router.get('/:id', requireUser, async (req, res) => {
   const result = await db.query('SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND (deleted_at IS NULL)', [req.params.id, req.userId]);

@@ -11,6 +11,8 @@ import { Alert } from 'react-native';
 import { CreateTaskInput, UpdateTaskInput, Priority } from '../types';
 import { useAppStore } from '../store';
 import { NotificationService } from '../services/notifications/notification.service';
+import { taskHistoryService } from '../services/history/taskHistory.service';
+import { mapDbTask } from '../api/remote';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +26,7 @@ export const queryClient = new QueryClient({
 export const QUERY_KEYS = {
   TODAY_TASKS: ['tasks', 'today'],
   ALL_TASKS: ['tasks', 'all'],
+  TASK_HISTORY: ['tasks', 'history'],
   TASK: (id: string) => ['tasks', id],
   PROGRESS: ['progress', 'summary'],
   TODAY_PROGRESS: ['progress', 'today'],
@@ -100,9 +103,14 @@ export function useCreateTask() {
       return tasksRepository.create(payload);
     },
     onSuccess: (created: any) => {
+      const userId = useAppStore.getState().user?.id;
+      if (created) {
+        taskHistoryService.recordCreatedTask(created, userId).catch(() => {});
+      }
       useAppStore.getState().recordTaskCreation(created?.targetDate || created?.date);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK_HISTORY });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.SUBSCRIPTION });
@@ -118,11 +126,16 @@ export function useUpdateTask() {
       const payload: UpdateTaskInput = input || (rest as UpdateTaskInput);
       return tasksRepository.update(id, payload);
     },
-    onSuccess: (_, args) => {
+    onSuccess: (updated: any, args) => {
       const id = typeof args === 'string' ? args : args.id;
+      const userId = useAppStore.getState().user?.id;
+      if (updated) {
+        taskHistoryService.updateTaskInHistory(id, updated, userId).catch(() => {});
+      }
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK_HISTORY });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
     },
   });
@@ -140,15 +153,108 @@ export function useCompleteTask() {
       }
       return tasksRepository.complete(id, completed, status);
     },
-    onSuccess: (_, args) => {
+    onSuccess: (updated: any, args) => {
       const id = typeof args === 'string' ? args : args.id;
+      const completed = typeof args === 'object' ? args.completed : undefined;
+      const status = typeof args === 'object' ? args.status : undefined;
+      const userId = useAppStore.getState().user?.id;
+      taskHistoryService.updateTaskInHistory(
+        id,
+        {
+          completed: completed !== false,
+          confirmationStatus: status || (completed ? 'COMPLETED' : 'PENDING'),
+        },
+        userId
+      ).catch(() => {});
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK_HISTORY });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PROGRESS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_PROGRESS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.STREAK });
     },
+  });
+}
+
+export function useTaskHistory(filterStatus: 'all' | 'done' | 'pending' | 'missed' = 'all', searchQuery: string = '') {
+  const { user } = useAppStore();
+  const userId = user?.id;
+
+  return useQuery({
+    queryKey: [...QUERY_KEYS.TASK_HISTORY, filterStatus, searchQuery, userId || 'anon'],
+    queryFn: async () => {
+      const localItems = await taskHistoryService.getLocalHistory(userId);
+
+      try {
+        const params = new URLSearchParams();
+        if (filterStatus !== 'all') params.append('status', filterStatus);
+        if (searchQuery.trim()) params.append('search', searchQuery.trim());
+
+        const queryStr = params.toString() ? `?${params.toString()}` : '';
+        const res: any = await apiClient.get(`/tasks/history${queryStr}`);
+
+        const serverTasks: any[] = res?.tasks || [];
+        const mappedServer = serverTasks.map(mapDbTask);
+        const synced = await taskHistoryService.syncWithServer(mappedServer, userId);
+
+        let filtered = synced;
+        if (filterStatus !== 'all') {
+          filtered = filtered.filter((t) => {
+            const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
+            const isMissed = t.confirmationStatus === 'MISSED';
+            if (filterStatus === 'done') return isDone;
+            if (filterStatus === 'missed') return isMissed;
+            if (filterStatus === 'pending') return !isDone && !isMissed;
+            return true;
+          });
+        }
+
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          filtered = filtered.filter(
+            (t) =>
+              t.title?.toLowerCase().includes(q) ||
+              t.description?.toLowerCase().includes(q) ||
+              t.notes?.toLowerCase().includes(q)
+          );
+        }
+
+        const stats = res?.stats || taskHistoryService.computeStats(synced);
+        return {
+          tasks: filtered,
+          allTasks: synced,
+          stats,
+        };
+      } catch (err) {
+        let filtered = localItems;
+        if (filterStatus !== 'all') {
+          filtered = filtered.filter((t) => {
+            const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
+            const isMissed = t.confirmationStatus === 'MISSED';
+            if (filterStatus === 'done') return isDone;
+            if (filterStatus === 'missed') return isMissed;
+            if (filterStatus === 'pending') return !isDone && !isMissed;
+            return true;
+          });
+        }
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          filtered = filtered.filter(
+            (t) =>
+              t.title?.toLowerCase().includes(q) ||
+              t.description?.toLowerCase().includes(q) ||
+              t.notes?.toLowerCase().includes(q)
+          );
+        }
+        return {
+          tasks: filtered,
+          allTasks: localItems,
+          stats: taskHistoryService.computeStats(localItems),
+        };
+      }
+    },
+    staleTime: 1000 * 15,
   });
 }
 

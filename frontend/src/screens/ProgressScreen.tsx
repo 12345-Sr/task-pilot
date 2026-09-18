@@ -10,6 +10,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import { useWeeklyProgress } from '../hooks';
@@ -145,6 +146,39 @@ export const ProgressScreen: React.FC = () => {
             <Text style={styles.chevronIcon}>›</Text>
           </View>
         ) : null}
+
+        {/* Task Creation History Card */}
+        <TouchableOpacity
+          style={styles.historyCard}
+          activeOpacity={0.88}
+          onPress={() => navigation.navigate('TaskHistory')}
+        >
+          <View style={styles.historyCardLeft}>
+            <View style={styles.historyIconBadge}>
+              <Text style={styles.historyIconText}>📜</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.historyCardTitle}>
+                {language === 'hi' ? 'Tasks Banane Ka Itihaas' : 'Created Tasks History'}
+              </Text>
+              <Text style={styles.historyCardSub}>
+                {language === 'hi'
+                  ? 'Aapke sabhi banaye gaye tasks ka poora timeline'
+                  : 'Full timeline & archive of all tasks you created'}
+              </Text>
+            </View>
+          </View>
+          <LinearGradient
+            colors={['#8B5CF6', '#3B82F6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.historyBtnGradient}
+          >
+            <Text style={styles.historyBtnText}>
+              {language === 'hi' ? 'Itihaas Dekhein →' : 'View History →'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Motivation Card */}
         <View style={styles.quoteCard}>
@@ -415,6 +449,59 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: '#166534',
     marginTop: 2,
+  },
+  historyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: spacing.sm + 2,
+    shadowColor: colors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  historyCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  historyIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyIconText: {
+    fontSize: 22,
+  },
+  historyCardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  historyCardSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  historyBtnGradient: {
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyBtnText: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 });
 

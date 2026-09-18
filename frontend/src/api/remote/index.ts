@@ -41,7 +41,7 @@ export function parseTaskDate(val: any): string {
   return str.slice(0, 10);
 }
 
-function mapDbTask(t: any): Task {
+export function mapDbTask(t: any): Task {
   if (!t) return {} as Task;
   const idStr = String(t.id || '');
   const isDone = t.status === 'done' || t.completed === true;

@@ -278,6 +278,30 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>{t(language, 'preferences_title')}</Text>
 
+          {/* Created Tasks History */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('TaskHistory')}
+          >
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>📜</Text>
+              <View>
+                <Text style={styles.settingLabel}>
+                  {isHindi ? 'Tasks Banane Ka Itihaas' : 'Created Tasks History'}
+                </Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi
+                    ? 'Aapke sabhi banaye gaye tasks ka poora timeline'
+                    : 'Full archive & timeline of all tasks created'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.chevron}>›</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Language Selector (Opens In-Page Modal) */}
           <TouchableOpacity
             style={styles.settingRow}

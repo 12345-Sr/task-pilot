@@ -131,13 +131,26 @@ export const TodayScreen: React.FC = () => {
               <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.settingsHeaderBtn}
-            onPress={() => navigation.navigate('Settings')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.settingsHeaderIcon}>⚙️</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.settingsHeaderBtn}
+              onPress={() => navigation.navigate('TaskHistory')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Task History"
+            >
+              <Text style={styles.settingsHeaderIcon}>📜</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.settingsHeaderBtn}
+              onPress={() => navigation.navigate('Settings')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+            >
+              <Text style={styles.settingsHeaderIcon}>⚙️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* User Greeting Card (Warm Sunrise Header) */}
