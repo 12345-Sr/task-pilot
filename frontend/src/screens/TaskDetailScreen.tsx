@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -45,6 +45,47 @@ export const TaskDetailScreen: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
 
   const task: Task | undefined = (tasks || []).find((t) => t.id === taskId);
+
+  // Check if first alert has arrived
+  const hasFirstAlertFired = useMemo(() => {
+    if (!task) return false;
+    if (
+      task.firstAlertSent ||
+      task.first_alert_sent ||
+      (task.alert_count && task.alert_count > 0) ||
+      task.morningAlertSent ||
+      task.twoHourAlertSent ||
+      task.oneHourAlertSent
+    ) {
+      return true;
+    }
+
+    const taskDateStr = task.targetDate || task.date;
+    const taskTimeStr = task.reminderTime || task.time || task.deadlineTime;
+    if (!taskDateStr) return false;
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    if (taskDateStr < todayStr) return true;
+
+    if (taskDateStr === todayStr && taskTimeStr) {
+      const clean = taskTimeStr.replace(/am|pm/gi, '').trim();
+      const parts = clean.split(':').map(Number);
+      let h = parts[0] || 0;
+      const m = parts[1] || 0;
+      if (/pm/i.test(taskTimeStr) && h < 12) h += 12;
+      if (/am/i.test(taskTimeStr) && h === 12) h = 0;
+
+      const scheduledMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime();
+      const firstAlertMs = scheduledMs - 10 * 60 * 1000;
+      if (now.getTime() >= firstAlertMs) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [task]);
 
   const taskTitle = task?.title || '';
   const taskDate = task?.targetDate || task?.date || '';
@@ -197,14 +238,20 @@ export const TaskDetailScreen: React.FC = () => {
           >
             <Text style={styles.editTopBtnText}>✏️</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setConfirmDeleteVisible(true)}
-            style={styles.deleteTopBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Delete Task"
-          >
-            <Text style={styles.deleteIconText}>🗑️</Text>
-          </TouchableOpacity>
+          {!hasFirstAlertFired ? (
+            <TouchableOpacity
+              onPress={() => setConfirmDeleteVisible(true)}
+              style={styles.deleteTopBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Delete Task"
+            >
+              <Text style={styles.deleteIconText}>🗑️</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.lockedTopBadge} accessibilityLabel="Task Alert Sent (Locked)">
+              <Text style={styles.lockedTopIcon}>🔒</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -428,14 +475,32 @@ export const TaskDetailScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/* Secondary Delete Button */}
-        <TouchableOpacity
-          style={styles.deleteOutlineButton}
-          activeOpacity={0.7}
-          onPress={() => setConfirmDeleteVisible(true)}
-        >
-          <Text style={styles.deleteOutlineText}>{t(language, 'delete_task_btn')}</Text>
-        </TouchableOpacity>
+        {/* Secondary Delete Button OR Alert-Locked Notice */}
+        {!hasFirstAlertFired ? (
+          <TouchableOpacity
+            style={styles.deleteOutlineButton}
+            activeOpacity={0.7}
+            onPress={() => setConfirmDeleteVisible(true)}
+          >
+            <Text style={styles.deleteOutlineText}>{t(language, 'delete_task_btn')}</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.alertLockedCard}>
+            <View style={styles.alertLockedHeader}>
+              <Text style={styles.alertLockedIconBig}>🔒</Text>
+              <Text style={styles.alertLockedTitle}>
+                {language === 'hi'
+                  ? 'Pehla Alert Aa Chuka Hai (Locked)'
+                  : 'First Alert Sent (Locked)'}
+              </Text>
+            </View>
+            <Text style={styles.alertLockedDesc}>
+              {language === 'hi'
+                ? 'Is kaam ka reminder alert bheja ja chuka hai. Alert aane ke baad kaam ko delete nahi kiya ja sakta.'
+                : 'The first reminder alert has already arrived for this task. It cannot be deleted once alerted.'}
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Repeat Monthly Confirmation Modal */}
@@ -861,6 +926,46 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.urgentRed,
     fontSize: 14,
+  },
+  lockedTopBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  lockedTopIcon: {
+    fontSize: 18,
+  },
+  alertLockedCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.lg,
+    borderWidth: 1.2,
+    borderColor: '#CBD5E1',
+    padding: 12,
+    marginTop: -spacing.xs,
+  },
+  alertLockedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  alertLockedIconBig: {
+    fontSize: 16,
+  },
+  alertLockedTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  alertLockedDesc: {
+    fontSize: 11.5,
+    color: '#64748B',
+    lineHeight: 16,
   },
 });
 

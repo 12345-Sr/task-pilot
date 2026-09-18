@@ -36,6 +36,9 @@ export interface Task {
   morningAlertSent?: boolean;
   twoHourAlertSent?: boolean;
   oneHourAlertSent?: boolean;
+  first_alert_sent?: boolean;
+  firstAlertSent?: boolean;
+  alert_count?: number;
   completedAt?: string;
   reminderMinutes?: number;
   createdAt?: string;

@@ -76,14 +76,19 @@ router.get('/', requireUser, async (req, res) => {
   const { date } = req.query;
   let result;
   try {
+    const alertCols = `
+      t.*,
+      COALESCE((SELECT COUNT(*)::int FROM notification_log nl WHERE nl.task_id = t.id), 0) AS alert_count,
+      EXISTS(SELECT 1 FROM notification_log nl WHERE nl.task_id = t.id) AS first_alert_sent
+    `;
     if (date) {
       result = await db.query(
-        'SELECT * FROM tasks WHERE user_id = $1 AND task_date = $2 AND (deleted_at IS NULL) ORDER BY task_time ASC',
+        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND t.task_date = $2 AND (t.deleted_at IS NULL) ORDER BY t.task_time ASC`,
         [req.userId, date]
       );
     } else {
       result = await db.query(
-        'SELECT * FROM tasks WHERE user_id = $1 AND (deleted_at IS NULL) ORDER BY task_date ASC, task_time ASC',
+        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND (t.deleted_at IS NULL) ORDER BY t.task_date ASC, t.task_time ASC`,
         [req.userId]
       );
     }
@@ -374,7 +379,7 @@ const handleTaskUpdate = async (req, res) => {
 router.patch('/:id', requireUser, handleTaskUpdate);
 router.put('/:id', requireUser, handleTaskUpdate);
 
-// DELETE /api/tasks/:id — marks task as deleted while freeing up quota
+// DELETE /api/tasks/:id — marks task as deleted while freeing up quota (disallowed if alert arrived)
 router.delete('/:id', requireUser, async (req, res) => {
   const { id } = req.params;
   if (!id || !/^[0-9a-fA-F-]{36}$/.test(id)) {
@@ -382,6 +387,19 @@ router.delete('/:id', requireUser, async (req, res) => {
   }
 
   try {
+    // Prevent deletion if an alert has already fired for this task
+    const alertCheck = await db.query(
+      'SELECT id FROM notification_log WHERE task_id = $1 LIMIT 1',
+      [id]
+    );
+    if (alertCheck.rows.length > 0) {
+      return res.status(403).json({
+        error: 'Pehla alert bheja ja chuka hai. Alert aane ke baad kaam ko delete nahi kiya ja sakta.',
+        message: 'Cannot delete task after the first alert has arrived.',
+        code: 'ALERT_ALREADY_SENT',
+      });
+    }
+
     const result = await db.query(
       'UPDATE tasks SET deleted_at = now() WHERE id = $1 AND user_id = $2 RETURNING id',
       [id, req.userId]

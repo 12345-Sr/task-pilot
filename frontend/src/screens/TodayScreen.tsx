@@ -177,23 +177,125 @@ export const TodayScreen: React.FC = () => {
             </TouchableOpacity>
           ) : (() => {
             const taskCount = Array.isArray(tasks) ? tasks.length : undefined;
-            const { used: freeUsed, remaining: freeRemaining } = getFreeUsage(undefined, taskCount);
+            const { used: freeUsed } = getFreeUsage(undefined, taskCount);
             return (
-              <TouchableOpacity
-                style={styles.trialBannerMini}
-                activeOpacity={0.85}
-                onPress={() => setPaywallVisible(true)}
-              >
-                <View style={styles.trialBannerLeft}>
-                  <Text style={styles.trialBadge}>Free Plan</Text>
-                  <Text style={styles.trialText} numberOfLines={1} ellipsizeMode="tail">
-                    {freeUsed}/3 {language === 'hi' ? 'used' : 'used'} • {freeRemaining} {language === 'hi' ? 'bache hain' : 'left'}
-                  </Text>
+              <View style={styles.freeQuotaCard}>
+                <View style={styles.freeQuotaHeader}>
+                  <View style={styles.freeQuotaTitleRow}>
+                    <Text style={styles.freeQuotaIcon}>🎁</Text>
+                    <Text style={styles.freeQuotaTitle}>
+                      {language === 'hi'
+                        ? `Free Plan: ${freeUsed}/3 Kaam Banaye Gaye`
+                        : `Free Plan: ${freeUsed}/3 Tasks Created`}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.freeUpgradePill}
+                    onPress={() => setPaywallVisible(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.freeUpgradePillText}>
+                      {freeUsed >= 3 ? '⭐ Go Pro' : '⚡ Upgrade'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.upgradeBtnMini}>
-                  <Text style={styles.upgradeBtnTextMini}>Upgrade</Text>
+
+                {/* 3 Step Indicator Pills: 1, 2, 3 */}
+                <View style={styles.freeStepsRow}>
+                  {/* Step 1 */}
+                  <View style={[styles.freeStepPill, freeUsed >= 1 && styles.freeStepPillDone]}>
+                    <Text style={[styles.freeStepNumber, freeUsed >= 1 && styles.freeStepNumberDone]}>
+                      {freeUsed >= 1 ? '✓' : '1'}
+                    </Text>
+                    <Text style={[styles.freeStepText, freeUsed >= 1 && styles.freeStepTextDone]}>
+                      {freeUsed >= 1
+                        ? (language === 'hi' ? 'Task 1' : 'Task 1')
+                        : (language === 'hi' ? 'Task 1' : 'Task 1')}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.freeStepConnector, freeUsed >= 2 && styles.freeStepConnectorDone]} />
+
+                  {/* Step 2 */}
+                  <View
+                    style={[
+                      styles.freeStepPill,
+                      freeUsed >= 2 && styles.freeStepPillDone,
+                      freeUsed === 1 && styles.freeStepPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.freeStepNumber,
+                        freeUsed >= 2 && styles.freeStepNumberDone,
+                        freeUsed === 1 && styles.freeStepNumberActive,
+                      ]}
+                    >
+                      {freeUsed >= 2 ? '✓' : '2'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.freeStepText,
+                        freeUsed >= 2 && styles.freeStepTextDone,
+                        freeUsed === 1 && styles.freeStepTextActive,
+                      ]}
+                    >
+                      {language === 'hi' ? 'Task 2' : 'Task 2'}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.freeStepConnector, freeUsed >= 3 && styles.freeStepConnectorDone]} />
+
+                  {/* Step 3 */}
+                  <View
+                    style={[
+                      styles.freeStepPill,
+                      freeUsed >= 3 && styles.freeStepPillDone,
+                      freeUsed === 2 && styles.freeStepPillFinal,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.freeStepNumber,
+                        freeUsed >= 3 && styles.freeStepNumberDone,
+                        freeUsed === 2 && styles.freeStepNumberFinal,
+                      ]}
+                    >
+                      {freeUsed >= 3 ? '✓' : freeUsed === 2 ? '🔥' : '3'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.freeStepText,
+                        freeUsed >= 3 && styles.freeStepTextDone,
+                        freeUsed === 2 && styles.freeStepTextFinal,
+                      ]}
+                    >
+                      {freeUsed === 2
+                        ? (language === 'hi' ? 'Aakhri!' : 'Final!')
+                        : (language === 'hi' ? 'Task 3' : 'Task 3')}
+                    </Text>
+                  </View>
                 </View>
-              </TouchableOpacity>
+
+                {/* Subtitle / Hint */}
+                <Text style={styles.freeQuotaSub}>
+                  {freeUsed === 0
+                    ? (language === 'hi'
+                        ? '3 free tasks uplabdh hain. Naya task jodein!'
+                        : '3 free tasks available. Add your first task!')
+                    : freeUsed === 1
+                    ? (language === 'hi'
+                        ? '1 kaam ban chuka hai. 2 aur free tasks bache hain!'
+                        : '1 task created. 2 free tasks remaining!')
+                    : freeUsed === 2
+                    ? (language === 'hi'
+                        ? '2 kaam ban chuke hain. Sirf 1 aakhri free task bacha hai!'
+                        : '2 tasks created. Only 1 final free task left!')
+                    : (language === 'hi'
+                        ? 'Saare 3 free tasks ban gaye. Unlimited ke liye Pro upgrade karein.'
+                        : 'All 3 free tasks used. Upgrade to Pro for unlimited tasks.')}
+                </Text>
+              </View>
             );
           })()}
         </View>
@@ -438,6 +540,128 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 16,
     fontWeight: '500',
+  },
+  freeQuotaCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    padding: 10,
+    gap: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  freeQuotaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  freeQuotaTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  freeQuotaIcon: {
+    fontSize: 15,
+  },
+  freeQuotaTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  freeUpgradePill: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  freeUpgradePillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  freeStepsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  freeStepPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 4,
+  },
+  freeStepPillDone: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#86EFAC',
+  },
+  freeStepPillActive: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FCD34D',
+  },
+  freeStepPillFinal: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+  },
+  freeStepNumber: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#94A3B8',
+  },
+  freeStepNumberDone: {
+    color: '#16A34A',
+    fontWeight: '900',
+  },
+  freeStepNumberActive: {
+    color: '#D97706',
+    fontWeight: '900',
+  },
+  freeStepNumberFinal: {
+    color: '#DC2626',
+    fontWeight: '900',
+  },
+  freeStepText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  freeStepTextDone: {
+    color: '#16A34A',
+  },
+  freeStepTextActive: {
+    color: '#B45309',
+  },
+  freeStepTextFinal: {
+    color: '#DC2626',
+  },
+  freeStepConnector: {
+    width: 6,
+    height: 2,
+    backgroundColor: '#CBD5E1',
+    marginHorizontal: 2,
+  },
+  freeStepConnectorDone: {
+    backgroundColor: '#86EFAC',
+  },
+  freeQuotaSub: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+    lineHeight: 15,
   },
   trialBannerMini: {
     flexDirection: 'row',

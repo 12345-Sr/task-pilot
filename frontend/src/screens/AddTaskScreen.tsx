@@ -29,9 +29,12 @@ import NotificationService from '../services/notifications/notification.service'
 export const AddTaskScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, paywallVisible, setPaywallVisible } = useAppStore();
+  const { language, isPremium, paywallVisible, setPaywallVisible, getFreeUsage } = useAppStore();
   const { data: existingTasks } = useTodayTasks();
   const createTaskMutation = useCreateTask();
+
+  const taskCount = Array.isArray(existingTasks) ? existingTasks.length : undefined;
+  const { used: freeUsed } = getFreeUsage(undefined, taskCount);
 
   useEffect(() => {
     if (Array.isArray(existingTasks)) {
@@ -239,6 +242,43 @@ export const AddTaskScreen: React.FC = () => {
               <Text style={styles.errorText}>{errorMsg}</Text>
             </View>
           ) : null}
+
+          {/* Free Tier Task Creation Step Counter (1, 2, 3) */}
+          {!isPremium && (
+            <View style={styles.freeStepNoticeCard}>
+              <View style={styles.freeStepNoticeLeft}>
+                <View
+                  style={[
+                    styles.freeStepNoticeIconWrap,
+                    freeUsed === 2 && styles.freeStepNoticeIconWrapFinal,
+                  ]}
+                >
+                  <Text style={styles.freeStepNoticeIcon}>
+                    {freeUsed === 0 ? '1️⃣' : freeUsed === 1 ? '2️⃣' : '🔥'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.freeStepNoticeTitle}>
+                    {freeUsed === 0
+                      ? (language === 'hi' ? 'Free Task 1 / 3 banaya ja raha hai' : 'Creating Task 1 of 3 (Free Tier)')
+                      : freeUsed === 1
+                      ? (language === 'hi' ? 'Free Task 2 / 3 banaya ja raha hai' : 'Creating Task 2 of 3 (Free Tier)')
+                      : (language === 'hi' ? 'Free Task 3 / 3 (Aakhri free task!)' : 'Creating Task 3 of 3 (Final Free Task!)')}
+                  </Text>
+                  <Text style={styles.freeStepNoticeSub}>
+                    {freeUsed === 0
+                      ? (language === 'hi' ? 'Iske baad 2 aur free tasks bachenge' : '2 free tasks will remain after this')
+                      : freeUsed === 1
+                      ? (language === 'hi' ? 'Iske baad 1 aakhri free task bachega' : '1 final free task will remain after this')
+                      : (language === 'hi' ? 'Yeh aapka aakhri free task hai · Unlimited ke liye Pro lein' : 'This is your final free task · Go Pro for unlimited')}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.freeStepNoticeBadge}>
+                <Text style={styles.freeStepNoticeBadgeText}>{Math.min(3, freeUsed + 1)}/3</Text>
+              </View>
+            </View>
+          )}
 
           {/* Title Input */}
           <View style={styles.inputGroup}>
@@ -558,6 +598,59 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.urgentRed,
     textAlign: 'center',
+  },
+  freeStepNoticeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1.2,
+    borderColor: '#FDE68A',
+    borderRadius: radius.md,
+    padding: spacing.sm + 2,
+    gap: spacing.sm,
+  },
+  freeStepNoticeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  freeStepNoticeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  freeStepNoticeIconWrapFinal: {
+    backgroundColor: '#FEE2E2',
+  },
+  freeStepNoticeIcon: {
+    fontSize: 16,
+  },
+  freeStepNoticeTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  freeStepNoticeSub: {
+    fontSize: 11,
+    color: '#B45309',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  freeStepNoticeBadge: {
+    backgroundColor: '#B45309',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+  },
+  freeStepNoticeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   inputGroup: {
     gap: spacing.xs,
