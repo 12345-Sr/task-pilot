@@ -88,6 +88,8 @@ router.get('/', requireUser, async (req, res) => {
         `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND (t.deleted_at IS NULL) ORDER BY t.task_date ASC, t.task_time ASC`,
         [req.userId]
       );
+    }
+
     let lifetimeCreated = 0;
     try {
       const subR = await db.query('SELECT status, lifetime_tasks_created FROM subscriptions WHERE user_id = $1', [req.userId]);
