@@ -47,3 +47,4 @@ frontend/android/.gradle/
 frontend/android/app/src/main/assets/
 frontend/ios-bundle/
 *.zip
+*.aab

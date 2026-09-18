@@ -240,7 +240,7 @@ router.get('/checkout', async (req, res) => {
     const amountPaise = 39900;
 
     let userName = 'TaskAlert User';
-    let userEmail = 'user@taskpilot.app';
+    let userEmail = 'user@taskalert.app';
     let userPhone = '';
 
     if (user_id) {

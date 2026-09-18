@@ -18,7 +18,7 @@ services:
       - key: ADMIN_JWT_SECRET
         generateValue: true
       - key: ADMIN_EMAIL
-        value: admin@taskpilot.com
+        value: admin@taskalert.com
       - key: ADMIN_PASSWORD
         sync: false
       - key: DATABASE_URL
@@ -44,7 +44,7 @@ services:
       - key: SMTP_PASS
         sync: false
       - key: EMAIL_FROM
-        value: "Task Pilot <no-reply@taskpilot.com>"
+        value: "TaskAlert <no-reply@taskalert.com>"
       - key: RESEND_API_KEY
         sync: false
       - key: BREVO_API_KEY
