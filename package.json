@@ -1,8 +1,8 @@
 {
-  "name": "task-pilot",
-  "version": "1.0.0",
+  "name": "task-alert",
+  "version": "1.0.3",
   "private": true,
-  "description": "Task Pilot - Root Workspace",
+  "description": "Task Alert - Root Workspace",
   "scripts": {
     "start": "node admin-server.js",
     "build": "echo 'Admin panel build complete'",

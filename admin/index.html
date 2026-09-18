@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task Pilot — Admin Dashboard</title>
+<title>Task Alert — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -94,11 +94,16 @@
     display: inline-flex;
     align-items: center;
   }
-  .brand-name .part-task, .sidebar-brand-text .part-task {
+  .brand-name .part-task, .sidebar-brand-text .part-task, .mobile-brand-title .part-task {
     color: #0F172A;
   }
-  .brand-name .part-pilot, .sidebar-brand-text .part-pilot {
-    color: #EAB308;
+  .brand-name .part-pilot, .sidebar-brand-text .part-pilot,
+  .brand-name .part-alert, .sidebar-brand-text .part-alert, .mobile-brand-title .part-alert {
+    color: #F59E0B;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .login-title {
     font-size: 22px;
@@ -1333,6 +1338,372 @@
       max-width: 170px;
     }
   }
+
+  /* ================== SECTION FILTER TOOLBARS ================== */
+  .section-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #FAFCFF;
+    border-bottom: 1px solid var(--border-line);
+  }
+  .filter-search-box {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+  }
+  .filter-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+  .filter-search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    font-size: 13px;
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+  .filter-search-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .filter-select {
+    padding: 9px 14px;
+    font-size: 13px;
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 140px;
+    transition: all 0.2s ease;
+  }
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .filter-btn-reset {
+    padding: 8px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-btn-reset:hover {
+    background: #E2E8F0;
+    color: var(--text-primary);
+  }
+  .filter-count-badge {
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: #EFF6FF;
+    color: #2563EB;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid #DBEAFE;
+    white-space: nowrap;
+  }
+
+  /* ================== USER PROFILE MODAL & DRAWER ================== */
+  .profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease-out;
+  }
+  .profile-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .profile-modal-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 820px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px) scale(0.98);
+    transition: all 0.25s ease-out;
+  }
+  .profile-modal-overlay.active .profile-modal-card {
+    transform: translateY(0) scale(1);
+  }
+  .profile-modal-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border-line);
+    position: relative;
+    background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+  }
+  .profile-header-flex {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .profile-hero-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    font-size: 26px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+    box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.35);
+    flex-shrink: 0;
+  }
+  .profile-header-info {
+    flex: 1;
+  }
+  .profile-hero-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .profile-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .profile-hero-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .profile-badges-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .profile-modal-close-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .profile-modal-close-btn:hover {
+    background: #F1F5F9;
+    color: var(--text-primary);
+  }
+
+  /* Profile KPI 4-grid */
+  .profile-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 20px 32px;
+    background: #F8FAFC;
+    border-bottom: 1px solid var(--border-line);
+  }
+  .profile-kpi-item {
+    background: #FFFFFF;
+    border: 1px solid var(--border-card);
+    border-radius: 14px;
+    padding: 12px 16px;
+  }
+  .profile-kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .profile-kpi-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .profile-kpi-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Profile Tab Nav */
+  .profile-tabs-nav {
+    display: flex;
+    gap: 8px;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--border-line);
+    background: #FFFFFF;
+  }
+  .profile-tab-btn {
+    padding: 14px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .profile-tab-btn:hover {
+    color: var(--text-primary);
+  }
+  .profile-tab-btn.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+  }
+
+  /* Profile Tab Panels */
+  .profile-tab-panel {
+    display: none;
+    padding: 24px 32px 32px;
+  }
+  .profile-tab-panel.active {
+    display: block;
+  }
+
+  /* Detail Grid */
+  .profile-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+  }
+  .profile-detail-cell {
+    background: #F8FAFC;
+    border: 1px solid #EDF2F7;
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .profile-detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .profile-detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+  .copy-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: #EEF2FF;
+    color: #4F46E5;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 6px;
+    border: 1px solid #E0E7FF;
+  }
+  .copy-chip:hover {
+    background: #E0E7FF;
+  }
+
+  /* Action Cards inside profile */
+  .profile-action-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-card);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .profile-action-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .profile-action-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* Responsive for profile modal */
+  @media (max-width: 768px) {
+    .profile-modal-card {
+      max-height: 95vh;
+      border-radius: 18px;
+    }
+    .profile-modal-header,
+    .profile-kpi-grid,
+    .profile-tabs-nav,
+    .profile-tab-panel {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+    .profile-kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .profile-details-grid {
+      grid-template-columns: 1fr;
+    }
+    .profile-header-flex {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1350,7 +1721,7 @@
           <line x1="28" y1="49" x2="92" y2="18" stroke="#FACC15" stroke-width="3.5" stroke-linecap="round" />
         </svg>
       </div>
-      <div class="brand-name"><span class="part-task">Task</span><span class="part-pilot">Pilot</span></div>
+      <div class="brand-name"><span class="part-task">Task</span><span class="part-alert">Alert</span></div>
     </div>
     <h1 class="login-title">Admin Dashboard</h1>
     <p class="login-sub">Sign in to manage platform operations & users</p>
@@ -1395,7 +1766,7 @@
             <line x1="28" y1="49" x2="92" y2="18" stroke="#FACC15" stroke-width="3.5" stroke-linecap="round" />
           </svg>
         </div>
-        <span class="sidebar-brand-text brand-name"><span class="part-task">Task</span><span class="part-pilot">Pilot</span></span>
+        <span class="sidebar-brand-text brand-name"><span class="part-task">Task</span><span class="part-alert">Alert</span></span>
       </a>
       <div style="display:flex; align-items:center; gap:6px;">
         <!-- Mobile Drawer Close Button -->
@@ -1538,7 +1909,7 @@
               <line x1="28" y1="49" x2="92" y2="18" stroke="#FACC15" stroke-width="3.5" stroke-linecap="round" />
             </svg>
           </div>
-          <span class="mobile-brand-title"><span class="part-task">Task</span><span class="part-pilot">Pilot</span></span>
+          <span class="mobile-brand-title"><span class="part-task">Task</span><span class="part-alert">Alert</span></span>
         </div>
 
         <!-- Desktop Search Wrapper -->
@@ -1710,6 +2081,27 @@
           </div>
         </div>
 
+        <!-- Overview Filter & Activity Search Bar -->
+        <div class="table-card" style="margin-bottom: 20px;">
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="overviewSearchInput" class="filter-search-input" placeholder="Search recent users & payments by name or email..." oninput="filterOverviewActivity(this.value)">
+            </div>
+            <select id="overviewFilterType" class="filter-select" onchange="filterOverviewActivity(document.getElementById('overviewSearchInput').value)">
+              <option value="all">All Activity</option>
+              <option value="active">Active Subscribers</option>
+              <option value="free">Free Users</option>
+            </select>
+            <button class="filter-btn-reset" onclick="resetOverviewFilter()">
+              <span>✕ Reset</span>
+            </button>
+            <span class="filter-count-badge" id="overviewCountBadge">Live Dashboard</span>
+          </div>
+        </div>
+
         <!-- Middle Row: Recent Users & Recent Payments -->
         <div class="grid-two-cols">
           
@@ -1799,7 +2191,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Users Directory</h1>
-            <p class="page-subtitle">Real-time user accounts registered in Task Pilot</p>
+            <p class="page-subtitle">Real-time user accounts registered in Task Alert</p>
           </div>
           <div style="display:flex; gap:10px;">
             <button class="btn-submit" style="width:auto; padding:9px 18px; margin-top:0;" onclick="loadUsers()">Refresh Users</button>
@@ -1807,14 +2199,41 @@
         </div>
 
         <div class="table-card">
-          <div class="table-header-bar">
-            <input type="text" id="userSearchInput" class="input-field" style="max-width:300px; padding:8px 12px;" placeholder="Filter by name or email..." oninput="filterUsers(this.value)">
-            <span id="userTableCount" style="font-size:12.5px; color:var(--text-secondary); font-weight:600;">2 Users</span>
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="userSearchInput" class="filter-search-input" placeholder="Search by name, email, phone, or user ID..." oninput="applyUsersFilters()">
+            </div>
+            <select id="userStatusFilter" class="filter-select" onchange="applyUsersFilters()">
+              <option value="all">All Account Status</option>
+              <option value="active">Active Accounts</option>
+              <option value="deactivated">Deactivated Accounts</option>
+            </select>
+            <select id="userSubFilter" class="filter-select" onchange="applyUsersFilters()">
+              <option value="all">All Subscriptions</option>
+              <option value="active">Pro (Active)</option>
+              <option value="free">Free Tier</option>
+              <option value="expired">Expired</option>
+            </select>
+            <select id="userLangFilter" class="filter-select" onchange="applyUsersFilters()">
+              <option value="all">All Languages</option>
+              <option value="en">English (EN)</option>
+              <option value="hi">Hindi (HI)</option>
+              <option value="gu">Gujarati (GU)</option>
+              <option value="mr">Marathi (MR)</option>
+              <option value="ta">Tamil (TA)</option>
+            </select>
+            <button class="filter-btn-reset" onclick="resetUsersFilters()" title="Reset all filters">
+              <span>✕ Clear</span>
+            </button>
+            <span id="userTableCount" class="filter-count-badge">0 Users</span>
           </div>
           <table class="data-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>User Profile</th>
                 <th>Language</th>
                 <th>Install Date</th>
                 <th>Subscription</th>
@@ -1833,15 +2252,37 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Tasks Management</h1>
-            <p class="page-subtitle">All scheduled, active and completed tasks across all users</p>
+            <p class="page-subtitle">All scheduled, active and completed tasks across all users in Task Alert</p>
           </div>
           <button class="btn-submit" style="width:auto; padding:9px 18px; margin-top:0;" onclick="loadTasks()">Refresh Tasks</button>
         </div>
 
         <div class="table-card">
-          <div class="table-header-bar">
-            <div style="font-size:14px; font-weight:700;">Task Pilot Real-Time Activity Log</div>
-            <span id="tasksTableCount" style="font-size:12.5px; color:var(--text-secondary); font-weight:600;">4 Tasks</span>
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="taskSearchInput" class="filter-search-input" placeholder="Search tasks by title, description, user name, or email..." oninput="applyTasksFilters()">
+            </div>
+            <select id="taskStatusFilter" class="filter-select" onchange="applyTasksFilters()">
+              <option value="all">All Statuses</option>
+              <option value="done">Completed</option>
+              <option value="pending">Pending</option>
+            </select>
+            <select id="taskDateFilter" class="filter-select" onchange="applyTasksFilters()">
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past / History</option>
+            </select>
+            <select id="taskUserSelectFilter" class="filter-select" onchange="applyTasksFilters()">
+              <option value="all">All Users</option>
+            </select>
+            <button class="filter-btn-reset" onclick="resetTasksFilters()" title="Reset all filters">
+              <span>✕ Clear</span>
+            </button>
+            <span id="tasksTableCount" class="filter-count-badge">0 Tasks</span>
           </div>
           <table class="data-table">
             <thead>
@@ -1865,19 +2306,34 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Subscriptions & Packages</h1>
-            <p class="page-subtitle">User plan tiers, renewal schedules and payment statuses</p>
+            <p class="page-subtitle">User plan tiers, renewal schedules and payment statuses in Task Alert</p>
           </div>
           <button class="btn-submit" style="width:auto; padding:9px 18px; margin-top:0;" onclick="loadSubs('')">Refresh Subscriptions</button>
         </div>
 
         <div class="table-card">
-          <div class="table-header-bar">
-            <select id="subsStatusFilter" class="input-field" style="max-width:200px; padding:8px 12px;" onchange="loadSubs(this.value)">
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="subsSearchInput" class="filter-search-input" placeholder="Search subscriber by name, email, or payment ID..." oninput="applySubsFilters()">
+            </div>
+            <select id="subsStatusFilter" class="filter-select" onchange="applySubsFilters()">
               <option value="">All Statuses</option>
               <option value="active">Active (Premium)</option>
               <option value="free">Free Tier</option>
               <option value="expired">Expired</option>
             </select>
+            <select id="subsPlanFilter" class="filter-select" onchange="applySubsFilters()">
+              <option value="all">All Plans</option>
+              <option value="pro">Pro Plan</option>
+              <option value="free">Free Tier</option>
+            </select>
+            <button class="filter-btn-reset" onclick="resetSubsFilters()" title="Reset all filters">
+              <span>✕ Clear</span>
+            </button>
+            <span id="subsTableCount" class="filter-count-badge">0 Subscriptions</span>
           </div>
           <table class="data-table">
             <thead>
@@ -1969,16 +2425,30 @@
         </div>
 
         <div class="table-card">
-          <div class="table-header-bar" style="display:flex; justify-content:space-between; gap:16px;">
-            <div style="display:flex; gap:12px; flex:1;">
-              <select id="ticketStatusFilter" class="input-field" style="max-width:180px; padding:8px 12px;" onchange="loadTickets()">
-                <option value="all">All Statuses</option>
-                <option value="open">Open</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-              </select>
-              <input type="text" id="ticketSearchInput" class="input-field" placeholder="Search by subject, email, or message..." style="max-width:320px;" oninput="debounceTicketSearch()">
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="ticketSearchInput" class="filter-search-input" placeholder="Search by subject, email, or message..." oninput="debounceTicketSearch()">
             </div>
+            <select id="ticketStatusFilter" class="filter-select" onchange="loadTickets()">
+              <option value="all">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+            <select id="ticketCategoryFilter" class="filter-select" onchange="loadTickets()">
+              <option value="all">All Categories</option>
+              <option value="general">General</option>
+              <option value="bug">Bug / Technical</option>
+              <option value="billing">Billing & Subs</option>
+              <option value="feature">Feature Request</option>
+            </select>
+            <button class="filter-btn-reset" onclick="resetTicketFilters()" title="Reset all filters">
+              <span>✕ Clear</span>
+            </button>
+            <span id="ticketsTableCountBadge" class="filter-count-badge">0 Tickets</span>
           </div>
           <table class="data-table">
             <thead>
@@ -2011,15 +2481,31 @@
           </div>
         </div>
 
-        <div class="settings-grid">
+        <!-- Settings Search & Filter Bar -->
+        <div class="table-card" style="margin-bottom: 20px;">
+          <div class="section-filter-bar">
+            <div class="filter-search-box">
+              <span class="filter-search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="settingsSearchInput" class="filter-search-input" placeholder="Search settings (e.g. pricing, task limit, alert sounds, razorpay, app identity)..." oninput="filterSettingsCards(this.value)">
+            </div>
+            <button class="filter-btn-reset" onclick="document.getElementById('settingsSearchInput').value=''; filterSettingsCards('');">
+              <span>✕ Clear</span>
+            </button>
+            <span id="settingsFilterCount" class="filter-count-badge">4 Config Modules</span>
+          </div>
+        </div>
+
+        <div class="settings-grid" id="settingsGridContainer">
           
           <!-- Card 1: App Details -->
-          <div class="content-card">
+          <div class="content-card setting-card-item">
             <h2 class="card-title" style="margin-bottom:18px;">App Identity & Information</h2>
             
             <div class="form-group">
               <label class="form-label">Application Name</label>
-              <input type="text" id="settingAppName" class="input-field" value="Task Pilot" placeholder="App Name">
+              <input type="text" id="settingAppName" class="input-field" value="Task Alert" placeholder="App Name">
             </div>
 
             <div class="form-group">
@@ -2045,7 +2531,7 @@
           </div>
 
           <!-- Card 2: Free Limit & Task Rules -->
-          <div class="content-card">
+          <div class="content-card setting-card-item">
             <h2 class="card-title" style="margin-bottom:18px;">Free Tier Limits & Streak Rules</h2>
             
             <div class="setting-row">
@@ -2091,7 +2577,7 @@
           </div>
 
           <!-- Card 3: Subscription & Pricing -->
-          <div class="content-card">
+          <div class="content-card setting-card-item">
             <h2 class="card-title" style="margin-bottom:18px;">Subscription & Pricing Tiers</h2>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
@@ -2131,7 +2617,7 @@
           </div>
 
           <!-- Card 4: Daily Alerts & Backend Connection -->
-          <div class="content-card">
+          <div class="content-card setting-card-item">
             <h2 class="card-title" style="margin-bottom:18px;">Notification Schedules & API Server</h2>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
@@ -2723,74 +3209,135 @@ async function loadOverview() {
     document.getElementById('lowerTotalBookings').textContent = liveTaskCount;
     document.getElementById('lowerConversionRate').textContent = totalUsers > 0 ? `${Math.min(100, Math.round((activeSubs / totalUsers) * 100))}%` : '0%';
 
-    // Populate REAL RECENT USERS from the database!
-    const recentUsersEl = document.getElementById('recentUsersList');
-    if (recentUsersEl) {
-      if (!usersList.length) {
-        recentUsersEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No registered users found.</div>';
-      } else {
-        const colors = ['avatar-purple', 'avatar-indigo', 'avatar-teal', 'avatar-orange'];
-        recentUsersEl.innerHTML = usersList.slice(0, 5).map((u, i) => {
-          const initials = (u.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
-          const dateStr = u.install_date 
-            ? new Date(u.install_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
-            : 'Recent';
-          return `
-            <div class="recent-user-row">
-              <div class="recent-user-left">
-                <div class="recent-avatar ${colors[i % colors.length]}">${initials}</div>
-                <div>
-                  <div class="recent-user-name">${escapeHtml(u.name || 'Task Pilot User')}</div>
-                  <div class="recent-user-email">${escapeHtml(u.email || '')}</div>
-                </div>
-              </div>
-              <div class="recent-date">${dateStr}</div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    // Populate Recent Payments from subscriptions with REAL USER NAME and EMAIL!
-    const recentPaymentsEl = document.getElementById('recentPaymentsList');
-    if (recentPaymentsEl) {
-      const activeSubsList = subsList.filter(s => s.status === 'active' || Number(s.plan_price || 0) > 0);
-      const displaySubs = activeSubsList.length > 0 ? activeSubsList : subsList.slice(0, 5);
-      if (displaySubs.length > 0) {
-        recentPaymentsEl.innerHTML = displaySubs.map(s => {
-          const userName = s.name || s.user_name || userMap[s.user_id]?.name || 'Task Pilot User';
-          const isActive = (s.status === 'active');
-          const isFree = (s.status === 'free');
-          const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
-          const userEmail = s.email || s.user_email || userMap[s.user_id]?.email || `${planName} (${(s.status || 'free').toUpperCase()})`;
-          const initials = userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'TP';
-          const priceVal = isFree ? 0 : Number(s.plan_price || 399);
-          return `
-            <div class="recent-user-row">
-              <div class="recent-user-left">
-                <div class="recent-avatar avatar-teal">${initials}</div>
-                <div>
-                  <div class="recent-user-name">${escapeHtml(userName)}</div>
-                  <div class="recent-user-email">${escapeHtml(userEmail)}</div>
-                </div>
-              </div>
-              <div class="recent-amount">₹${priceVal.toLocaleString('en-IN')}</div>
-            </div>
-          `;
-        }).join('');
-      } else {
-        recentPaymentsEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No payments recorded yet.</div>';
-      }
-    }
+    // Store overview cached lists for instant filtering
+    overviewUsersList = usersList;
+    overviewSubsList = subsList;
+    overviewUserMap = userMap;
+    filterOverviewActivity(document.getElementById('overviewSearchInput')?.value || '');
   } catch (err) {
     console.error('loadOverview error:', err);
   }
 }
 
+// ----------------- OVERVIEW SEARCH & FILTER -----------------
+let overviewUsersList = [];
+let overviewSubsList = [];
+let overviewUserMap = {};
+
+function filterOverviewActivity(query) {
+  const q = (query || '').toLowerCase().trim();
+  const filterType = document.getElementById('overviewFilterType')?.value || 'all';
+
+  // Filter Recent Users
+  let filteredUsers = overviewUsersList;
+  if (q) {
+    filteredUsers = filteredUsers.filter(u =>
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.includes(q))
+    );
+  }
+  if (filterType === 'active') {
+    filteredUsers = filteredUsers.filter(u => u.subscription_status === 'active');
+  } else if (filterType === 'free') {
+    filteredUsers = filteredUsers.filter(u => !u.subscription_status || u.subscription_status === 'free');
+  }
+
+  const recentUsersEl = document.getElementById('recentUsersList');
+  if (recentUsersEl) {
+    if (!filteredUsers.length) {
+      recentUsersEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No matching users found.</div>';
+    } else {
+      const colors = ['avatar-purple', 'avatar-indigo', 'avatar-teal', 'avatar-orange'];
+      recentUsersEl.innerHTML = filteredUsers.slice(0, 6).map((u, i) => {
+        const initials = (u.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+        const dateStr = u.install_date 
+          ? new Date(u.install_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+          : 'Recent';
+        return `
+          <div class="recent-user-row" style="cursor:pointer;" onclick="openUserProfileModal('${u.id}')" title="Click to view ${escapeHtml(u.name || 'User')}'s complete profile">
+            <div class="recent-user-left">
+              <div class="recent-avatar ${colors[i % colors.length]}">${initials}</div>
+              <div>
+                <div class="recent-user-name" style="display:flex; align-items:center; gap:6px;">
+                  <span>${escapeHtml(u.name || 'Task Alert User')}</span>
+                  <span style="font-size:10px; color:var(--primary-blue); font-weight:700;">View Profile →</span>
+                </div>
+                <div class="recent-user-email">${escapeHtml(u.email || '')}</div>
+              </div>
+            </div>
+            <div class="recent-date">${dateStr}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Filter Recent Payments
+  let filteredSubs = overviewSubsList;
+  if (q) {
+    filteredSubs = filteredSubs.filter(s => {
+      const uName = s.name || s.user_name || overviewUserMap[s.user_id]?.name || '';
+      const uEmail = s.email || s.user_email || overviewUserMap[s.user_id]?.email || '';
+      const pName = s.plan_name || '';
+      return uName.toLowerCase().includes(q) || uEmail.toLowerCase().includes(q) || pName.toLowerCase().includes(q);
+    });
+  }
+  if (filterType === 'active') {
+    filteredSubs = filteredSubs.filter(s => s.status === 'active');
+  } else if (filterType === 'free') {
+    filteredSubs = filteredSubs.filter(s => s.status === 'free');
+  }
+
+  const recentPaymentsEl = document.getElementById('recentPaymentsList');
+  if (recentPaymentsEl) {
+    const displaySubs = filteredSubs.slice(0, 6);
+    if (displaySubs.length > 0) {
+      recentPaymentsEl.innerHTML = displaySubs.map(s => {
+        const userName = s.name || s.user_name || overviewUserMap[s.user_id]?.name || 'Task Alert User';
+        const isActive = (s.status === 'active');
+        const isFree = (s.status === 'free');
+        const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
+        const userEmail = s.email || s.user_email || overviewUserMap[s.user_id]?.email || `${planName} (${(s.status || 'free').toUpperCase()})`;
+        const initials = userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'TA';
+        const priceVal = isFree ? 0 : Number(s.plan_price || 399);
+        const targetUserId = s.user_id || '';
+        return `
+          <div class="recent-user-row" style="cursor:pointer;" onclick="${targetUserId ? `openUserProfileModal('${targetUserId}')` : ''}" title="Click to view profile">
+            <div class="recent-user-left">
+              <div class="recent-avatar avatar-teal">${initials}</div>
+              <div>
+                <div class="recent-user-name">${escapeHtml(userName)}</div>
+                <div class="recent-user-email">${escapeHtml(userEmail)}</div>
+              </div>
+            </div>
+            <div class="recent-amount">₹${priceVal.toLocaleString('en-IN')}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      recentPaymentsEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No matching transactions found.</div>';
+    }
+  }
+
+  const countBadge = document.getElementById('overviewCountBadge');
+  if (countBadge) {
+    countBadge.textContent = q ? `${filteredUsers.length} Users / ${filteredSubs.length} Subs` : 'Live Dashboard';
+  }
+}
+
+function resetOverviewFilter() {
+  const input = document.getElementById('overviewSearchInput');
+  if (input) input.value = '';
+  const select = document.getElementById('overviewFilterType');
+  if (select) select.value = 'all';
+  filterOverviewActivity('');
+}
+
 // ----------------- LOAD USERS DIRECTORY -----------------
 async function loadUsers() {
   const tbody = document.getElementById('usersTableBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Fetching users from database...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Fetching users from database...</td></tr>';
   
   try {
     const res = await fetch(`${API_BASE}/admin/users?pageSize=100`, { headers: authHeaders() });
@@ -2799,44 +3346,109 @@ async function loadUsers() {
       data = await res.json();
     }
     cachedUsers = (data.users && data.users.length > 0) ? data.users : [];
-    renderUsersTable(cachedUsers);
+    applyUsersFilters();
   } catch (e) {
     cachedUsers = [];
-    renderUsersTable(cachedUsers);
+    applyUsersFilters();
   }
+}
+
+function applyUsersFilters() {
+  const query = document.getElementById('userSearchInput')?.value.trim().toLowerCase() || '';
+  const statusFilter = document.getElementById('userStatusFilter')?.value || 'all';
+  const subFilter = document.getElementById('userSubFilter')?.value || 'all';
+  const langFilter = document.getElementById('userLangFilter')?.value || 'all';
+
+  let list = cachedUsers;
+
+  // Search filter (name, email, phone, id)
+  if (query) {
+    list = list.filter(u =>
+      (u.name && u.name.toLowerCase().includes(query)) ||
+      (u.email && u.email.toLowerCase().includes(query)) ||
+      (u.phone && u.phone.includes(query)) ||
+      (u.id && String(u.id).toLowerCase().includes(query))
+    );
+  }
+
+  // Account status filter
+  if (statusFilter === 'active') {
+    list = list.filter(u => u.is_active !== false);
+  } else if (statusFilter === 'deactivated') {
+    list = list.filter(u => u.is_active === false);
+  }
+
+  // Subscription tier filter
+  if (subFilter !== 'all') {
+    list = list.filter(u => (u.subscription_status || 'free') === subFilter);
+  }
+
+  // Language filter
+  if (langFilter !== 'all') {
+    list = list.filter(u => (u.language || 'en').toLowerCase() === langFilter.toLowerCase());
+  }
+
+  const countEl = document.getElementById('userTableCount');
+  if (countEl) {
+    countEl.textContent = `Showing ${list.length} of ${cachedUsers.length} Users`;
+  }
+
+  renderUsersTable(list);
+}
+
+function resetUsersFilters() {
+  const searchInput = document.getElementById('userSearchInput');
+  if (searchInput) searchInput.value = '';
+  const statusFilter = document.getElementById('userStatusFilter');
+  if (statusFilter) statusFilter.value = 'all';
+  const subFilter = document.getElementById('userSubFilter');
+  if (subFilter) subFilter.value = 'all';
+  const langFilter = document.getElementById('userLangFilter');
+  if (langFilter) langFilter.value = 'all';
+  applyUsersFilters();
 }
 
 function renderUsersTable(list) {
   const tbody = document.getElementById('usersTableBody');
-  document.getElementById('userTableCount').textContent = `${list.length} Users`;
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No users found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No users match the active search & filter criteria.</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(u => {
-    const dateStr = u.install_date ? new Date(u.install_date).toLocaleDateString() : 'N/A';
+    const dateStr = u.install_date ? new Date(u.install_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
     const subStatus = u.subscription_status || 'free';
     const badgeClass = subStatus === 'active' ? 'active' : (subStatus === 'expired' ? 'expired' : 'free');
     const isActive = u.is_active !== false;
     const activeBadge = isActive
       ? '<span class="status-badge" style="background:#DCFCE7; color:#16A34A; font-size:10px; margin-left:6px;">ACTIVE</span>'
       : '<span class="status-badge" style="background:#FEE2E2; color:#DC2626; font-size:10px; margin-left:6px;">DEACTIVATED</span>';
+    const initials = (u.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+
     return `
-      <tr style="${isActive ? '' : 'opacity:0.75; background:#FFF8F8;'}">
+      <tr style="${isActive ? '' : 'opacity:0.8; background:#FFF9F9;'}">
         <td>
-          <div style="font-weight:700; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
-            <span>${escapeHtml(u.name || 'Task Pilot User')}</span>
-            ${activeBadge}
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="user-avatar" style="width:36px; height:36px; font-size:13px; font-weight:700; background:#EEF2FF; color:#4F46E5; cursor:pointer;" onclick="openUserProfileModal('${u.id}')">${initials}</div>
+            <div>
+              <div style="font-weight:700; display:flex; align-items:center; flex-wrap:wrap; gap:4px; cursor:pointer; color:var(--text-primary);" onclick="openUserProfileModal('${u.id}')" title="Click to view full user profile">
+                <span class="user-hover-name" style="text-decoration:underline dotted;">${escapeHtml(u.name || 'Task Alert User')}</span>
+                ${activeBadge}
+              </div>
+              <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(u.email || '')}</div>
+              ${u.phone ? `<div style="font-size:11px; color:var(--text-muted);">📱 ${escapeHtml(u.phone)}</div>` : ''}
+            </div>
           </div>
-          <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(u.email || '')}</div>
-          ${u.phone ? `<div style="font-size:11px; color:var(--text-muted);">📱 ${escapeHtml(u.phone)}</div>` : ''}
         </td>
-        <td>${escapeHtml((u.language || 'en').toUpperCase())}</td>
+        <td>
+          <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:#F1F5F9; color:#475569; text-transform:uppercase;">
+            ${escapeHtml((u.language || 'en').toUpperCase())}
+          </span>
+        </td>
         <td>${dateStr}</td>
         <td><span class="status-badge ${badgeClass}">${subStatus.toUpperCase()}</span></td>
         <td>
           <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0;" onclick="viewUserDetail('${u.id || 1}')">Inspect</button>
+            <button class="btn-submit" style="width:auto; padding:5px 12px; font-size:11.5px; margin-top:0; background:var(--primary-blue);" onclick="openUserProfileModal('${u.id || 1}')">View Profile</button>
             <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0; background:${isActive ? '#F59E0B' : '#10B981'}; border-color:transparent;" onclick="toggleUserStatus('${u.id}', ${isActive})">${isActive ? 'Deactivate' : 'Activate'}</button>
             <button class="btn-submit" style="width:auto; padding:5px 10px; font-size:11.5px; margin-top:0; background:#EF4444; border-color:transparent;" onclick="deleteUser('${u.id}', '${escapeHtml(u.name || 'User')}')">Delete</button>
           </div>
@@ -2846,33 +3458,22 @@ function renderUsersTable(list) {
   }).join('');
 }
 
+// Backward compatible helper for old calls
 function filterUsers(q) {
-  const query = q.toLowerCase();
-  const filtered = cachedUsers.filter(u => 
-    (u.name && u.name.toLowerCase().includes(query)) || 
-    (u.email && u.email.toLowerCase().includes(query))
-  );
-  renderUsersTable(filtered);
+  const input = document.getElementById('userSearchInput');
+  if (input) input.value = q;
+  applyUsersFilters();
 }
 
-async function viewUserDetail(uid) {
-  showToast(`Loading details for user #${uid}...`);
-  try {
-    const res = await fetch(`${API_BASE}/admin/users/${uid}`, { headers: authHeaders() });
-    if (res.ok) {
-      const d = await res.json();
-      const statusText = d.user?.is_active === false ? 'DEACTIVATED' : 'ACTIVE';
-      alert(`User: ${d.user?.name || 'User'}\nEmail: ${d.user?.email}\nPhone: ${d.user?.phone || 'N/A'}\nAccount Status: ${statusText}\nLanguage: ${(d.user?.language || 'en').toUpperCase()}\nRecent Tasks: ${d.recentTasks?.length || 0}`);
-    }
-  } catch (e) {
-    showToast(`User details ready`);
-  }
+// Inspect legacy alias to open complete profile modal
+function viewUserDetail(uid) {
+  openUserProfileModal(uid);
 }
 
 async function toggleUserStatus(uid, currentActive) {
   const action = currentActive ? 'deactivate' : 'activate';
   const confirmMsg = currentActive 
-    ? 'Are you sure you want to DEACTIVATE this user? They will be immediately blocked from logging in or using the app.' 
+    ? 'Are you sure you want to DEACTIVATE this user? They will be blocked from logging in or synchronizing tasks with Task Alert.' 
     : 'Are you sure you want to ACTIVATE this user? Their account access will be restored immediately.';
   
   if (!confirm(confirmMsg)) return;
@@ -2886,9 +3487,12 @@ async function toggleUserStatus(uid, currentActive) {
     });
     const data = await res.json();
     if (res.ok) {
-      showToast(data.message || `User status updated`);
+      showToast(data.message || `User status updated successfully`);
       await loadUsers();
       if (typeof loadOverview === 'function') loadOverview();
+      if (currentModalUser && currentModalUser.id === uid) {
+        openUserProfileModal(uid);
+      }
     } else {
       alert(data.error || `Failed to update user status`);
     }
@@ -2913,6 +3517,9 @@ async function deleteUser(uid, userName) {
       showToast(data.message || `User permanently deleted`);
       await loadUsers();
       if (typeof loadOverview === 'function') loadOverview();
+      if (currentModalUser && currentModalUser.id === uid) {
+        closeUserProfileModal();
+      }
     } else {
       alert(data.error || `Failed to delete user`);
     }
@@ -2922,9 +3529,11 @@ async function deleteUser(uid, userName) {
 }
 
 // ----------------- LOAD TASKS -----------------
+let cachedTasks = [];
+
 async function loadTasks() {
   const tbody = document.getElementById('tasksTableBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading tasks...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Loading tasks...</td></tr>';
   
   try {
     if (!cachedUsers.length) {
@@ -2937,40 +3546,126 @@ async function loadTasks() {
     cachedUsers.forEach(u => { if (u.id) userMap[u.id] = u; });
 
     const tasks = await fetchAllTasks();
-    const list = tasks;
-    document.getElementById('tasksTableCount').textContent = `${list.length} Tasks`;
-    if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No tasks found in database.</td></tr>';
-      return;
+    cachedTasks = tasks.map(t => ({
+      ...t,
+      user_name: t.user_name || userMap[t.user_id]?.name || 'Task Alert User',
+      user_email: t.user_email || t.email || userMap[t.user_id]?.email || 'user@taskalert.com'
+    }));
+
+    // Populate user select filter in Tasks toolbar
+    const userSelect = document.getElementById('taskUserSelectFilter');
+    if (userSelect) {
+      const currentSelected = userSelect.value;
+      const uniqueUsers = {};
+      cachedTasks.forEach(t => {
+        if (t.user_id && !uniqueUsers[t.user_id]) {
+          uniqueUsers[t.user_id] = t.user_name;
+        }
+      });
+      userSelect.innerHTML = '<option value="all">All Users</option>' +
+        Object.entries(uniqueUsers).map(([uid, uName]) => `<option value="${uid}">${escapeHtml(uName)}</option>`).join('');
+      userSelect.value = currentSelected || 'all';
     }
-    tbody.innerHTML = list.map(t => {
-      const isDone = t.status === 'done';
-      const userName = t.user_name || userMap[t.user_id]?.name || 'Task Pilot User';
-      const userEmail = t.user_email || t.email || userMap[t.user_id]?.email || 'user@taskpilot.com';
-      return `
-        <tr>
-          <td style="font-weight:600;">${escapeHtml(t.title || 'Untitled Task')}</td>
-          <td>
-            <div style="font-weight:700;">${escapeHtml(userName)}</div>
-            <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(userEmail)}</div>
-          </td>
-          <td>${t.task_date || 'Today'}</td>
-          <td>${t.task_time || 'Scheduled'}</td>
-          <td>
-            <span class="status-badge ${isDone ? 'active' : 'free'}">${isDone ? 'COMPLETED' : 'PENDING'}</span>
-          </td>
-        </tr>
-      `;
-    }).join('');
+
+    applyTasksFilters();
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No tasks found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No tasks found.</td></tr>';
   }
 }
 
-// ----------------- LOAD SUBSCRIPTIONS (Showing Real User Names and Emails) -----------------
+function applyTasksFilters() {
+  const query = document.getElementById('taskSearchInput')?.value.trim().toLowerCase() || '';
+  const status = document.getElementById('taskStatusFilter')?.value || 'all';
+  const dateFilter = document.getElementById('taskDateFilter')?.value || 'all';
+  const userFilter = document.getElementById('taskUserSelectFilter')?.value || 'all';
+
+  let list = cachedTasks;
+
+  if (query) {
+    list = list.filter(t =>
+      (t.title && t.title.toLowerCase().includes(query)) ||
+      (t.description && t.description.toLowerCase().includes(query)) ||
+      (t.user_name && t.user_name.toLowerCase().includes(query)) ||
+      (t.user_email && t.user_email.toLowerCase().includes(query))
+    );
+  }
+
+  if (status === 'done') {
+    list = list.filter(t => t.status === 'done');
+  } else if (status === 'pending') {
+    list = list.filter(t => t.status !== 'done');
+  }
+
+  if (userFilter !== 'all') {
+    list = list.filter(t => String(t.user_id) === String(userFilter));
+  }
+
+  if (dateFilter !== 'all') {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateFilter === 'today') {
+      list = list.filter(t => (t.task_date || '').startsWith(todayStr));
+    } else if (dateFilter === 'upcoming') {
+      list = list.filter(t => (t.task_date || '') > todayStr);
+    } else if (dateFilter === 'past') {
+      list = list.filter(t => (t.task_date || '') < todayStr);
+    }
+  }
+
+  const countBadge = document.getElementById('tasksTableCount');
+  if (countBadge) {
+    countBadge.textContent = `Showing ${list.length} of ${cachedTasks.length} Tasks`;
+  }
+
+  renderTasksTable(list);
+}
+
+function resetTasksFilters() {
+  const searchInput = document.getElementById('taskSearchInput');
+  if (searchInput) searchInput.value = '';
+  const statusFilter = document.getElementById('taskStatusFilter');
+  if (statusFilter) statusFilter.value = 'all';
+  const dateFilter = document.getElementById('taskDateFilter');
+  if (dateFilter) dateFilter.value = 'all';
+  const userSelect = document.getElementById('taskUserSelectFilter');
+  if (userSelect) userSelect.value = 'all';
+  applyTasksFilters();
+}
+
+function renderTasksTable(list) {
+  const tbody = document.getElementById('tasksTableBody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No tasks match the active filters.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(t => {
+    const isDone = t.status === 'done';
+    const userName = t.user_name || 'Task Alert User';
+    const userEmail = t.user_email || '';
+    return `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(t.title || 'Untitled Task')}</td>
+        <td>
+          <div style="font-weight:700; cursor:pointer; color:var(--primary-blue);" onclick="${t.user_id ? `openUserProfileModal('${t.user_id}')` : ''}" title="View user profile">
+            ${escapeHtml(userName)}
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(userEmail)}</div>
+        </td>
+        <td>${t.task_date || 'Today'}</td>
+        <td>${t.task_time || 'Scheduled'}</td>
+        <td>
+          <span class="status-badge ${isDone ? 'active' : 'free'}">${isDone ? 'COMPLETED' : 'PENDING'}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ----------------- LOAD SUBSCRIPTIONS -----------------
+let cachedSubs = [];
+
 async function loadSubs(filterStatus) {
   const tbody = document.getElementById('subsTableBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading subscriptions...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Loading subscriptions...</td></tr>';
   
   try {
     if (!cachedUsers.length) {
@@ -2988,42 +3683,104 @@ async function loadSubs(filterStatus) {
       const d = await res.json();
       list = d.subscriptions || [];
     }
-    if (filterStatus) {
-      list = list.filter(s => s.status === filterStatus);
-    }
-    if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No subscriptions found.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = list.map(s => {
-      const userName = s.name || s.user_name || userMap[s.user_id]?.name || 'Task Pilot User';
-      const userEmail = s.email || s.user_email || userMap[s.user_id]?.email || (s.user_id ? `#${s.user_id.slice(0, 8)}` : '');
-      const isActive = (s.status === 'active');
-      const isFree = (s.status === 'free');
-      const badgeClass = isActive ? 'active' : (s.status === 'expired' || s.status === 'cancelled' ? 'expired' : 'free');
-      
-      const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
-      const priceDisplay = isFree ? '₹0' : `₹${Number(s.plan_price || 399).toLocaleString('en-IN')}`;
-      const expiryDisplay = isActive 
-        ? (s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('en-IN') : '1 Month')
-        : (isFree ? 'Permanent' : 'Expired');
 
-      return `
-        <tr>
-          <td>
-            <div style="font-weight:700;">${escapeHtml(userName)}</div>
-            <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(userEmail)}</div>
-          </td>
-          <td style="font-weight:600;">${escapeHtml(planName)}</td>
-          <td>${priceDisplay}</td>
-          <td><span class="status-badge ${badgeClass}">${(s.status || 'FREE').toUpperCase()}</span></td>
-          <td>${expiryDisplay}</td>
-        </tr>
-      `;
-    }).join('');
+    cachedSubs = list.map(s => ({
+      ...s,
+      user_name: s.name || s.user_name || userMap[s.user_id]?.name || 'Task Alert User',
+      user_email: s.email || s.user_email || userMap[s.user_id]?.email || (s.user_id ? `#${s.user_id.slice(0, 8)}` : '')
+    }));
+
+    if (filterStatus) {
+      const select = document.getElementById('subsStatusFilter');
+      if (select) select.value = filterStatus;
+    }
+
+    applySubsFilters();
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Failed to load subscriptions.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Failed to load subscriptions.</td></tr>';
   }
+}
+
+function applySubsFilters() {
+  const query = document.getElementById('subsSearchInput')?.value.trim().toLowerCase() || '';
+  const status = document.getElementById('subsStatusFilter')?.value || '';
+  const plan = document.getElementById('subsPlanFilter')?.value || 'all';
+
+  let list = cachedSubs;
+
+  if (query) {
+    list = list.filter(s =>
+      (s.user_name && s.user_name.toLowerCase().includes(query)) ||
+      (s.user_email && s.user_email.toLowerCase().includes(query)) ||
+      (s.plan_name && s.plan_name.toLowerCase().includes(query)) ||
+      (s.razorpay_payment_id && s.razorpay_payment_id.toLowerCase().includes(query)) ||
+      (s.user_id && String(s.user_id).toLowerCase().includes(query))
+    );
+  }
+
+  if (status) {
+    list = list.filter(s => s.status === status);
+  }
+
+  if (plan !== 'all') {
+    if (plan === 'pro') {
+      list = list.filter(s => s.status === 'active' || (s.plan_name && s.plan_name.toLowerCase().includes('pro')));
+    } else if (plan === 'free') {
+      list = list.filter(s => s.status === 'free' || (s.plan_name && s.plan_name.toLowerCase().includes('free')));
+    }
+  }
+
+  const countBadge = document.getElementById('subsTableCount');
+  if (countBadge) {
+    countBadge.textContent = `Showing ${list.length} of ${cachedSubs.length} Subscriptions`;
+  }
+
+  renderSubsTable(list);
+}
+
+function resetSubsFilters() {
+  const searchInput = document.getElementById('subsSearchInput');
+  if (searchInput) searchInput.value = '';
+  const statusFilter = document.getElementById('subsStatusFilter');
+  if (statusFilter) statusFilter.value = '';
+  const planFilter = document.getElementById('subsPlanFilter');
+  if (planFilter) planFilter.value = 'all';
+  applySubsFilters();
+}
+
+function renderSubsTable(list) {
+  const tbody = document.getElementById('subsTableBody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No subscriptions match the active search & filters.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(s => {
+    const userName = s.user_name || 'Task Alert User';
+    const userEmail = s.user_email || '';
+    const isActive = (s.status === 'active');
+    const isFree = (s.status === 'free');
+    const badgeClass = isActive ? 'active' : (s.status === 'expired' || s.status === 'cancelled' ? 'expired' : 'free');
+    const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
+    const priceDisplay = isFree ? '₹0' : `₹${Number(s.plan_price || 399).toLocaleString('en-IN')}`;
+    const expiryDisplay = isActive 
+      ? (s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('en-IN') : '1 Month')
+      : (isFree ? 'Permanent' : 'Expired');
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700; cursor:pointer; color:var(--primary-blue);" onclick="${s.user_id ? `openUserProfileModal('${s.user_id}')` : ''}" title="View user profile">
+            ${escapeHtml(userName)}
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(userEmail)}</div>
+        </td>
+        <td style="font-weight:600;">${escapeHtml(planName)}</td>
+        <td>${priceDisplay}</td>
+        <td><span class="status-badge ${badgeClass}">${(s.status || 'FREE').toUpperCase()}</span></td>
+        <td>${expiryDisplay}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ----------------- SETTINGS HANDLERS -----------------
@@ -3050,9 +3807,9 @@ function saveSettings() {
     API_BASE = custom.replace(/\/+$/, '');
   }
 
-  const appName = document.getElementById('settingAppName')?.value || 'Task Pilot';
+  const appName = document.getElementById('settingAppName')?.value || 'Task Alert';
   const tagline = document.getElementById('settingAppTagline')?.value || '';
-  const supportEmail = document.getElementById('settingSupportEmail')?.value || 'support@taskpilot.com';
+  const supportEmail = document.getElementById('settingSupportEmail')?.value || 'support@taskalert.com';
   const freeLimit = document.getElementById('settingFreeLimit')?.value || '3';
   const monthlyPrice = document.getElementById('settingMonthlyPrice')?.value || '399';
   const annualPrice = document.getElementById('settingAnnualPrice')?.value || '3999';
@@ -3069,9 +3826,9 @@ function saveSettings() {
 }
 
 function resetDefaultSettings() {
-  if (document.getElementById('settingAppName')) document.getElementById('settingAppName').value = 'Task Pilot';
+  if (document.getElementById('settingAppName')) document.getElementById('settingAppName').value = 'Task Alert';
   if (document.getElementById('settingAppTagline')) document.getElementById('settingAppTagline').value = 'Smart AI Daily Task Manager & Habit Streak Tracker';
-  if (document.getElementById('settingSupportEmail')) document.getElementById('settingSupportEmail').value = 'support@taskpilot.com';
+  if (document.getElementById('settingSupportEmail')) document.getElementById('settingSupportEmail').value = 'support@taskalert.com';
   if (document.getElementById('settingFreeLimit')) document.getElementById('settingFreeLimit').value = '3';
   if (document.getElementById('settingMonthlyPrice')) document.getElementById('settingMonthlyPrice').value = '399';
   if (document.getElementById('settingAnnualPrice')) document.getElementById('settingAnnualPrice').value = '3999';
@@ -3081,6 +3838,49 @@ function resetDefaultSettings() {
   saveSettings();
   showToast('✓ Settings reset to default values');
 }
+
+// Settings Real-Time Filter & Search
+function filterSettingsCards(query) {
+  const q = (query || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('.setting-card-item');
+  let visible = 0;
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    const matches = !q || text.includes(q);
+    card.style.display = matches ? '' : 'none';
+    if (matches) visible++;
+  });
+  const countEl = document.getElementById('settingsFilterCount');
+  if (countEl) {
+    countEl.textContent = q ? `${visible} of ${cards.length} Modules` : `${cards.length} Config Modules`;
+  }
+}
+
+// Global Topbar Search Connected to Active View
+document.getElementById('globalSearchInput')?.addEventListener('input', (e) => {
+  const val = e.target.value;
+  const activeView = document.querySelector('.view-container.active')?.id || 'view-overview';
+
+  if (activeView === 'view-overview') {
+    const input = document.getElementById('overviewSearchInput');
+    if (input) { input.value = val; filterOverviewActivity(val); }
+  } else if (activeView === 'view-users') {
+    const input = document.getElementById('userSearchInput');
+    if (input) { input.value = val; applyUsersFilters(); }
+  } else if (activeView === 'view-payments') {
+    const input = document.getElementById('taskSearchInput');
+    if (input) { input.value = val; applyTasksFilters(); }
+  } else if (activeView === 'view-subs') {
+    const input = document.getElementById('subsSearchInput');
+    if (input) { input.value = val; applySubsFilters(); }
+  } else if (activeView === 'view-tickets') {
+    const input = document.getElementById('ticketSearchInput');
+    if (input) { input.value = val; debounceTicketSearch(); }
+  } else if (activeView === 'view-settings') {
+    const input = document.getElementById('settingsSearchInput');
+    if (input) { input.value = val; filterSettingsCards(val); }
+  }
+});
 
 async function testApiConnection() {
   const statusEl = document.getElementById('apiTestStatus');
@@ -3135,6 +3935,7 @@ setInterval(() => {
     if (activeView === 'view-overview') loadOverview();
   }
 }, 25000);
+
 // ================= SUPPORT TICKETS CONTROLLER =================
 let cachedTickets = [];
 let ticketSearchTimeout = null;
@@ -3152,8 +3953,16 @@ function filterTicketsByStatus(status) {
   loadTickets();
 }
 
+function resetTicketFilters() {
+  const s = document.getElementById('ticketSearchInput'); if (s) s.value = '';
+  const stat = document.getElementById('ticketStatusFilter'); if (stat) stat.value = 'all';
+  const cat = document.getElementById('ticketCategoryFilter'); if (cat) cat.value = 'all';
+  loadTickets();
+}
+
 async function loadTickets() {
   const statusFilter = document.getElementById('ticketStatusFilter')?.value || 'all';
+  const categoryFilter = document.getElementById('ticketCategoryFilter')?.value || 'all';
   const search = document.getElementById('ticketSearchInput')?.value || '';
   const tbody = document.getElementById('ticketsTableBody');
   if (tbody) {
@@ -3168,7 +3977,13 @@ async function loadTickets() {
     const res = await fetch(url.toString(), { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    cachedTickets = data.tickets || [];
+    let tickets = data.tickets || [];
+
+    // Filter by Category if selected
+    if (categoryFilter && categoryFilter !== 'all') {
+      tickets = tickets.filter(t => (t.category || 'general').toLowerCase().includes(categoryFilter.toLowerCase()));
+    }
+    cachedTickets = tickets;
 
     // Update KPIs
     const counts = data.counts || { total: 0, open: 0, in_progress: 0, resolved: 0 };
@@ -3188,8 +4003,14 @@ async function loadTickets() {
       }
     }
 
+    // Update Toolbar badge
+    const badgeCount = document.getElementById('ticketsTableCountBadge');
+    if (badgeCount) {
+      badgeCount.textContent = `${cachedTickets.length} Tickets`;
+    }
+
     if (!cachedTickets.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:#94A3B8;">No support tickets found in this view.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:#94A3B8;">No support tickets found matching active filters.</td></tr>`;
       return;
     }
 
@@ -3205,7 +4026,9 @@ async function loadTickets() {
       return `
         <tr>
           <td>
-            <div style="font-weight:600; color:#0F172A;">${escapeHtml(t.user_name || 'User')}</div>
+            <div style="font-weight:600; color:var(--primary-blue); cursor:pointer;" onclick="${t.user_id ? `openUserProfileModal('${t.user_id}')` : ''}" title="View user profile">
+              ${escapeHtml(t.user_name || 'User')}
+            </div>
             <div style="font-size:12px; color:#64748B;">${escapeHtml(t.user_email || '')}</div>
           </td>
           <td>
@@ -3240,6 +4063,258 @@ async function loadTickets() {
     console.error('Error loading tickets:', err);
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:#DC2626;">Failed to load tickets: ${err.message}</td></tr>`;
   }
+}
+
+// ================= USER PROFILE CONTROLLER =================
+let currentModalUser = null;
+let currentModalUserTasks = [];
+let currentModalUserSub = null;
+
+function handleProfileModalBackdrop(e) {
+  if (e.target.id === 'userProfileModal') {
+    closeUserProfileModal();
+  }
+}
+
+function closeUserProfileModal() {
+  const modal = document.getElementById('userProfileModal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function switchProfileTab(tabName) {
+  const tabIds = ['info', 'subscription', 'tasks', 'actions'];
+  tabIds.forEach(t => {
+    const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const panel = document.getElementById(`profileTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (panel) panel.classList.toggle('active', t === tabName);
+  });
+}
+
+function copyUserIdToClipboard() {
+  if (!currentModalUser?.id) return;
+  navigator.clipboard?.writeText(String(currentModalUser.id)).then(() => {
+    showToast('✓ User ID copied to clipboard');
+  }).catch(() => {
+    showToast(`User ID: ${currentModalUser.id}`);
+  });
+}
+
+async function openUserProfileModal(userId) {
+  const modal = document.getElementById('userProfileModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Switch to info tab by default
+  switchProfileTab('info');
+
+  // Pre-fill with cached data if available
+  const cached = cachedUsers.find(u => String(u.id) === String(userId)) || { id: userId };
+  populateModalWithUserData(cached, null, []);
+
+  // Fetch complete real-time details from backend
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${userId}`, { headers: authHeaders() });
+    if (res.ok) {
+      const data = await res.json();
+      populateModalWithUserData(data.user || cached, data.subscription, data.recentTasks || []);
+    }
+  } catch (err) {
+    console.warn('Could not fetch full user profile, using cached data:', err);
+  }
+}
+
+function populateModalWithUserData(user, subscription, tasks) {
+  currentModalUser = user || {};
+  currentModalUserSub = subscription || null;
+  currentModalUserTasks = tasks || [];
+
+  const name = user.name || 'Task Alert User';
+  const email = user.email || 'No email registered';
+  const phone = user.phone || '';
+  const lang = (user.language || 'en').toLowerCase();
+  const isActive = user.is_active !== false;
+  const subStatus = (subscription?.status || user.subscription_status || 'free').toLowerCase();
+  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+
+  const langMap = {
+    en: 'English',
+    hi: 'Hindi (हिंदी)',
+    gu: 'Gujarati (ગુજરાતી)',
+    mr: 'Marathi (मराठी)',
+    ta: 'Tamil (தமிழ்)'
+  };
+  const langDisplay = langMap[lang] || lang.toUpperCase();
+
+  // Header Elements
+  document.getElementById('modalUserAvatar').textContent = initials;
+  document.getElementById('modalUserName').textContent = name;
+  document.getElementById('modalUserEmail').textContent = email;
+  
+  const phoneContainer = document.getElementById('modalUserPhoneContainer');
+  if (phone) {
+    phoneContainer.style.display = 'inline-flex';
+    document.getElementById('modalUserPhone').textContent = phone;
+  } else {
+    phoneContainer.style.display = 'none';
+  }
+
+  const joinDate = user.install_date ? new Date(user.install_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : (user.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently');
+  document.getElementById('modalUserJoined').textContent = joinDate;
+  document.getElementById('modalUserId').textContent = user.id ? `#${String(user.id).slice(0, 12)}` : '#—';
+
+  // Badges
+  const activeBadge = document.getElementById('modalUserActiveBadge');
+  activeBadge.textContent = isActive ? 'ACTIVE' : 'DEACTIVATED';
+  activeBadge.className = `status-badge ${isActive ? 'active' : 'expired'}`;
+
+  const subBadge = document.getElementById('modalUserSubBadge');
+  subBadge.textContent = subStatus.toUpperCase();
+  subBadge.className = `status-badge ${subStatus === 'active' ? 'active' : (subStatus === 'expired' ? 'expired' : 'free')}`;
+
+  // KPI summary cards
+  const isPro = subStatus === 'active';
+  const planPriceVal = subscription?.plan_price ? `₹${subscription.plan_price} / month` : (isPro ? '₹399 / month' : '₹0 / month');
+  document.getElementById('modalKpiPlanName').textContent = subscription?.plan_name || (isPro ? 'Pro Plan' : 'Free Tier');
+  document.getElementById('modalKpiPlanPrice').textContent = planPriceVal;
+
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === 'done').length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  document.getElementById('modalKpiTotalTasks').textContent = totalTasks;
+  document.getElementById('modalKpiTasksSub').textContent = totalTasks > 0 ? `${completedTasks} Completed` : 'No tasks created yet';
+  document.getElementById('modalKpiCompletionRate').textContent = `${completionRate}%`;
+  document.getElementById('modalKpiCompletedSub').textContent = `${completedTasks} of ${totalTasks} tasks`;
+  document.getElementById('modalKpiLang').textContent = langDisplay.split(' ')[0];
+  document.getElementById('modalKpiLangCode').textContent = `Code: ${lang}`;
+  document.getElementById('modalTabTaskCount').textContent = totalTasks;
+
+  // Tab 1 Details
+  document.getElementById('detailFullName').textContent = name;
+  document.getElementById('detailEmail').textContent = email;
+  document.getElementById('detailPhone').textContent = phone || 'Not Provided';
+  document.getElementById('detailLanguage').textContent = `${langDisplay} (${lang})`;
+  document.getElementById('detailAccountStatus').textContent = isActive ? 'Active (Full Access)' : 'Deactivated (Access Blocked)';
+  document.getElementById('detailInstallDate').textContent = user.install_date ? new Date(user.install_date).toLocaleString('en-IN') : 'N/A';
+  document.getElementById('detailCreatedAt').textContent = user.created_at ? new Date(user.created_at).toLocaleString('en-IN') : 'N/A';
+  document.getElementById('detailUserUuid').textContent = user.id || 'N/A';
+
+  // Tab 2 Subscription
+  document.getElementById('detailSubPlan').textContent = subscription?.plan_name || (isPro ? 'Pro Plan' : 'Free Tier');
+  document.getElementById('detailSubPrice').textContent = planPriceVal;
+  document.getElementById('detailSubStatus').textContent = subStatus.toUpperCase();
+  document.getElementById('detailSubExpiry').textContent = subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }) : (isPro ? '30 Days from start' : 'Permanent Free Access');
+  document.getElementById('detailSubPaymentId').textContent = subscription?.razorpay_payment_id || 'N/A';
+  document.getElementById('detailSubSubscriptionId').textContent = subscription?.razorpay_subscription_id || 'N/A';
+
+  // Tab 3 Tasks
+  filterModalTasks('');
+
+  // Tab 4 Admin Controls
+  const toggleBtn = document.getElementById('modalToggleStatusBtn');
+  toggleBtn.textContent = isActive ? 'Deactivate Account' : 'Activate Account';
+  toggleBtn.style.background = isActive ? '#F59E0B' : '#10B981';
+
+  const langSelect = document.getElementById('modalActionLanguageSelect');
+  if (langSelect) langSelect.value = lang;
+}
+
+function filterModalTasks(q) {
+  const query = (q || '').toLowerCase().trim();
+  const status = document.getElementById('modalTaskStatusFilter')?.value || 'all';
+  const tbody = document.getElementById('modalTasksTableBody');
+  if (!tbody) return;
+
+  let filtered = currentModalUserTasks;
+  if (query) {
+    filtered = filtered.filter(t => (t.title && t.title.toLowerCase().includes(query)) || (t.description && t.description.toLowerCase().includes(query)));
+  }
+  if (status === 'done') {
+    filtered = filtered.filter(t => t.status === 'done');
+  } else if (status === 'pending') {
+    filtered = filtered.filter(t => t.status !== 'done');
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:24px; color:var(--text-muted);">No tasks recorded for this user.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(t => {
+    const isDone = t.status === 'done';
+    return `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(t.title || 'Untitled Task')}</td>
+        <td>${t.task_date || 'Today'}</td>
+        <td>${t.task_time || 'Scheduled'}</td>
+        <td><span class="status-badge ${isDone ? 'active' : 'free'}">${isDone ? 'COMPLETED' : 'PENDING'}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function toggleModalUserStatus() {
+  if (!currentModalUser?.id) return;
+  await toggleUserStatus(currentModalUser.id, currentModalUser.is_active !== false);
+}
+
+async function grantModalUserPremium() {
+  if (!currentModalUser?.id) return;
+  if (!confirm(`Grant 30 days of free Pro Subscription to "${currentModalUser.name || 'User'}"?`)) return;
+
+  showToast('Granting 30-Day Pro Subscription...');
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${currentModalUser.id}/grant-premium`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ days: 30 })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || '✓ Pro subscription granted successfully!');
+      await loadUsers();
+      if (typeof loadSubs === 'function') loadSubs('');
+      if (typeof loadOverview === 'function') loadOverview();
+      openUserProfileModal(currentModalUser.id);
+    } else {
+      alert(data.error || 'Failed to grant premium access');
+    }
+  } catch (err) {
+    alert(`Network error: ${err.message}`);
+  }
+}
+
+async function saveModalUserLanguage() {
+  if (!currentModalUser?.id) return;
+  const lang = document.getElementById('modalActionLanguageSelect')?.value;
+  if (!lang) return;
+
+  showToast('Updating user language...');
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${currentModalUser.id}/language`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ language: lang })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || `✓ Language updated to ${lang.toUpperCase()}`);
+      await loadUsers();
+      openUserProfileModal(currentModalUser.id);
+    } else {
+      alert(data.error || 'Failed to update language');
+    }
+  } catch (err) {
+    alert(`Network error: ${err.message}`);
+  }
+}
+
+function deleteModalUser() {
+  if (!currentModalUser?.id) return;
+  deleteUser(currentModalUser.id, currentModalUser.name || 'User');
 }
 
 let activeModalTicket = null;
@@ -3368,6 +4443,233 @@ function deleteActiveModalTicket() {
         <button id="ticketModalSaveBtn" class="btn-submit" style="width:auto; padding:10px 24px; margin-top:0;" onclick="saveTicketReply()">Save & Update Ticket</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= USER PROFILE WITH ALL NECESSARY DETAILS MODAL ================= -->
+<div id="userProfileModal" class="profile-modal-overlay" onclick="handleProfileModalBackdrop(event)">
+  <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalUserName">
+    
+    <!-- Modal Header -->
+    <div class="profile-modal-header">
+      <button class="profile-modal-close-btn" onclick="closeUserProfileModal()" aria-label="Close Profile">✕</button>
+      <div class="profile-header-flex">
+        <div class="profile-hero-avatar" id="modalUserAvatar">U</div>
+        <div class="profile-header-info">
+          <div class="profile-hero-name">
+            <span id="modalUserName">User Name</span>
+            <span id="modalUserActiveBadge" class="status-badge active">ACTIVE</span>
+            <span id="modalUserSubBadge" class="status-badge free">FREE TIER</span>
+          </div>
+          <div class="profile-hero-meta">
+            <span class="profile-hero-meta-item">
+              <span>📧</span>
+              <span id="modalUserEmail">user@example.com</span>
+            </span>
+            <span class="profile-hero-meta-item" id="modalUserPhoneContainer">
+              <span>📱</span>
+              <span id="modalUserPhone">+91 00000 00000</span>
+            </span>
+            <span class="profile-hero-meta-item">
+              <span>📅 Joined:</span>
+              <span id="modalUserJoined">Recent</span>
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-top:2px;">
+            <span>User ID: <code id="modalUserId" style="background:#F1F5F9; padding:2px 8px; border-radius:6px; font-family:monospace; color:#334155; font-size:12px;">#00000</code></span>
+            <button class="copy-chip" onclick="copyUserIdToClipboard()" title="Copy User ID">📋 Copy ID</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 KPI Quick Summary Cards -->
+    <div class="profile-kpi-grid">
+      <div class="profile-kpi-item">
+        <div class="profile-kpi-label">Subscription Tier</div>
+        <div class="profile-kpi-val" id="modalKpiPlanName">Free Tier</div>
+        <div class="profile-kpi-sub" id="modalKpiPlanPrice">₹0 / month</div>
+      </div>
+      <div class="profile-kpi-item">
+        <div class="profile-kpi-label">Total Tasks</div>
+        <div class="profile-kpi-val" id="modalKpiTotalTasks">0</div>
+        <div class="profile-kpi-sub" id="modalKpiTasksSub">Created all-time</div>
+      </div>
+      <div class="profile-kpi-item">
+        <div class="profile-kpi-label">Completion Rate</div>
+        <div class="profile-kpi-val" id="modalKpiCompletionRate">0%</div>
+        <div class="profile-kpi-sub" id="modalKpiCompletedSub">0 Completed</div>
+      </div>
+      <div class="profile-kpi-item">
+        <div class="profile-kpi-label">Language / Locale</div>
+        <div class="profile-kpi-val" id="modalKpiLang">English</div>
+        <div class="profile-kpi-sub" id="modalKpiLangCode">Code: en</div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="profile-tabs-nav">
+      <button class="profile-tab-btn active" id="tabBtnInfo" onclick="switchProfileTab('info')">Overview & Details</button>
+      <button class="profile-tab-btn" id="tabBtnSub" onclick="switchProfileTab('subscription')">Subscription & Billing</button>
+      <button class="profile-tab-btn" id="tabBtnTasks" onclick="switchProfileTab('tasks')">Tasks & Activity (<span id="modalTabTaskCount">0</span>)</button>
+      <button class="profile-tab-btn" id="tabBtnActions" onclick="switchProfileTab('actions')">Admin Actions & Controls</button>
+    </div>
+
+    <!-- Tab 1: Overview & Details -->
+    <div id="profileTabInfo" class="profile-tab-panel active">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text-primary);">Account & Personal Profile Details</h3>
+      <div class="profile-details-grid">
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Full Name</div>
+          <div class="profile-detail-value" id="detailFullName">—</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Email Address</div>
+          <div class="profile-detail-value" id="detailEmail">—</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Phone Number</div>
+          <div class="profile-detail-value" id="detailPhone">Not Provided</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Preferred App Language</div>
+          <div class="profile-detail-value" id="detailLanguage">English (en)</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Account Status</div>
+          <div class="profile-detail-value" id="detailAccountStatus">Active (Permitted)</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Install / Registration Date</div>
+          <div class="profile-detail-value" id="detailInstallDate">—</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Account Created At</div>
+          <div class="profile-detail-value" id="detailCreatedAt">—</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">System Unique UUID</div>
+          <div class="profile-detail-value" id="detailUserUuid" style="font-family:monospace; font-size:12px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Subscription & Billing -->
+    <div id="profileTabSubscription" class="profile-tab-panel">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text-primary);">Subscription Plan & Billing Information</h3>
+      <div class="profile-details-grid" style="margin-bottom:20px;">
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Current Plan Name</div>
+          <div class="profile-detail-value" id="detailSubPlan">Free Tier</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Plan Price Rate</div>
+          <div class="profile-detail-value" id="detailSubPrice">₹0 / month</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Subscription Status</div>
+          <div class="profile-detail-value" id="detailSubStatus">Free</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Renewal / Expiry Date</div>
+          <div class="profile-detail-value" id="detailSubExpiry">Permanent</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Razorpay Payment ID</div>
+          <div class="profile-detail-value" id="detailSubPaymentId" style="font-family:monospace; font-size:12px;">N/A</div>
+        </div>
+        <div class="profile-detail-cell">
+          <div class="profile-detail-label">Razorpay Subscription ID</div>
+          <div class="profile-detail-value" id="detailSubSubscriptionId" style="font-family:monospace; font-size:12px;">N/A</div>
+        </div>
+      </div>
+
+      <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:14px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:13.5px; font-weight:700; color:#15803D;">Grant Free 30-Day Pro Subscription</div>
+          <div style="font-size:12px; color:#166534;">Compliment this user with 30 days of full Pro access and unlimited tasks.</div>
+        </div>
+        <button class="btn-submit" style="width:auto; padding:9px 18px; margin-top:0; background:#16A34A; border-color:transparent;" onclick="grantModalUserPremium()">Grant 30-Day Pro</button>
+      </div>
+    </div>
+
+    <!-- Tab 3: Tasks & Activity -->
+    <div id="profileTabTasks" class="profile-tab-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <h3 style="font-size:15px; font-weight:700; color:var(--text-primary);">User's Scheduled Tasks & Reminders</h3>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="modalTaskSearch" class="input-field" placeholder="Search user's tasks..." style="padding:6px 12px; font-size:12px; width:180px;" oninput="filterModalTasks(this.value)">
+          <select id="modalTaskStatusFilter" class="input-field" style="padding:6px 10px; font-size:12px; width:130px;" onchange="filterModalTasks(document.getElementById('modalTaskSearch').value)">
+            <option value="all">All Statuses</option>
+            <option value="done">Completed</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--border-card); border-radius:12px; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Task Title</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="modalTasksTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 4: Admin Actions -->
+    <div id="profileTabActions" class="profile-tab-panel">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text-primary);">Administrative Actions & Security Controls</h3>
+
+      <!-- Action 1: Toggle Active -->
+      <div class="profile-action-card">
+        <div>
+          <div class="profile-action-title">Account Access & Login Authorization</div>
+          <div class="profile-action-desc">Instantly toggle whether this user is allowed to sign in and synchronize tasks with Task Alert.</div>
+        </div>
+        <button id="modalToggleStatusBtn" class="btn-submit" style="width:auto; padding:8px 18px; margin-top:0; white-space:nowrap;" onclick="toggleModalUserStatus()">Deactivate Account</button>
+      </div>
+
+      <!-- Action 2: Change Language -->
+      <div class="profile-action-card">
+        <div>
+          <div class="profile-action-title">Update Preferred App Language</div>
+          <div class="profile-action-desc">Change the user's interface language for in-app reminders and voice alerts.</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="modalActionLanguageSelect" class="filter-select" style="min-width:130px;">
+            <option value="en">English (en)</option>
+            <option value="hi">Hindi (hi)</option>
+            <option value="gu">Gujarati (gu)</option>
+            <option value="mr">Marathi (mr)</option>
+            <option value="ta">Tamil (ta)</option>
+          </select>
+          <button class="btn-submit" style="width:auto; padding:8px 14px; margin-top:0;" onclick="saveModalUserLanguage()">Save</button>
+        </div>
+      </div>
+
+      <!-- Action 3: Permanently Delete -->
+      <div class="profile-action-card" style="border-color:#FCA5A5; background:#FFF5F5;">
+        <div>
+          <div class="profile-action-title" style="color:#DC2626;">Permanently Delete Account</div>
+          <div class="profile-action-desc">Removes user identity, task database records, and active subscription. This cannot be undone.</div>
+        </div>
+        <button class="btn-submit" style="width:auto; padding:8px 18px; margin-top:0; background:#EF4444; border-color:transparent; white-space:nowrap;" onclick="deleteModalUser()">Delete User</button>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding:16px 32px; border-top:1px solid var(--border-line); background:#F8FAFC; display:flex; justify-content:flex-end; gap:10px;">
+      <button class="btn-secondary" onclick="closeUserProfileModal()">Close Profile</button>
+    </div>
+
   </div>
 </div>
 </body>
