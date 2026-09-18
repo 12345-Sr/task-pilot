@@ -51,7 +51,6 @@ export const AddTaskScreen: React.FC = () => {
     const next = getNextValidFutureTime();
     return `${next.hourStr}:${next.minuteStr} ${next.period}`;
   });
-  const [reminderEnabled, setReminderEnabled] = useState(true);
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
@@ -71,19 +70,18 @@ export const AddTaskScreen: React.FC = () => {
       return;
     }
 
-    if (reminderEnabled) {
-      const parts = reminderTime.replace(/am|pm/gi, '').trim().split(':');
-      const isPM = /pm/i.test(reminderTime);
-      const hStr = parts[0] || '09';
-      const mStr = parts[1] || '00';
-      if (isTimeInPast(hStr, mStr, isPM ? 'PM' : 'AM', selectedDate)) {
-        setErrorMsg(
-          language === 'hi'
-            ? '⚠️ Aaj ke liye beeta hua samay nahi chuna ja sakta. Kripya aage ka samay chunein.'
-            : '⚠️ Cannot schedule a past time for today. Please pick a future time.'
-        );
-        return;
-      }
+    // Time is mandatory and cannot be skipped - validate for past time
+    const parts = reminderTime.replace(/am|pm/gi, '').trim().split(':');
+    const isPM = /pm/i.test(reminderTime);
+    const hStr = parts[0] || '09';
+    const mStr = parts[1] || '00';
+    if (isTimeInPast(hStr, mStr, isPM ? 'PM' : 'AM', selectedDate)) {
+      setErrorMsg(
+        language === 'hi'
+          ? '⚠️ Aaj ke liye beeta hua samay nahi chuna ja sakta. Kripya aage ka samay chunein.'
+          : '⚠️ Cannot schedule a past time for today. Please pick a future time.'
+      );
+      return;
     }
 
     const { used: freeUsed } = useAppStore.getState().getFreeUsage();
@@ -132,8 +130,8 @@ export const AddTaskScreen: React.FC = () => {
         priority: priority.toUpperCase() as any,
         targetDate: selectedDate,
         date: selectedDate,
-        reminderTime: reminderEnabled ? reminderTime : undefined,
-        time: reminderEnabled ? reminderTime : undefined,
+        reminderTime: reminderTime,
+        time: reminderTime,
         repeatMonthly: Boolean(repeatMonthly),
       },
       {
@@ -148,15 +146,13 @@ export const AddTaskScreen: React.FC = () => {
           await NotificationService.sendTaskAddedNotification(
             taskTitle,
             selectedDate,
-            reminderEnabled ? reminderTime : undefined,
+            reminderTime,
             `✅ ${t(language, 'task_added_success')}: ${taskTitle}`,
             t(language, 'task_added_msg')
           );
 
-          // 2. Schedule future deadline / alert if reminder is enabled
-          if (reminderEnabled) {
-            await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
-          }
+          // 2. Schedule future deadline / alert (time is mandatory)
+          await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
           const wasRepeated = repeatMonthly;
           setTitle('');
           setDescription('');
@@ -330,44 +326,40 @@ export const AddTaskScreen: React.FC = () => {
             />
           </View>
 
-          {/* Reminder Section with Sliding Time Picker */}
+          {/* Reminder Section with Sliding Time Picker - Mandatory & Important */}
           <View style={styles.reminderCard}>
             <View style={styles.reminderHeader}>
               <View style={styles.reminderHeaderLeft}>
                 <Text style={styles.reminderTitle}>{t(language, 'reminder_time_heading')}</Text>
                 <Text style={styles.reminderSubtitle}>
-                  {reminderEnabled ? `${reminderTime} ${t(language, 'alert_at_time')}` : t(language, 'alert_off')}
+                  {`${reminderTime} ${t(language, 'alert_at_time')}`}
                 </Text>
               </View>
-              <Switch
-                value={reminderEnabled}
-                onValueChange={setReminderEnabled}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={colors.surface}
-              />
+              <View style={styles.importantBadge}>
+                <View style={styles.importantDot} />
+                <Text style={styles.importantBadgeText}>
+                  {language === 'hi' ? 'महत्वपूर्ण' : 'Important'}
+                </Text>
+              </View>
             </View>
 
-            {reminderEnabled && (
-              <>
-                {/* 3-Column Time Slider Picker */}
-                <TimeSliderPicker
-                  value={reminderTime}
-                  onChange={setReminderTime}
-                  language={language}
-                  selectedDate={selectedDate}
-                />
+            {/* 3-Column Time Slider Picker */}
+            <TimeSliderPicker
+              value={reminderTime}
+              onChange={setReminderTime}
+              language={language}
+              selectedDate={selectedDate}
+            />
 
-                {/* Focused Task Alert Note */}
-                <View style={styles.alertNoteBox}>
-                  <Text style={styles.alertNoteIcon}>🔔</Text>
-                  <Text style={styles.alertNoteText}>
-                    {language === 'hi'
-                      ? `Is kaam ke 2 alerts aayenge: 10 minute pehle warning aur theek samay (${reminderTime}) par alert.`
-                      : `2 alerts will sound for this task: 10 minutes before and at the exact scheduled time (${reminderTime}).`}
-                  </Text>
-                </View>
-              </>
-            )}
+            {/* Focused Task Alert Note */}
+            <View style={styles.alertNoteBox}>
+              <Text style={styles.alertNoteIcon}>🔔</Text>
+              <Text style={styles.alertNoteText}>
+                {language === 'hi'
+                  ? `Is kaam ke 2 alerts aayenge: 10 minute pehle warning aur theek samay (${reminderTime}) par alert.`
+                  : `2 alerts will sound for this task: 10 minutes before and at the exact scheduled time (${reminderTime}).`}
+              </Text>
+            </View>
           </View>
 
           {/* Pro Feature: Repeat Daily for Whole Month */}
@@ -462,9 +454,7 @@ export const AddTaskScreen: React.FC = () => {
 
                 <View style={styles.previewRow}>
                   <Text style={styles.previewLabel}>⏰ {t(language, 'reminder_time_heading').replace(/^[^\w\s\u0900-\u0DFF]+/, '').trim()}:</Text>
-                  <Text style={styles.previewValue}>
-                    {reminderEnabled ? reminderTime : t(language, 'alert_off')}
-                  </Text>
+                  <Text style={styles.previewValue}>{reminderTime}</Text>
                 </View>
 
                 <View style={styles.previewDivider} />
@@ -683,9 +673,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: '#E2E8F0',
     padding: spacing.md,
     gap: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   reminderHeader: {
     flexDirection: 'row',
@@ -705,6 +700,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.primaryOrange,
+  },
+  importantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECDD3',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    gap: 5,
+  },
+  importantDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+  importantBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#DC2626',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   alertNoteBox: {
     flexDirection: 'row',

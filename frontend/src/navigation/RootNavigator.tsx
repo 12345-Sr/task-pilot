@@ -134,8 +134,8 @@ export const RootNavigator: React.FC = () => {
       >
         <Stack.Screen name="Language" component={LanguageScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="AddTask" component={AddTaskScreen} />

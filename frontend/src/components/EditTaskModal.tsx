@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Switch,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -44,7 +43,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [description, setDescription] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [reminderTime, setReminderTime] = useState('06:00 PM');
-  const [reminderEnabled, setReminderEnabled] = useState(true);
   const [priority, setPriority] = useState<Priority>('medium');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -68,8 +66,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     const initialTime =
       task.deadlineTime || task.time || task.reminderTime || '06:00 PM';
     setReminderTime(initialTime);
-
-    setReminderEnabled(Boolean(task.deadlineTime || task.time || task.reminderTime));
 
     const p = String(task.priority || 'MEDIUM').toUpperCase();
     if (p === 'URGENT' || p === 'HIGH' || p === 'ZAROORI' || p === 'IMPORTANT') {
@@ -97,20 +93,18 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       return;
     }
 
-    // Past time validation for Today tasks
-    if (reminderEnabled) {
-      const parts = reminderTime.replace(/am|pm/gi, '').trim().split(':');
-      const isPM = /pm/i.test(reminderTime);
-      const hStr = parts[0] || '09';
-      const mStr = parts[1] || '00';
-      if (isTimeInPast(hStr, mStr, isPM ? 'PM' : 'AM', selectedDate)) {
-        setErrorMsg(
-          language === 'hi'
-            ? '⚠️ Beeta hua samay nahi chuna ja sakta. Kripya future time chunein.'
-            : '⚠️ Cannot schedule a past time for today. Please pick a future time.'
-        );
-        return;
-      }
+    // Time is mandatory - validate past time for Today tasks
+    const parts = reminderTime.replace(/am|pm/gi, '').trim().split(':');
+    const isPM = /pm/i.test(reminderTime);
+    const hStr = parts[0] || '09';
+    const mStr = parts[1] || '00';
+    if (isTimeInPast(hStr, mStr, isPM ? 'PM' : 'AM', selectedDate)) {
+      setErrorMsg(
+        language === 'hi'
+          ? '⚠️ Beeta hua samay nahi chuna ja sakta. Kripya future time chunein.'
+          : '⚠️ Cannot schedule a past time for today. Please pick a future time.'
+      );
+      return;
     }
 
     const trimmedDesc = description.trim();
@@ -128,25 +122,21 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         notes: trimmedDesc,
         targetDate: selectedDate,
         date: selectedDate,
-        time: reminderEnabled ? reminderTime : undefined,
-        deadlineTime: reminderEnabled ? reminderTime : undefined,
-        reminderTime: reminderEnabled ? reminderTime : undefined,
+        time: reminderTime,
+        deadlineTime: reminderTime,
+        reminderTime: reminderTime,
         priority: priority.toUpperCase() as any,
       } as any,
       {
         onSuccess: async (updated: any) => {
-          // Reschedule alert notifications
-          if (reminderEnabled) {
-            await NotificationService.cancelTaskAlerts(task.id);
-            await NotificationService.scheduleTaskAlerts(
-              trimmedTitle,
-              selectedDate,
-              reminderTime,
-              task.id
-            );
-          } else {
-            await NotificationService.cancelTaskAlerts(task.id);
-          }
+          // Reschedule alert notifications (time is mandatory)
+          await NotificationService.cancelTaskAlerts(task.id);
+          await NotificationService.scheduleTaskAlerts(
+            trimmedTitle,
+            selectedDate,
+            reminderTime,
+            task.id
+          );
 
           Alert.alert(
             '✅',
@@ -270,7 +260,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               />
             </View>
 
-            {/* 4. Reminder Time & Clock with Past-Time Prevention */}
+            {/* 4. Reminder Time & Clock - Mandatory & Important */}
             <View style={styles.fieldBlock}>
               <View style={styles.reminderToggleRow}>
                 <View>
@@ -278,29 +268,25 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     {language === 'hi' ? 'Deadline Time & Alert' : 'Deadline Time & Alert'}
                   </Text>
                   <Text style={styles.reminderToggleSub}>
-                    {language === 'hi'
-                      ? 'AM / PM ya samay yahan badlein'
-                      : 'Change AM / PM or alert hours'}
+                    {`${reminderTime} • ${language === 'hi' ? 'अनिवार्य समय' : 'Scheduled & Important'}`}
                   </Text>
                 </View>
-                <Switch
-                  value={reminderEnabled}
-                  onValueChange={setReminderEnabled}
-                  trackColor={{ false: '#CBD5E1', true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                />
+                <View style={styles.importantBadge}>
+                  <View style={styles.importantDot} />
+                  <Text style={styles.importantBadgeText}>
+                    {language === 'hi' ? 'महत्वपूर्ण' : 'Important'}
+                  </Text>
+                </View>
               </View>
 
-              {reminderEnabled && (
-                <View style={styles.clockBox}>
-                  <TimeSliderPicker
-                    value={reminderTime}
-                    onChange={setReminderTime}
-                    language={language}
-                    selectedDate={selectedDate}
-                  />
-                </View>
-              )}
+              <View style={styles.clockBox}>
+                <TimeSliderPicker
+                  value={reminderTime}
+                  onChange={setReminderTime}
+                  language={language}
+                  selectedDate={selectedDate}
+                />
+              </View>
             </View>
 
             {/* 5. Notes / Description */}
@@ -487,6 +473,30 @@ const styles = StyleSheet.create({
   reminderToggleSub: {
     fontSize: 11,
     color: '#64748B',
+  },
+  importantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECDD3',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    gap: 5,
+  },
+  importantDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+  importantBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#DC2626',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   clockBox: {
     marginTop: 4,

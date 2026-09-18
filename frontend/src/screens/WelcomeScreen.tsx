@@ -409,7 +409,7 @@ export default function WelcomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.primaryBtn}
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('Signup')}
+            onPress={() => navigation.navigate('Login')}
             accessibilityRole="button"
             accessibilityLabel={t(language, 'welcome_start')}
           >
@@ -424,14 +424,14 @@ export default function WelcomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.secondaryBtn}
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => navigation.navigate('Signup')}
             accessibilityRole="button"
-            accessibilityLabel={t(language, 'login_button')}
+            accessibilityLabel={t(language, 'signup_button')}
           >
             <Text style={styles.secondaryBtnText}>
-              {t(language, 'already_have_account')}{' '}
+              {t(language, 'dont_have_account')}{' '}
               <Text style={styles.secondaryBtnHighlight}>
-                {t(language, 'login_button')}
+                {t(language, 'signup_button')}
               </Text>
             </Text>
           </TouchableOpacity>
