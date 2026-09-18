@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
@@ -463,20 +464,27 @@ export const SignupScreen: React.FC = () => {
               </Text>
             </View>
 
-            {/* Golden Primary CTA Button */}
+            {/* Vibrant Purple-Blue Gradient Primary CTA Button */}
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[styles.primaryButtonTouch, registerMutation.isPending && styles.buttonDisabled]}
               onPress={handleSignup}
               disabled={registerMutation.isPending}
               activeOpacity={0.88}
             >
-              {registerMutation.isPending ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.primaryButtonText}>
-                  {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
-                </Text>
-              )}
+              <LinearGradient
+                colors={['#8B5CF6', '#3B82F6']}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.primaryButton}
+              >
+                {registerMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>
+                    {language === 'hi' ? 'Naya Account Banayein →' : 'Create Account →'}
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
             {/* Divider */}
@@ -850,17 +858,25 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '500',
   },
+  primaryButtonTouch: {
+    height: 48,
+    borderRadius: 13,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
   primaryButton: {
-    backgroundColor: colors.primary,
-    height: 46,
-    borderRadius: 12,
+    flex: 1,
+    height: 48,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.24,
-    shadowRadius: 6,
-    elevation: 3,
+  },
+  buttonDisabled: {
+    opacity: 0.65,
   },
   primaryButtonText: {
     color: '#FFFFFF',

@@ -15,6 +15,7 @@ import {
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Task, Priority } from '../types';
 import { useAppStore } from '../store';
 import { useUpdateTask } from '../hooks';
@@ -330,13 +331,20 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               activeOpacity={0.88}
               disabled={updateMutation.isPending}
             >
-              {updateMutation.isPending ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.saveBtnText}>
-                  {language === 'hi' ? 'Badlaav Save Karein 💾' : 'Save Changes 💾'}
-                </Text>
-              )}
+              <LinearGradient
+                colors={['#8B5CF6', '#3B82F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveBtnGradient}
+              >
+                {updateMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>
+                    {language === 'hi' ? 'Badlaav Save Karein 💾' : 'Save Changes 💾'}
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -524,16 +532,20 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     flex: 2,
-    paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: colors.primary, // #C5A059 Champagne Camel Gold
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
+    overflow: 'hidden',
+    shadowColor: colors.primaryPurple,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
+  },
+  saveBtnGradient: {
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   saveBtnText: {
     fontSize: 15,

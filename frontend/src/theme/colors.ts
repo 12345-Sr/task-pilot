@@ -17,13 +17,17 @@ export const colors = {
   secondaryText: '#64748B',
   textMuted: '#94A3B8',
 
-  // Brand Accents (Panel 10: Primary #C5A059 - Camel Sand / Champagne Gold, NOT Orange)
-  primary: '#C5A059',
-  primaryOrange: '#C5A059',
-  darkOrange: '#A37B30',
-  brandGold: '#C5A059',
-  goldSoft: '#FDF7EC',
-  goldLight: '#FFFDF7',
+  // Brand Accents - Modern Purple-to-Blue Gradient Scheme
+  primary: '#6366F1',
+  primaryPurple: '#8B5CF6',
+  primaryBlue: '#3B82F6',
+  buttonGradient: ['#8B5CF6', '#3B82F6'] as const,
+  buttonGradientAlt: ['#7C3AED', '#2563EB'] as const,
+  primaryOrange: '#6366F1',
+  darkOrange: '#4F46E5',
+  brandGold: '#6366F1',
+  goldSoft: '#EEF2FF',
+  goldLight: '#F5F3FF',
 
   // Priority Accents (from Panel 10 Mockup)
   // Red (Important) / Zaroori: Sea-Green / Teal #26A69A
@@ -52,9 +56,6 @@ export const colors = {
   eveningIndigo: '#1E1B4B',
   eveningPurple: '#4F46E5',
   eveningSoft: '#EEF2FF',
-
-  // Primary Blue / Steel
-  primaryBlue: '#0284C7',
 
   // Borders, Dividers & Shadows
   border: '#E2E8F0',

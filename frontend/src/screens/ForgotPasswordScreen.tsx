@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import BrandLogo from '../components/BrandLogo';
@@ -275,11 +276,18 @@ export const ForgotPasswordScreen: React.FC = () => {
                   onPress={handleSendCode}
                   disabled={forgotMutation.isPending}
                 >
-                  {forgotMutation.isPending ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.primaryButtonText}>{t(language, 'send_code_btn')}</Text>
-                  )}
+                  <LinearGradient
+                    colors={['#8B5CF6', '#3B82F6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    {forgotMutation.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.primaryButtonText}>{t(language, 'send_code_btn')}</Text>
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             )}
@@ -320,13 +328,20 @@ export const ForgotPasswordScreen: React.FC = () => {
                   onPress={handleVerifyCode}
                   disabled={verifyMutation.isPending}
                 >
-                  {verifyMutation.isPending ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.primaryButtonText}>
-                      {language === 'hi' ? 'Code Verify Karein' : 'Verify Code'}
-                    </Text>
-                  )}
+                  <LinearGradient
+                    colors={['#8B5CF6', '#3B82F6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    {verifyMutation.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.primaryButtonText}>
+                        {language === 'hi' ? 'Code Verify Karein' : 'Verify Code'}
+                      </Text>
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
 
                 <View style={styles.resendRow}>
@@ -406,11 +421,18 @@ export const ForgotPasswordScreen: React.FC = () => {
                   onPress={handleResetPassword}
                   disabled={resetMutation.isPending}
                 >
-                  {resetMutation.isPending ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.primaryButtonText}>{t(language, 'submit_reset_btn')}</Text>
-                  )}
+                  <LinearGradient
+                    colors={['#8B5CF6', '#3B82F6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    {resetMutation.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.primaryButtonText}>{t(language, 'submit_reset_btn')}</Text>
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             )}
@@ -432,7 +454,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                   activeOpacity={0.88}
                   onPress={() => navigation.navigate('Login')}
                 >
-                  <Text style={styles.primaryButtonText}>{t(language, 'login_button')}</Text>
+                  <LinearGradient
+                    colors={['#8B5CF6', '#3B82F6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    <Text style={styles.primaryButtonText}>{t(language, 'login_button')}</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             )}
@@ -670,17 +699,20 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
-    height: 52,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
+    overflow: 'hidden',
+    shadowColor: colors.primaryPurple,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 4,
     marginTop: 4,
+  },
+  primaryButtonGradient: {
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
   },
   buttonDisabled: {
     opacity: 0.65,

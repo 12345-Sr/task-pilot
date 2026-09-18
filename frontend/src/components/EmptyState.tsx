@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { useAppStore } from '../store';
@@ -36,12 +37,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {handlePress ? (
         <TouchableOpacity
           activeOpacity={0.8}
-          style={styles.btn}
+          style={styles.btnTouch}
           onPress={handlePress}
           accessibilityRole="button"
           accessibilityLabel={buttonLabel}
         >
-          <Text style={styles.btnText}>{buttonLabel}</Text>
+          <LinearGradient
+            colors={['#8B5CF6', '#3B82F6']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.btn}
+          >
+            <Text style={styles.btnText}>{buttonLabel}</Text>
+          </LinearGradient>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -72,11 +80,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
+  btnTouch: {
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    shadowColor: colors.primaryPurple,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   btn: {
-    backgroundColor: colors.primaryOrange,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnText: {
     color: colors.white,

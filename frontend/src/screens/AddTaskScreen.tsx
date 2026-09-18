@@ -14,6 +14,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
 import { useAppStore } from '../store';
@@ -396,18 +397,25 @@ export const AddTaskScreen: React.FC = () => {
 
           {/* Review & Save CTA */}
           <TouchableOpacity
-            style={[styles.saveButton, createTaskMutation.isPending && styles.buttonDisabled]}
+            style={[styles.saveButtonTouch, createTaskMutation.isPending && styles.buttonDisabled]}
             activeOpacity={0.85}
             onPress={handleReviewTask}
             disabled={createTaskMutation.isPending}
           >
-            {createTaskMutation.isPending ? (
-              <ActivityIndicator color={colors.surface} />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                {language === 'hi' ? 'Kaam Jodo' : t(language, 'save_task')}
-              </Text>
-            )}
+            <LinearGradient
+              colors={['#8B5CF6', '#3B82F6']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.saveButton}
+            >
+              {createTaskMutation.isPending ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <Text style={styles.saveButtonText}>
+                  {language === 'hi' ? 'Kaam Jodo →' : `${t(language, 'save_task')} →`}
+                </Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -501,18 +509,25 @@ export const AddTaskScreen: React.FC = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalSubmitBtn, createTaskMutation.isPending && styles.buttonDisabled]}
+                style={[styles.modalSubmitBtnTouch, createTaskMutation.isPending && styles.buttonDisabled]}
                 activeOpacity={0.85}
                 onPress={handleConfirmAndSave}
                 disabled={createTaskMutation.isPending}
               >
-                {createTaskMutation.isPending ? (
-                  <ActivityIndicator color={colors.surface} size="small" />
-                ) : (
-                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>
-                    {t(language, 'confirm_task_submit')}
-                  </Text>
-                )}
+                <LinearGradient
+                  colors={['#8B5CF6', '#3B82F6']}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={styles.modalSubmitBtn}
+                >
+                  {createTaskMutation.isPending ? (
+                    <ActivityIndicator color={colors.surface} size="small" />
+                  ) : (
+                    <Text style={styles.modalSubmitBtnText} numberOfLines={1}>
+                      {t(language, 'confirm_task_submit')}
+                    </Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -751,17 +766,21 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.primaryOrange,
   },
+  saveButtonTouch: {
+    borderRadius: radius.md,
+    marginTop: spacing.md,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
   saveButton: {
-    backgroundColor: colors.primaryOrange,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    marginTop: spacing.md,
-    shadowColor: colors.primaryOrange,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -902,19 +921,24 @@ const styles = StyleSheet.create({
     color: '#475569',
     textAlign: 'center',
   },
-  modalSubmitBtn: {
+  modalSubmitBtnTouch: {
     flex: 1.3,
+    height: 46,
+    borderRadius: radius.md,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  modalSubmitBtn: {
+    flex: 1,
     height: 46,
     paddingHorizontal: 6,
     borderRadius: radius.md,
-    backgroundColor: colors.primaryOrange,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primaryOrange,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   modalSubmitBtnText: {
     fontSize: 13,

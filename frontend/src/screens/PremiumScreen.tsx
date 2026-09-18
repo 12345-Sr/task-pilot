@@ -11,6 +11,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import { useUpgradeSubscription } from '../hooks';
@@ -168,15 +169,22 @@ export const PremiumScreen: React.FC = () => {
           onPress={handleSubscribe}
           disabled={upgradeMutation.isPending}
         >
-          {upgradeMutation.isPending ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.upgradeBtnText}>
-              {isPremium
-                ? (language === 'hi' ? '👑 Pro Status & Details Dekhein' : '👑 View Pro Details & Status')
-                : (language === 'hi' ? '3 Din Free Try Karein' : t(language, 'unlock_pro'))}
-            </Text>
-          )}
+          <LinearGradient
+            colors={['#8B5CF6', '#3B82F6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.upgradeBtnGradient}
+          >
+            {upgradeMutation.isPending ? (
+              <ActivityIndicator color={colors.surface} />
+            ) : (
+              <Text style={styles.upgradeBtnText}>
+                {isPremium
+                  ? (language === 'hi' ? '👑 Pro Status & Details Dekhein' : '👑 View Pro Details & Status')
+                  : (language === 'hi' ? '3 Din Free Try Karein' : t(language, 'unlock_pro'))}
+              </Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         <Text style={styles.cancelAnytimeText}>
@@ -360,16 +368,20 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   upgradeBtn: {
-    backgroundColor: colors.primaryOrange,
     borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+    overflow: 'hidden',
     marginTop: spacing.sm,
-    shadowColor: colors.primaryOrange,
+    shadowColor: colors.primaryPurple,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  upgradeBtnGradient: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
   },
   btnDisabled: {
     opacity: 0.7,

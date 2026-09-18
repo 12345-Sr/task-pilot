@@ -19,6 +19,7 @@ import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BrandLogo } from './BrandLogo';
 import { NotificationService } from '../services/notifications/notification.service';
 
@@ -425,25 +426,32 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               onPress={handleOpenRazorpayCheckout}
               disabled={launchingGateway || loadingOrder}
             >
-              {launchingGateway || loadingOrder ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <ActivityIndicator color={colors.surface} size="small" />
-                  <Text style={styles.primaryPayBtnText}>
-                    {isHinglish ? 'Razorpay Khul Raha Hai...' : 'Opening Razorpay...'}
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  <Text style={styles.primaryPayBtnText}>
-                    💳 Pay ₹399 with Razorpay
-                  </Text>
-                  <Text style={styles.primaryPayBtnSub}>
-                    {isHinglish
-                      ? '⚡ Chrome par kholein • Sabhi payment options enabled'
-                      : '⚡ Open in Chrome to pay • All payment methods enabled'}
-                  </Text>
-                </>
-              )}
+              <LinearGradient
+                colors={['#8B5CF6', '#3B82F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryPayBtnGradient}
+              >
+                {launchingGateway || loadingOrder ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <ActivityIndicator color={colors.surface} size="small" />
+                    <Text style={styles.primaryPayBtnText}>
+                      {isHinglish ? 'Razorpay Khul Raha Hai...' : 'Opening Razorpay...'}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.primaryPayBtnText}>
+                      💳 Pay ₹399 with Razorpay
+                    </Text>
+                    <Text style={styles.primaryPayBtnSub}>
+                      {isHinglish
+                        ? '⚡ Chrome par kholein • Sabhi payment options enabled'
+                        : '⚡ Open in Chrome to pay • All payment methods enabled'}
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -757,17 +765,20 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   primaryPayBtn: {
-    backgroundColor: colors.primaryOrange,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primaryOrange,
+    overflow: 'hidden',
+    shadowColor: colors.primaryPurple,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
+  },
+  primaryPayBtnGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
   },
   primaryPayBtnText: {
     fontSize: 16,

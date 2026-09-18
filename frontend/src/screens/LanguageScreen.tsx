@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { BrandLogo } from '../components/BrandLogo';
 import { colors } from '../theme/colors';
@@ -373,15 +374,22 @@ export const LanguageScreen: React.FC = () => {
         {/* Dynamic CTA Continue Button */}
         <View style={styles.bottomBar}>
           <TouchableOpacity
-            style={styles.continueBtn}
+            style={styles.continueBtnTouch}
             activeOpacity={0.88}
             onPress={handleContinue}
             accessibilityRole="button"
             accessibilityLabel={selectedItem.ctaText}
           >
-            <Text style={styles.continueBtnText}>
-              {selectedItem.ctaText}
-            </Text>
+            <LinearGradient
+              colors={['#8B5CF6', '#3B82F6']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.continueBtn}
+            >
+              <Text style={styles.continueBtnText}>
+                {selectedItem.ctaText}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
           <Text style={styles.bottomHint}>
             Settings se kisi bhi samay badal sakte hain
@@ -600,18 +608,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 6,
   },
+  continueBtnTouch: {
+    borderRadius: 16,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+    overflow: 'hidden',
+  },
   continueBtn: {
-    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 15,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
   },
   continueBtnText: {
     color: colors.white,

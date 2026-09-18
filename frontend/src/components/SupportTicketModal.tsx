@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
+import { LinearGradient } from 'expo-linear-gradient';
 import { apiClient } from '../api/client';
 import { useAppStore } from '../store';
 
@@ -265,13 +266,20 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                     disabled={submitting}
                     activeOpacity={0.85}
                   >
-                    {submitting ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.submitBtnText}>
-                        {isHindi ? 'Ticket Darj Karein' : 'Submit Ticket'}
-                      </Text>
-                    )}
+                    <LinearGradient
+                      colors={['#8B5CF6', '#3B82F6']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.submitBtnGradient}
+                    >
+                      {submitting ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.submitBtnText}>
+                          {isHindi ? 'Ticket Darj Karein' : 'Submit Ticket'}
+                        </Text>
+                      )}
+                    </LinearGradient>
                   </TouchableOpacity>
                 </ScrollView>
               )}
@@ -546,13 +554,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   submitBtn: {
-    backgroundColor: colors.primaryOrange,
     borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 18,
+    shadowColor: colors.primaryPurple,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitBtnGradient: {
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 18,
-    ...shadows.card,
+    borderRadius: 14,
   },
   submitBtnDisabled: {
     opacity: 0.6,

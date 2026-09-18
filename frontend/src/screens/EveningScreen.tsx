@@ -10,6 +10,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../store';
 import { t } from '../i18n';
 import { useTodayTasks, useCompleteTask, useWeeklyProgress } from '../hooks';
@@ -176,7 +177,14 @@ export const EveningScreen: React.FC = () => {
             activeOpacity={0.85}
             onPress={handleFinishReview}
           >
-            <Text style={styles.reviewButtonText}>{t(language, 'finish_confirmation')}</Text>
+            <LinearGradient
+              colors={['#8B5CF6', '#3B82F6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.reviewGradient}
+            >
+              <Text style={styles.reviewButtonText}>{t(language, 'finish_confirmation')}</Text>
+            </LinearGradient>
           </TouchableOpacity>
         ) : (
           <View style={styles.celebrationCard}>
@@ -189,9 +197,16 @@ export const EveningScreen: React.FC = () => {
               activeOpacity={0.85}
               onPress={handlePlanTomorrow}
             >
-              <Text style={styles.planTomorrowText}>
-                {language === 'hi' ? 'Kal ke kaam dekhein →' : t(language, 'set_tomorrow_tasks_btn')}
-              </Text>
+              <LinearGradient
+                colors={['#8B5CF6', '#3B82F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.planTomorrowGradient}
+              >
+                <Text style={styles.planTomorrowText}>
+                  {language === 'hi' ? 'Kal ke kaam dekhein →' : t(language, 'set_tomorrow_tasks_btn')}
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
@@ -356,21 +371,30 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   reviewButton: {
-    backgroundColor: colors.primaryOrange,
     borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+    overflow: 'hidden',
     marginTop: spacing.md,
     elevation: 4,
+    shadowColor: colors.primaryPurple,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  reviewGradient: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
   },
   reviewButtonText: {
     ...typography.button,
     color: colors.white,
+    fontWeight: '800',
   },
   celebrationCard: {
     backgroundColor: '#FFF9ED',
     borderWidth: 1.5,
-    borderColor: colors.primaryOrange,
+    borderColor: colors.primaryPurple,
     borderRadius: radius.lg,
     padding: spacing.lg,
     alignItems: 'center',
@@ -392,15 +416,26 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   planTomorrowButton: {
-    backgroundColor: colors.primaryOrange,
     borderRadius: radius.md,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+    shadowColor: colors.primaryPurple,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  planTomorrowGradient: {
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.xl,
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
   },
   planTomorrowText: {
     ...typography.button,
     color: colors.white,
+    fontWeight: '800',
   },
 });
 

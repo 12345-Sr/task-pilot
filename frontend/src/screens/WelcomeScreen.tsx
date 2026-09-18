@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BrandLogo } from '../components/BrandLogo';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
@@ -407,18 +408,25 @@ export default function WelcomeScreen({ navigation }: any) {
         {/* Bottom CTA Block */}
         <View style={styles.bottomBlock}>
           <TouchableOpacity
-            style={styles.primaryBtn}
+            style={styles.primaryBtnTouch}
             activeOpacity={0.88}
             onPress={() => navigation.navigate('Login')}
             accessibilityRole="button"
             accessibilityLabel={t(language, 'welcome_start')}
           >
-            <Text style={styles.primaryBtnText}>
-              {t(language, 'welcome_start')}
-            </Text>
-            <View style={styles.arrowCircle}>
-              <Text style={styles.arrowText}>→</Text>
-            </View>
+            <LinearGradient
+              colors={['#8B5CF6', '#3B82F6']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.primaryBtn}
+            >
+              <Text style={styles.primaryBtnText}>
+                {t(language, 'welcome_start')}
+              </Text>
+              <View style={styles.arrowCircle}>
+                <Text style={styles.arrowText}>→</Text>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -694,20 +702,23 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 4,
   },
+  primaryBtnTouch: {
+    borderRadius: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
   primaryBtn: {
     flexDirection: 'row',
-    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 13,
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.32,
-    shadowRadius: 8,
-    elevation: 4,
   },
   primaryBtnText: {
     color: colors.white,
