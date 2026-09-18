@@ -6,7 +6,7 @@ export const colors = {
   card: '#FFFFFF',
   white: '#FFFFFF',
   surfaceSecondary: '#F8FAFC',
-  inputBg: '#FDF2FF', // Panel 10: Input #FDF2FF
+  inputBg: '#F8FAFC', // Clean modern soft slate
   headerWarm: '#FFF9F0',
   headerWarmAlt: '#FAF5EB',
 

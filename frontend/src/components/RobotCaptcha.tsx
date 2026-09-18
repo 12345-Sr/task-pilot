@@ -47,9 +47,15 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
   };
 
   const handleCheckboxPress = () => {
-    if (isVerified) return;
-    setShowChallenge(true);
+    if (isVerified || isChecking) return;
+    setIsChecking(true);
     setErrorMsg('');
+    setTimeout(() => {
+      setIsChecking(false);
+      setIsVerified(true);
+      setShowChallenge(false);
+      onVerify(true);
+    }, 400);
   };
 
   const handleVerify = () => {
@@ -92,6 +98,32 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
           </View>
           <Text style={{ fontSize: 20 }}>🛡️</Text>
         </View>
+      ) : !showChallenge ? (
+        <TouchableOpacity
+          style={[styles.card, isChecking && styles.cardActive]}
+          onPress={handleCheckboxPress}
+          activeOpacity={0.8}
+        >
+          <View style={styles.leftRow}>
+            <View style={[styles.checkbox, isChecking && styles.checkboxActive]}>
+              {isChecking ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : null}
+            </View>
+            <View>
+              <Text style={styles.label}>
+                {language === 'hi' ? 'Main robot nahi hoon' : "I am not a robot"}
+              </Text>
+              <Text style={styles.subLabel}>
+                {language === 'hi' ? '1-tap suraksha satyapan' : '1-tap security verification'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.badgeContainer}>
+            <Text style={styles.badgeIcon}>🛡️</Text>
+            <Text style={styles.badgeText}>TASKALERT</Text>
+          </View>
+        </TouchableOpacity>
       ) : (
         <View style={styles.challengeBox}>
           <View style={styles.challengeHeader}>

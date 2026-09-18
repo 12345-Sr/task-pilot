@@ -303,101 +303,104 @@ export default function WelcomeScreen({ navigation }: any) {
           },
         ]}
       >
-        {/* Top Header Row with Language switcher */}
-        <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.langPickerButton}
-            onPress={() => navigation.navigate('Language')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Change Language"
-          >
-            <Text style={styles.langGlobe}>🌐</Text>
-            <Text style={styles.langLabel}>
-              {currentLangMeta.native} ({language.toUpperCase()})
+        {/* Top Header & Brand Unit */}
+        <View style={styles.topSection}>
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              style={styles.langPickerButton}
+              onPress={() => navigation.navigate('Language')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Change Language"
+            >
+              <Text style={styles.langGlobe}>🌐</Text>
+              <Text style={styles.langLabel}>
+                {currentLangMeta.native} ({language.toUpperCase()})
+              </Text>
+              <Text style={styles.langChevron}>▾</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.brandContainer}>
+            <View style={styles.logoOuterHalo}>
+              <View style={styles.logoShadowWrap}>
+                <BrandLogo size={50} showText={false} />
+              </View>
+            </View>
+            <Text style={styles.brandTitle}>
+              <Text style={{ color: '#0F172A' }}>Task</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
-            <Text style={styles.langChevron}>▾</Text>
-          </TouchableOpacity>
+            <View style={styles.taglineBadge}>
+              <Text style={styles.brandTagline}>"{t(language, 'tagline')}"</Text>
+            </View>
+            <Text style={styles.brandSubTagline}>{t(language, 'subTagline')}</Text>
+          </View>
         </View>
 
-        {/* Dynamic Brand Header */}
-        <View style={styles.brandContainer}>
-          <View style={styles.logoOuterHalo}>
-            <View style={styles.logoShadowWrap}>
-              <BrandLogo size={50} showText={false} />
+        {/* Center Workflow & Trial Section - Unified Container */}
+        <View style={styles.centerSection}>
+          <View style={styles.pillarsContainer}>
+            <View style={styles.pillarsHeaderRow}>
+              <View style={styles.pillarsHeaderBadge}>
+                <Text style={styles.pillarsHeaderBadgeText}>✨ WORKFLOW</Text>
+              </View>
+              <Text style={styles.pillarsHeading}>{featureContent.pillarsTitle}</Text>
             </View>
-          </View>
-          <Text style={styles.brandTitle}>
-            <Text style={{ color: '#0F172A' }}>Task</Text>
-            <Text style={{ color: '#EAB308' }}>Alert</Text>
-          </Text>
-          <View style={styles.taglineBadge}>
-            <Text style={styles.brandTagline}>"{t(language, 'tagline')}"</Text>
-          </View>
-          <Text style={styles.brandSubTagline}>{t(language, 'subTagline')}</Text>
-        </View>
 
-        {/* Dynamic 3-Pillar Daily Workflow Card - Compact 1-Screen Design */}
-        <View style={styles.pillarsContainer}>
-          <View style={styles.pillarsHeaderRow}>
-            <View style={styles.pillarsHeaderBadge}>
-              <Text style={styles.pillarsHeaderBadgeText}>✨ WORKFLOW</Text>
-            </View>
-            <Text style={styles.pillarsHeading}>{featureContent.pillarsTitle}</Text>
-          </View>
+            <View style={styles.pillarCardsList}>
+              {featureContent.pillars.map((pillar, index) => (
+                <View key={index} style={styles.pillarRow}>
+                  <View style={styles.pillarIconContainer}>
+                    <Text style={styles.pillarIcon}>{pillar.icon}</Text>
+                  </View>
 
-          <View style={styles.pillarCardsList}>
-            {featureContent.pillars.map((pillar, index) => (
-              <View key={index} style={styles.pillarRow}>
-                {/* Step Icon & Badge */}
-                <View style={styles.pillarIconContainer}>
-                  <Text style={styles.pillarIcon}>{pillar.icon}</Text>
-                </View>
-
-                {/* Content */}
-                <View style={styles.pillarContent}>
-                  <View style={styles.pillarTitleRow}>
-                    <Text style={styles.pillarTitle} numberOfLines={1}>
-                      {pillar.title}
-                    </Text>
-                    <View
-                      style={[
-                        styles.pillarBadge,
-                        {
-                          backgroundColor: pillar.badgeBg,
-                          borderColor: pillar.badgeColor + '30',
-                        },
-                      ]}
-                    >
-                      <Text
+                  <View style={styles.pillarContent}>
+                    <View style={styles.pillarTitleRow}>
+                      <Text style={styles.pillarTitle} numberOfLines={1}>
+                        {pillar.title}
+                      </Text>
+                      <View
                         style={[
-                          styles.pillarBadgeText,
-                          { color: pillar.badgeColor },
+                          styles.pillarBadge,
+                          {
+                            backgroundColor: pillar.badgeBg,
+                            borderColor: pillar.badgeColor + '30',
+                          },
                         ]}
                       >
-                        {pillar.badge}
-                      </Text>
+                        <Text
+                          style={[
+                            styles.pillarBadgeText,
+                            { color: pillar.badgeColor },
+                          ]}
+                        >
+                          {pillar.badge}
+                        </Text>
+                      </View>
                     </View>
+                    <Text style={styles.pillarDesc} numberOfLines={2}>
+                      {pillar.desc}
+                    </Text>
                   </View>
-                  <Text style={styles.pillarDesc} numberOfLines={1}>
-                    {pillar.desc}
-                  </Text>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
 
-        {/* Trial Benefit Highlight Badge - Compact Pill */}
-        <View style={styles.trialHighlightCard}>
-          <Text style={styles.trialSparkle}>👑</Text>
-          <View style={styles.trialTextWrap}>
-            <Text style={styles.trialHighlightTitle} numberOfLines={1}>
-              {featureContent.trialBadge}
-            </Text>
-            <Text style={styles.trialHighlightSub} numberOfLines={1}>
-              {featureContent.trialSubtitle}
-            </Text>
+          {/* Trial Highlight Badge - Seamlessly Docked */}
+          <View style={styles.trialHighlightCard}>
+            <View style={styles.trialIconCircle}>
+              <Text style={styles.trialSparkle}>👑</Text>
+            </View>
+            <View style={styles.trialTextWrap}>
+              <Text style={styles.trialHighlightTitle} numberOfLines={1}>
+                {featureContent.trialBadge}
+              </Text>
+              <Text style={styles.trialHighlightSub} numberOfLines={1}>
+                {featureContent.trialSubtitle}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -636,17 +639,37 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 1,
   },
+  topSection: {
+    width: '100%',
+  },
+  centerSection: {
+    width: '100%',
+    marginVertical: 4,
+  },
   trialHighlightCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FDF9F0',
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderColor: '#EBD8B3',
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    marginVertical: 4,
-    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 8,
+    gap: 10,
+    shadowColor: '#C5A059',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  trialIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F7EBD3',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   trialSparkle: {
     fontSize: 16,
@@ -655,12 +678,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trialHighlightTitle: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '800',
     color: '#825B15',
   },
   trialHighlightSub: {
-    fontSize: 10,
+    fontSize: 10.5,
     color: '#9B7426',
     fontWeight: '600',
   },

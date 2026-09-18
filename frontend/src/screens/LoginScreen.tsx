@@ -203,6 +203,7 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>{t(language, 'email_label')}</Text>
               <View style={styles.inputWrapper}>
+                <Text style={styles.inputLeadingIcon}>✉️</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
@@ -229,6 +230,7 @@ export const LoginScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrapper}>
+                <Text style={styles.inputLeadingIcon}>🔒</Text>
                 <TextInput
                   style={[styles.input, { paddingRight: 44 }]}
                   placeholder="••••••••"
@@ -460,7 +462,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 4,
   },
@@ -472,22 +474,29 @@ const styles = StyleSheet.create({
   },
   forgotLink: {
     fontSize: 11.5,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.primary,
+  },
+  inputLeadingIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBg,
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.4,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    height: 48,
+    paddingHorizontal: 12,
   },
   input: {
     flex: 1,
-    height: 44,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    height: '100%',
+    paddingHorizontal: 4,
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#0F172A',
   },
   eyeBtn: {
@@ -496,12 +505,12 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   eyeIcon: {
-    fontSize: 15,
+    fontSize: 16,
   },
   trustBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 4,
     marginBottom: 10,
   },
   trustBadgeIcon: {
@@ -515,8 +524,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    height: 44,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,

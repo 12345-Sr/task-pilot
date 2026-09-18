@@ -279,6 +279,7 @@ export const SignupScreen: React.FC = () => {
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>{t(language, 'name_label')}</Text>
               <View style={styles.inputWrapper}>
+                <Text style={styles.inputLeadingIcon}>👤</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Rohan Sharma"
@@ -297,6 +298,7 @@ export const SignupScreen: React.FC = () => {
                 {otpSent && <Text style={styles.otpDispatchedBadge}>✓ OTP Bheja Gaya</Text>}
               </View>
               <View style={styles.emailWrapper}>
+                <Text style={styles.inputLeadingIcon}>✉️</Text>
                 <TextInput
                   style={styles.emailInput}
                   placeholder="name@example.com"
@@ -385,6 +387,7 @@ export const SignupScreen: React.FC = () => {
                 {language === 'hi' ? 'Password Banayein (Min 6 chars)' : 'Create Password (Min 6 chars)'}
               </Text>
               <View style={styles.inputWrapper}>
+                <Text style={styles.inputLeadingIcon}>🔒</Text>
                 <TextInput
                   style={[styles.input, { paddingRight: 44 }]}
                   placeholder="••••••••"
@@ -408,6 +411,7 @@ export const SignupScreen: React.FC = () => {
                 {language === 'hi' ? 'Password Dobara Likhein (Retype Password)' : 'Retype Password (Confirm)'}
               </Text>
               <View style={styles.inputWrapper}>
+                <Text style={styles.inputLeadingIcon}>🛡️</Text>
                 <TextInput
                   style={[styles.input, { paddingRight: 44 }]}
                   placeholder="••••••••"
@@ -684,23 +688,27 @@ const styles = StyleSheet.create({
   emailWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBg,
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.4,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    height: 48,
+    paddingLeft: 12,
+    paddingRight: 5,
   },
   emailInput: {
     flex: 1,
-    height: 42,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    height: '100%',
+    paddingHorizontal: 4,
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#0F172A',
   },
   sendOtpBtn: {
-    backgroundColor: colors.primaryOrange,
+    backgroundColor: colors.primary,
+    borderRadius: 9,
     paddingHorizontal: 12,
-    height: 42,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -744,7 +752,7 @@ const styles = StyleSheet.create({
     borderColor: '#FDBA74',
     borderRadius: 10,
     paddingHorizontal: 12,
-    height: 42,
+    height: 44,
   },
   otpInputIcon: {
     fontSize: 16,
@@ -792,24 +800,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldLabel: {
-    fontSize: 11.5,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 4,
+  },
+  inputLeadingIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBg,
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.4,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    height: 48,
+    paddingHorizontal: 12,
   },
   input: {
     flex: 1,
-    height: 42,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    height: '100%',
+    paddingHorizontal: 4,
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#0F172A',
   },
   eyeBtn: {
@@ -818,13 +833,13 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   eyeIcon: {
-    fontSize: 15,
+    fontSize: 16,
   },
   trustBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 8,
+    marginTop: 3,
+    marginBottom: 7,
   },
   trustBadgeIcon: {
     fontSize: 13,
@@ -837,8 +852,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    height: 44,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,
