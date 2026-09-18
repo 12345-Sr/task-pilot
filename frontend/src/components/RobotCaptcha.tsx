@@ -93,7 +93,7 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
         <View style={styles.labelRow}>
           <Text style={styles.shieldIconSmall}>🛡️</Text>
           <Text style={styles.labelText}>
-            {language === 'hi' ? 'Suraksha Verification Code' : 'Security Verification Code'}
+            {language === 'hi' ? 'Suraksha Code' : 'Security Code'}
           </Text>
         </View>
 
@@ -128,7 +128,7 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
-          placeholder={language === 'hi' ? 'Upar ka 5-akshar code likhein' : 'Type 5-letter code here'}
+          placeholder={language === 'hi' ? '5-akshar code likhein' : 'Enter 5-letter code'}
           placeholderTextColor="#94A3B8"
           value={userInput}
           onChangeText={(text) => {
