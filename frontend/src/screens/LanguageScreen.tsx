@@ -285,58 +285,47 @@ export const LanguageScreen: React.FC = () => {
         contentContainerStyle={[
           styles.scrollContainer,
           {
-            paddingTop: 8,
-            paddingBottom: Math.max(insets.bottom, 24) + 16,
+            paddingTop: 4,
+            paddingBottom: Math.max(insets.bottom, 16) + 8,
           },
         ]}
       >
-        {/* Dynamic Multi-Lingual Flash Hero Header */}
+        {/* Compact Hero Section */}
         <View style={styles.heroSection}>
-          <View style={styles.logoWrapper}>
-            <Animated.View
-              style={[
-                styles.logoHalo,
-                { transform: [{ scale: haloPulse }] },
-              ]}
-            />
-            <View style={styles.logoContainer}>
-              <BrandLogo size={58} showText={false} />
-            </View>
-          </View>
-
-          {/* Dynamic Flash Greeting Box */}
-          <View style={styles.flashBanner}>
-            <Animated.View
-              style={[
-                styles.flashContent,
-                {
-                  opacity: flashOpacity,
-                  transform: [{ scale: flashScale }],
-                },
-              ]}
-            >
-              <Text style={styles.flashGreeting}>
-                {currentDisplayLang.greeting}
-              </Text>
-              <View style={styles.flashLangBadge}>
-                <Text style={styles.flashLangBadgeText}>
-                  {currentDisplayLang.icon} {currentDisplayLang.native} ({currentDisplayLang.english})
-                </Text>
-              </View>
-              <Text style={styles.flashTagline}>
-                "{currentDisplayLang.tagline}"
-              </Text>
-            </Animated.View>
+          <View style={styles.brandRow}>
+            <BrandLogo size={34} showText={false} />
+            <Text style={styles.brandTitle}>
+              <Text style={{ color: '#0F172A' }}>Task</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
+            </Text>
           </View>
 
           <Text style={styles.screenHeading}>Choose Your Language</Text>
           <Text style={styles.screenSubheading}>
-            Apni pasandida bhasha chunein • Select preferred language
+            Apni pasandida bhasha chunein • Select language
           </Text>
+
+          {/* Compact Flash Greeting Pill */}
+          <Animated.View
+            style={[
+              styles.flashBanner,
+              {
+                opacity: flashOpacity,
+                transform: [{ scale: flashScale }],
+              },
+            ]}
+          >
+            <Text style={styles.flashGreeting}>
+              {currentDisplayLang.greeting}!
+            </Text>
+            <Text style={styles.flashTagline} numberOfLines={1}>
+              "{currentDisplayLang.tagline}"
+            </Text>
+          </Animated.View>
         </View>
 
-        {/* 8 Regional Language Options List */}
-        <View style={styles.languagesContainer}>
+        {/* 8 Regional Language Options in a Sleek 2-Column Grid */}
+        <View style={styles.languagesGrid}>
           {LANGUAGE_LIST.map((item) => {
             const isSelected = selectedCode === item.code;
             return (
@@ -345,65 +334,37 @@ export const LanguageScreen: React.FC = () => {
                 activeOpacity={0.82}
                 onPress={() => handleSelectLanguage(item.code)}
                 style={[
-                  styles.languageCard,
-                  isSelected && styles.languageCardActive,
+                  styles.languageTile,
+                  isSelected && styles.languageTileActive,
                 ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
               >
-                {/* Left: Flag / Emblem */}
-                <View
-                  style={[
-                    styles.langIconCircle,
-                    isSelected && styles.langIconCircleActive,
-                  ]}
-                >
-                  <Text style={styles.langEmoji}>{item.icon}</Text>
+                <View style={styles.tileHeader}>
+                  <Text style={styles.tileEmoji}>{item.icon}</Text>
+                  {isSelected ? (
+                    <View style={styles.checkBadge}>
+                      <Text style={styles.checkBadgeText}>✓</Text>
+                    </View>
+                  ) : item.badge ? (
+                    <View style={styles.microBadge}>
+                      <Text style={styles.microBadgeText}>{item.badge}</Text>
+                    </View>
+                  ) : null}
                 </View>
 
-                {/* Middle: Native & English Labels */}
-                <View style={styles.langDetails}>
-                  <View style={styles.langTitleRow}>
-                    <Text
-                      style={[
-                        styles.langNative,
-                        isSelected && styles.langNativeActive,
-                      ]}
-                    >
-                      {item.native}
-                    </Text>
-                    {item.badge && (
-                      <View
-                        style={[
-                          styles.microBadge,
-                          isSelected && styles.microBadgeActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.microBadgeText,
-                            isSelected && styles.microBadgeTextActive,
-                          ]}
-                        >
-                          {item.badge}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.langSublabel}>
-                    {item.english} • {item.region}
-                  </Text>
-                </View>
-
-                {/* Right: Custom Checkmark Radio */}
-                <View
+                <Text
                   style={[
-                    styles.radioCircle,
-                    isSelected && styles.radioCircleActive,
+                    styles.tileNative,
+                    isSelected && styles.tileNativeActive,
                   ]}
+                  numberOfLines={1}
                 >
-                  {isSelected && <Text style={styles.checkIcon}>✓</Text>}
-                </View>
+                  {item.native}
+                </Text>
+                <Text style={styles.tileSublabel} numberOfLines={1}>
+                  {item.english}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -423,7 +384,7 @@ export const LanguageScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
           <Text style={styles.bottomHint}>
-            Language can be changed anytime from the top bar or settings.
+            Settings se kisi bhi samay badal sakte hain
           </Text>
         </View>
       </ScrollView>
@@ -497,79 +458,21 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
-  logoWrapper: {
-    position: 'relative',
+  brandRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    width: 80,
-    height: 80,
-  },
-  logoHalo: {
-    position: 'absolute',
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: 'rgba(197, 160, 89, 0.18)',
-  },
-  logoContainer: {
-    shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  flashBanner: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: '#EFE6D5',
-    alignItems: 'center',
-    marginBottom: 14,
-    shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  flashContent: {
-    alignItems: 'center',
-  },
-  flashGreeting: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    gap: 8,
     marginBottom: 4,
   },
-  flashLangBadge: {
-    backgroundColor: '#FDF7EC',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: '#EBD8B3',
-    marginBottom: 6,
-  },
-  flashLangBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#9B7426',
-  },
-  flashTagline: {
-    fontSize: 12.5,
-    fontStyle: 'italic',
-    color: '#64748B',
-    fontWeight: '600',
-    textAlign: 'center',
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   screenHeading: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -577,140 +480,142 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   screenSubheading: {
-    fontSize: 12.5,
-    color: '#64748B',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  languagesContainer: {
-    gap: 9,
-    marginBottom: 18,
-  },
-  languageCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 11,
-    paddingHorizontal: 13,
-    borderWidth: 1.5,
-    borderColor: '#EEF2F6',
-    gap: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  languageCardActive: {
-    backgroundColor: '#FDF9F0',
-    borderColor: '#C5A059',
-    shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  langIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  langIconCircleActive: {
-    backgroundColor: '#FDF7EC',
-    borderColor: '#EBD8B3',
-  },
-  langEmoji: {
-    fontSize: 20,
-  },
-  langDetails: {
-    flex: 1,
-  },
-  langTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  langNative: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  langNativeActive: {
-    color: '#825B15',
-  },
-  microBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: radius.pill,
-  },
-  microBadgeActive: {
-    backgroundColor: '#F7EBD3',
-  },
-  microBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  microBadgeTextActive: {
-    color: '#825B15',
-  },
-  langSublabel: {
     fontSize: 11.5,
     color: '#64748B',
     fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 6,
   },
-  radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
+  flashBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.pill,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#EFE6D5',
+    gap: 6,
+    shadowColor: '#C5A059',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  flashGreeting: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  flashTagline: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    color: '#9B7426',
+    fontWeight: '600',
+  },
+  languagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+    marginVertical: 4,
+  },
+  languageTile: {
+    width: '48.5%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: '#EEF2F6',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  languageTileActive: {
+    backgroundColor: '#FDF9F0',
+    borderColor: '#C5A059',
+    shadowColor: '#C5A059',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  tileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  tileEmoji: {
+    fontSize: 22,
+  },
+  checkBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#C5A059',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  radioCircleActive: {
-    borderColor: '#C5A059',
-    backgroundColor: '#C5A059',
-  },
-  checkIcon: {
+  checkBadgeText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
   },
+  microBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+  },
+  microBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tileNative: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  tileNativeActive: {
+    color: '#825B15',
+  },
+  tileSublabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+    marginTop: 1,
+  },
   bottomBar: {
-    marginTop: 4,
-    gap: 8,
+    marginTop: 6,
+    gap: 6,
   },
   continueBtn: {
-    backgroundColor: colors.primary, // #C5A059 Champagne Camel Gold
-    borderRadius: 16,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.38,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.32,
+    shadowRadius: 8,
+    elevation: 4,
   },
   continueBtnText: {
     color: colors.white,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   bottomHint: {
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 10.5,
     color: '#94A3B8',
     fontWeight: '500',
   },

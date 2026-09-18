@@ -324,7 +324,7 @@ export default function WelcomeScreen({ navigation }: any) {
         <View style={styles.brandContainer}>
           <View style={styles.logoOuterHalo}>
             <View style={styles.logoShadowWrap}>
-              <BrandLogo size={70} showText={false} />
+              <BrandLogo size={50} showText={false} />
             </View>
           </View>
           <Text style={styles.brandTitle}>
@@ -337,7 +337,7 @@ export default function WelcomeScreen({ navigation }: any) {
           <Text style={styles.brandSubTagline}>{t(language, 'subTagline')}</Text>
         </View>
 
-        {/* Dynamic 3-Pillar Daily Workflow Card */}
+        {/* Dynamic 3-Pillar Daily Workflow Card - Compact 1-Screen Design */}
         <View style={styles.pillarsContainer}>
           <View style={styles.pillarsHeaderRow}>
             <View style={styles.pillarsHeaderBadge}>
@@ -348,18 +348,18 @@ export default function WelcomeScreen({ navigation }: any) {
 
           <View style={styles.pillarCardsList}>
             {featureContent.pillars.map((pillar, index) => (
-              <View key={index} style={styles.pillarCard}>
-                {/* Icon Emblem with micro step badge */}
+              <View key={index} style={styles.pillarRow}>
+                {/* Step Icon & Badge */}
                 <View style={styles.pillarIconContainer}>
                   <Text style={styles.pillarIcon}>{pillar.icon}</Text>
-                  <View style={styles.iconStepBadge}>
-                    <Text style={styles.iconStepNumber}>{index + 1}</Text>
-                  </View>
                 </View>
 
                 {/* Content */}
                 <View style={styles.pillarContent}>
-                  <View style={styles.pillarBadgeRow}>
+                  <View style={styles.pillarTitleRow}>
+                    <Text style={styles.pillarTitle} numberOfLines={1}>
+                      {pillar.title}
+                    </Text>
                     <View
                       style={[
                         styles.pillarBadge,
@@ -379,26 +379,23 @@ export default function WelcomeScreen({ navigation }: any) {
                       </Text>
                     </View>
                   </View>
-                  <Text style={styles.pillarTitle}>
-                    {pillar.title}
+                  <Text style={styles.pillarDesc} numberOfLines={1}>
+                    {pillar.desc}
                   </Text>
-                  <Text style={styles.pillarDesc}>{pillar.desc}</Text>
                 </View>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Trial Benefit Highlight Badge */}
+        {/* Trial Benefit Highlight Badge - Compact Pill */}
         <View style={styles.trialHighlightCard}>
-          <View style={styles.trialIconWrap}>
-            <Text style={styles.trialSparkle}>👑</Text>
-          </View>
+          <Text style={styles.trialSparkle}>👑</Text>
           <View style={styles.trialTextWrap}>
-            <Text style={styles.trialHighlightTitle}>
+            <Text style={styles.trialHighlightTitle} numberOfLines={1}>
               {featureContent.trialBadge}
             </Text>
-            <Text style={styles.trialHighlightSub}>
+            <Text style={styles.trialHighlightSub} numberOfLines={1}>
               {featureContent.trialSubtitle}
             </Text>
           </View>
@@ -488,265 +485,229 @@ const styles = StyleSheet.create({
   },
   brandContainer: {
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 2,
   },
   logoOuterHalo: {
-    padding: 6,
-    borderRadius: 24,
+    padding: 4,
+    borderRadius: 20,
     backgroundColor: 'rgba(197, 160, 89, 0.08)',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   logoShadowWrap: {
     shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 6,
   },
   brandTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: -0.6,
-    marginBottom: 4,
+    letterSpacing: -0.5,
+    marginBottom: 2,
   },
   taglineBadge: {
     backgroundColor: '#FDF7EC',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: '#EBD8B3',
-    marginBottom: 6,
+    marginBottom: 3,
   },
   brandTagline: {
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '800',
     color: '#9B7426',
     textAlign: 'center',
     letterSpacing: 0.2,
   },
   brandSubTagline: {
-    fontSize: 12.5,
+    fontSize: 11,
     color: '#64748B',
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 16,
+    lineHeight: 15,
+    paddingHorizontal: 12,
   },
   pillarsContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1.5,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1.2,
     borderColor: '#EFE6D5',
-    marginVertical: 12,
+    marginVertical: 6,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   pillarsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: 6,
+    marginBottom: 8,
   },
   pillarsHeaderBadge: {
     backgroundColor: '#FDF7EC',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: '#EBD8B3',
   },
   pillarsHeaderBadgeText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
     color: '#9B7426',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   pillarsHeading: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   pillarCardsList: {
-    gap: 10,
+    gap: 6,
   },
-  pillarCard: {
+  pillarRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     backgroundColor: '#FAFBFD',
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: '#EEF2F6',
-    gap: 12,
+    gap: 8,
   },
   pillarIconContainer: {
-    position: 'relative',
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
     flexShrink: 0,
-    marginTop: 2,
-  },
-  iconStepBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 17,
-    height: 17,
-    borderRadius: 8.5,
-    backgroundColor: '#0F172A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  iconStepNumber: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   pillarIcon: {
-    fontSize: 20,
+    fontSize: 16,
   },
   pillarContent: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
   },
-  pillarBadgeRow: {
+  pillarTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    gap: 4,
   },
   pillarBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: radius.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pillarBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 0.3,
   },
   pillarTitle: {
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.1,
-    marginBottom: 3,
-    lineHeight: 18,
+    flex: 1,
   },
   pillarDesc: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     color: '#64748B',
-    lineHeight: 16,
+    lineHeight: 14,
     fontWeight: '500',
+    marginTop: 1,
   },
   trialHighlightCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FDF9F0',
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: '#EBD8B3',
-    borderRadius: 16,
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    marginBottom: 14,
-    gap: 10,
-    shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  trialIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F7EBD3',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginVertical: 4,
+    gap: 8,
   },
   trialSparkle: {
-    fontSize: 15,
+    fontSize: 16,
   },
   trialTextWrap: {
     flex: 1,
   },
   trialHighlightTitle: {
-    fontSize: 12.5,
+    fontSize: 11.5,
     fontWeight: '800',
     color: '#825B15',
-    marginBottom: 2,
   },
   trialHighlightSub: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#9B7426',
     fontWeight: '600',
   },
   bottomBlock: {
-    gap: 10,
+    gap: 6,
+    marginTop: 4,
   },
   primaryBtn: {
     flexDirection: 'row',
-    backgroundColor: colors.primary, // #C5A059 Champagne Camel Gold
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.38,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.32,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryBtnText: {
     color: colors.white,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
   arrowCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   arrowText: {
     color: colors.white,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '900',
   },
   secondaryBtn: {
-    paddingVertical: 8,
+    paddingVertical: 5,
     alignItems: 'center',
   },
   secondaryBtnText: {
-    fontSize: 13.5,
+    fontSize: 12.5,
     color: '#64748B',
     fontWeight: '600',
   },
@@ -756,7 +717,7 @@ const styles = StyleSheet.create({
   },
   footerNote: {
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 10,
     color: '#94A3B8',
     fontWeight: '500',
   },

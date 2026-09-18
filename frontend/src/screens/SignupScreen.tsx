@@ -225,23 +225,15 @@ export const SignupScreen: React.FC = () => {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top Brand Banner matching Panel 6 */}
+          {/* Top Brand & Language Row */}
           <View style={styles.topBrandRow}>
-            <BrandLogo size={32} showSun={true} />
-            <Text style={styles.brandTitle}>
-              <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Alert</Text>
-            </Text>
-          </View>
-
-          {/* Big Header */}
-          <View style={styles.header}>
-            <Text style={styles.mainTitle}>
-              {language === 'hi' ? 'Aapka Reminder Saathi' : 'Your Reminder Companion'}
-            </Text>
-            <Text style={styles.subTitle}>
-              {language === 'hi' ? 'Kal ka kaam, aaj set karein.' : 'Set tomorrow\'s tasks today.'}
-            </Text>
+            <View style={styles.brandTitleWrap}>
+              <BrandLogo size={28} showSun={true} />
+              <Text style={styles.brandTitle}>
+                <Text style={{ color: '#0F172A' }}>Task</Text>
+                <Text style={{ color: '#EAB308' }}>Alert</Text>
+              </Text>
+            </View>
 
             {/* Language Selector Pill */}
             <TouchableOpacity
@@ -253,6 +245,16 @@ export const SignupScreen: React.FC = () => {
               <Text style={styles.langPillText}>{currentLangObj.native}</Text>
               <Text style={styles.langPillArrow}>⌵</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* Compact Header */}
+          <View style={styles.header}>
+            <Text style={styles.mainTitle}>
+              {language === 'hi' ? 'Aapka Reminder Saathi' : 'Your Reminder Companion'}
+            </Text>
+            <Text style={styles.subTitle}>
+              {language === 'hi' ? 'Kal ka kaam, aaj set karein.' : 'Set tomorrow\'s tasks today.'}
+            </Text>
           </View>
 
           {/* Floating White Card */}
@@ -558,46 +560,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDF2F4',
   },
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    flexGrow: 1,
   },
   topBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  brandTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   brandTitle: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
-    marginLeft: 8,
-    letterSpacing: 0.5,
+    letterSpacing: -0.3,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 8,
   },
   mainTitle: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 2,
     letterSpacing: -0.3,
   },
   subTitle: {
-    fontSize: 15,
+    fontSize: 12,
     color: '#64748B',
-    marginBottom: 14,
+    marginBottom: 0,
   },
   langPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 20,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -605,37 +612,37 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   langPillIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 13,
+    marginRight: 4,
   },
   langPillText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#0F172A',
-    marginRight: 6,
+    marginRight: 4,
   },
   langPillArrow: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#64748B',
     fontWeight: '700',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 22,
+    borderRadius: 18,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   cardHeading: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 18,
+    marginBottom: 8,
   },
   errorBox: {
     backgroundColor: '#FEE2E2',
@@ -680,20 +687,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputBg,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   emailInput: {
     flex: 1,
-    height: 48,
-    paddingHorizontal: 14,
-    fontSize: 15,
+    height: 42,
+    paddingHorizontal: 12,
+    fontSize: 14,
     color: '#0F172A',
   },
   sendOtpBtn: {
     backgroundColor: colors.primaryOrange,
-    paddingHorizontal: 14,
-    height: 48,
+    paddingHorizontal: 12,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -702,30 +709,30 @@ const styles = StyleSheet.create({
   },
   sendOtpBtnText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '800',
   },
   otpSection: {
     backgroundColor: '#FFF7ED',
     borderWidth: 1.5,
     borderColor: '#FED7AA',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 10,
   },
   otpHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   otpTimerText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     color: colors.primaryOrange,
   },
   resendLinkText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     color: colors.primaryOrange,
   },
@@ -737,58 +744,58 @@ const styles = StyleSheet.create({
     borderColor: '#FDBA74',
     borderRadius: 10,
     paddingHorizontal: 12,
-    height: 48,
+    height: 42,
   },
   otpInputIcon: {
-    fontSize: 18,
-    marginRight: 8,
+    fontSize: 16,
+    marginRight: 6,
   },
   otpInput: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 8,
+    letterSpacing: 6,
     color: '#0F172A',
   },
   otpDoneBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#16A34A',
     alignItems: 'center',
     justifyContent: 'center',
   },
   otpDoneBadgeText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '900',
   },
   otpSubHint: {
-    fontSize: 11,
+    fontSize: 10.5,
     color: '#64748B',
-    marginTop: 6,
+    marginTop: 4,
   },
   matchStatusRow: {
-    marginTop: 6,
+    marginTop: 4,
   },
   matchSuccessText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     color: '#16A34A',
   },
   matchErrorText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#DC2626',
   },
   fieldGroup: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#334155',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -796,54 +803,54 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputBg,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 10,
   },
   input: {
     flex: 1,
-    height: 48,
-    paddingHorizontal: 14,
-    fontSize: 15,
+    height: 42,
+    paddingHorizontal: 12,
+    fontSize: 14,
     color: '#0F172A',
   },
   eyeBtn: {
     position: 'absolute',
-    right: 12,
+    right: 10,
     padding: 6,
   },
   eyeIcon: {
-    fontSize: 16,
+    fontSize: 15,
   },
   trustBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 20,
+    marginTop: 2,
+    marginBottom: 8,
   },
   trustBadgeIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 13,
+    marginRight: 5,
   },
   trustBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748B',
     fontWeight: '500',
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    height: 50,
-    borderRadius: 14,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.24,
+    shadowRadius: 6,
+    elevation: 3,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 8,
   },
   dividerLine: {
     flex: 1,
@@ -851,23 +858,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   dividerText: {
-    paddingHorizontal: 12,
-    fontSize: 13,
+    paddingHorizontal: 10,
+    fontSize: 11.5,
     color: '#94A3B8',
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14.5,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
+    marginTop: 10,
   },
   footerText: {
     fontSize: 14,
