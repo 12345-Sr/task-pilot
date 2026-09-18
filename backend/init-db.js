@@ -13,7 +13,7 @@ async function initDatabase(retries = 5, delayMs = 3000) {
           email           VARCHAR(180) UNIQUE NOT NULL,
           phone           VARCHAR(20),
           password_hash   TEXT NOT NULL,
-          language        VARCHAR(5) NOT NULL DEFAULT 'hi',
+          language        VARCHAR(5) NOT NULL DEFAULT 'en',
           push_token      TEXT,
           is_active       BOOLEAN NOT NULL DEFAULT TRUE,
           install_date    TIMESTAMPTZ NOT NULL DEFAULT now(),

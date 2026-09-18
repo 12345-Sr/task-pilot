@@ -37,8 +37,8 @@ interface SettingsLanguageOption {
 }
 
 const SETTINGS_LANGUAGES: SettingsLanguageOption[] = [
-  { code: 'hi', label: 'Hinglish', native: 'Hinglish', flag: '🇮🇳', region: 'India • Hinglish' },
   { code: 'en', label: 'English', native: 'English', flag: '🌐', region: 'Global' },
+  { code: 'hi', label: 'Hinglish', native: 'Hinglish', flag: '🇮🇳', region: 'India • Hinglish' },
   { code: 'mr', label: 'Marathi', native: 'मराठी', flag: '🚩', region: 'महाराष्ट्र' },
   { code: 'bn', label: 'Bengali', native: 'বাংলা', flag: '🌸', region: 'পশ্চিমবঙ্গ' },
   { code: 'ta', label: 'Tamil', native: 'தமிழ்', flag: '🪔', region: 'தமிழ்நாடு' },

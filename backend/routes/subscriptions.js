@@ -98,7 +98,7 @@ router.get('/status', requireUser, async (req, res) => {
     db.query('SELECT push_token, language FROM users WHERE id = $1', [req.userId])
       .then((uR) => {
         const token = uR.rows[0]?.push_token;
-        const lang = uR.rows[0]?.language || 'hi';
+        const lang = uR.rows[0]?.language || 'en';
         if (token) {
           const { sendPush } = require('../scheduler');
           const notifTitle = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
@@ -856,7 +856,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
     db.query('SELECT push_token, language FROM users WHERE id = $1', [req.userId])
       .then((uR) => {
         const token = uR.rows[0]?.push_token;
-        const lang = uR.rows[0]?.language || 'hi';
+        const lang = uR.rows[0]?.language || 'en';
         if (token) {
           const { sendPush } = require('../scheduler');
           const title = lang === 'hi' ? '🎉 Pro Plan Activate Ho Gaya!' : '🎉 Pro Plan Activated!';

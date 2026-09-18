@@ -274,7 +274,7 @@ async function checkExpiredSubscriptions() {
       );
 
       if (sub.push_token) {
-        const lang = sub.language || 'hi';
+        const lang = sub.language || 'en';
         const title = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
         const body = lang === 'hi'
           ? 'Aapka Pro subscription expire ho gaya hai. Aap wapas Free tier par aa gaye hain. Naye tasks aur reminder alerts ke liye Pro upgrade karein.'

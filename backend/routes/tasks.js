@@ -36,7 +36,7 @@ async function getAccessStatus(userId) {
     db.query('SELECT push_token, language FROM users WHERE id = $1', [userId])
       .then((uR) => {
         const token = uR.rows[0]?.push_token;
-        const lang = uR.rows[0]?.language || 'hi';
+        const lang = uR.rows[0]?.language || 'en';
         if (token) {
           const title = lang === 'hi' ? '⚠️ Pro Plan Expire Ho Gaya' : '⚠️ Pro Plan Expired';
           const body = lang === 'hi'
@@ -176,7 +176,7 @@ router.post('/', requireUser, async (req, res, next) => {
       db.query('SELECT push_token, language FROM users WHERE id = $1', [req.userId])
         .then((uR) => {
           const token = uR.rows[0]?.push_token;
-          const lang = uR.rows[0]?.language || 'hi';
+          const lang = uR.rows[0]?.language || 'en';
           if (token) {
             const notifTitle = lang === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached';
             const notifBody = lang === 'hi'

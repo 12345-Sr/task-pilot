@@ -333,7 +333,7 @@ export class RemoteUserRepository implements UserRepository {
       id: String(u.id || 'user_1'),
       name: u.name || 'User',
       email: u.email || 'user@example.com',
-      language: u.language || 'hi',
+      language: u.language || 'en',
     };
   }
 
@@ -350,7 +350,7 @@ export class RemoteUserRepository implements UserRepository {
       id: String(u.id || 'user_1'),
       name: u.name || name,
       email: u.email || email,
-      language: u.language || 'hi',
+      language: u.language || 'en',
     };
   }
 }

@@ -2223,10 +2223,13 @@
             <select id="userLangFilter" class="filter-select" onchange="applyUsersFilters()">
               <option value="all">All Languages</option>
               <option value="en">English (EN)</option>
-              <option value="hi">Hindi (HI)</option>
-              <option value="gu">Gujarati (GU)</option>
+              <option value="hi">Hindi / Hinglish (HI)</option>
               <option value="mr">Marathi (MR)</option>
+              <option value="bn">Bengali (BN)</option>
               <option value="ta">Tamil (TA)</option>
+              <option value="te">Telugu (TE)</option>
+              <option value="gu">Gujarati (GU)</option>
+              <option value="pa">Punjabi (PA)</option>
             </select>
             <button class="filter-btn-reset" onclick="resetUsersFilters()" title="Reset all filters">
               <span>✕ Clear</span>
@@ -4649,10 +4652,13 @@ function deleteActiveModalTicket() {
         <div style="display:flex; gap:8px; align-items:center;">
           <select id="modalActionLanguageSelect" class="filter-select" style="min-width:130px;">
             <option value="en">English (en)</option>
-            <option value="hi">Hindi (hi)</option>
-            <option value="gu">Gujarati (gu)</option>
+            <option value="hi">Hindi / Hinglish (hi)</option>
             <option value="mr">Marathi (mr)</option>
+            <option value="bn">Bengali (bn)</option>
             <option value="ta">Tamil (ta)</option>
+            <option value="te">Telugu (te)</option>
+            <option value="gu">Gujarati (gu)</option>
+            <option value="pa">Punjabi (pa)</option>
           </select>
           <button class="btn-submit" style="width:auto; padding:8px 14px; margin-top:0;" onclick="saveModalUserLanguage()">Save</button>
         </div>

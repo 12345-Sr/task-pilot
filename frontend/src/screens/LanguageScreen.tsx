@@ -34,18 +34,6 @@ interface LanguageItem {
 
 const LANGUAGE_LIST: LanguageItem[] = [
   {
-    code: 'hi',
-    native: 'Hinglish',
-    english: 'Hinglish',
-    greeting: 'Namaste',
-    greetingScript: 'Namaste',
-    region: 'India • Hinglish',
-    tagline: 'Kal ka kaam, aaj set karein',
-    ctaText: 'Hinglish mein shuru karein →',
-    icon: '🇮🇳',
-    badge: 'Popular',
-  },
-  {
     code: 'en',
     native: 'English',
     english: 'English',
@@ -56,6 +44,18 @@ const LANGUAGE_LIST: LanguageItem[] = [
     ctaText: 'Continue in English →',
     icon: '🌐',
     badge: 'Default',
+  },
+  {
+    code: 'hi',
+    native: 'Hinglish',
+    english: 'Hinglish',
+    greeting: 'Namaste',
+    greetingScript: 'Namaste',
+    region: 'India • Hinglish',
+    tagline: 'Kal ka kaam, aaj set karein',
+    ctaText: 'Hinglish mein shuru karein →',
+    icon: '🇮🇳',
+    badge: 'Popular',
   },
   {
     code: 'mr',
@@ -130,7 +130,7 @@ export const LanguageScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { language, setLanguage, isAuthenticated } = useAppStore();
 
-  const [selectedCode, setSelectedCode] = useState<SupportedLanguage>(language || 'hi');
+  const [selectedCode, setSelectedCode] = useState<SupportedLanguage>(language || 'en');
   const [tickerIndex, setTickerIndex] = useState(0);
   const [isManualPick, setIsManualPick] = useState(false);
 

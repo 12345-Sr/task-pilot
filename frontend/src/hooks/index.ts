@@ -278,7 +278,7 @@ export function useRegister() {
     mutationFn: async (data: { name: string; email: string; password: string; otp?: string; language?: string }) => {
       const res: any = await apiClient.post('/auth/register', {
         ...data,
-        language: data.language || language || 'hi',
+        language: data.language || language || 'en',
       });
       const { token, user } = res?.data || res;
       setToken(token);

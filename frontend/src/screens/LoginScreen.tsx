@@ -23,8 +23,8 @@ import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { signInWithGoogle } from '../services/auth/googleAuth.service';
 
 const LANGUAGES = [
-  { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
   { code: 'en', native: 'English', label: 'English' },
+  { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
   { code: 'mr', native: 'मराठी', label: 'Marathi' },
   { code: 'bn', native: 'বাংলা', label: 'Bengali' },
   { code: 'ta', native: 'தமிழ்', label: 'Tamil' },

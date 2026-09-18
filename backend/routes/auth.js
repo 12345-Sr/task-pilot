@@ -295,7 +295,7 @@ router.post('/register', async (req, res) => {
     const userResult = await db.query(
       `INSERT INTO users (name, email, phone, password_hash, language)
        VALUES ($1,$2,$3,$4,$5) RETURNING id, name, email, language, install_date`,
-      [name.trim(), trimmedEmail, phone || null, passwordHash, language || 'hi']
+      [name.trim(), trimmedEmail, phone || null, passwordHash, language || 'en']
     );
     const user = userResult.rows[0];
 

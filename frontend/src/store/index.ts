@@ -36,7 +36,7 @@ export interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   token: null,
-  language: 'hi',
+  language: 'en',
   isAuthenticated: false,
   isPremium: false,
   subscriptionInfo: null,
