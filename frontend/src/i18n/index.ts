@@ -92,7 +92,7 @@ export const translations: Record<string, Record<string, string>> = {
     dont_have_account: 'Naye hain?',
     greeting_morning: 'Namaste',
     tasks_pending_badge: 'kaam baaki',
-    stat_total: 'Kal Kaam',
+    stat_total: 'Kul Kaam',
     stat_done: 'Pura Hua (✓)',
     stat_pending: 'Baaki (⏳)',
     stat_missed: 'Chhoot Gaya (✗)',
