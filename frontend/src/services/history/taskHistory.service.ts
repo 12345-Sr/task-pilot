@@ -215,7 +215,7 @@ class TaskHistoryService {
       const key = this.getKey(userId);
       delete this.inMemoryCache[key];
       await AsyncStorage.removeItem(key);
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 

@@ -105,7 +105,7 @@ export function useCreateTask() {
     onSuccess: (created: any) => {
       const userId = useAppStore.getState().user?.id;
       if (created) {
-        taskHistoryService.recordCreatedTask(created, userId).catch(() => {});
+        taskHistoryService.recordCreatedTask(created, userId).catch(() => { });
       }
       useAppStore.getState().recordTaskCreation(created?.targetDate || created?.date);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
@@ -130,7 +130,7 @@ export function useUpdateTask() {
       const id = typeof args === 'string' ? args : args.id;
       const userId = useAppStore.getState().user?.id;
       if (updated) {
-        taskHistoryService.updateTaskInHistory(id, updated, userId).catch(() => {});
+        taskHistoryService.updateTaskInHistory(id, updated, userId).catch(() => { });
       }
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
@@ -149,7 +149,7 @@ export function useCompleteTask() {
       const completed = typeof args === 'object' ? args.completed : undefined;
       const status = typeof args === 'object' ? args.status : undefined;
       if (completed !== false) {
-        NotificationService.cancelTaskAlerts(id).catch(() => {});
+        NotificationService.cancelTaskAlerts(id).catch(() => { });
       }
       return tasksRepository.complete(id, completed, status);
     },
@@ -165,7 +165,7 @@ export function useCompleteTask() {
           confirmationStatus: status || (completed ? 'COMPLETED' : 'PENDING'),
         },
         userId
-      ).catch(() => {});
+      ).catch(() => { });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TASK(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TODAY_TASKS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_TASKS });
@@ -262,7 +262,7 @@ export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      NotificationService.cancelTaskAlerts(id).catch(() => {});
+      NotificationService.cancelTaskAlerts(id).catch(() => { });
       return tasksRepository.delete(id);
     },
     onSuccess: () => {

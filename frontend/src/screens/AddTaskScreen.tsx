@@ -253,15 +253,15 @@ export const AddTaskScreen: React.FC = () => {
                     {freeUsed === 0
                       ? (language === 'hi' ? 'Free Task 1 / 3 banaya ja raha hai' : 'Creating Task 1 of 3 (Free Tier)')
                       : freeUsed === 1
-                      ? (language === 'hi' ? 'Free Task 2 / 3 banaya ja raha hai' : 'Creating Task 2 of 3 (Free Tier)')
-                      : (language === 'hi' ? 'Free Task 3 / 3 (Aakhri free task!)' : 'Creating Task 3 of 3 (Final Free Task!)')}
+                        ? (language === 'hi' ? 'Free Task 2 / 3 banaya ja raha hai' : 'Creating Task 2 of 3 (Free Tier)')
+                        : (language === 'hi' ? 'Free Task 3 / 3 (Aakhri free task!)' : 'Creating Task 3 of 3 (Final Free Task!)')}
                   </Text>
                   <Text style={styles.freeStepNoticeSub}>
                     {freeUsed === 0
                       ? (language === 'hi' ? 'Iske baad 2 aur free tasks bachenge' : '2 free tasks will remain after this')
                       : freeUsed === 1
-                      ? (language === 'hi' ? 'Iske baad 1 aakhri free task bachega' : '1 final free task will remain after this')
-                      : (language === 'hi' ? 'Yeh aapka aakhri free task hai · Unlimited ke liye Pro lein' : 'This is your final free task · Go Pro for unlimited')}
+                        ? (language === 'hi' ? 'Iske baad 1 aakhri free task bachega' : '1 final free task will remain after this')
+                        : (language === 'hi' ? 'Yeh aapka aakhri free task hai · Unlimited ke liye Pro lein' : 'This is your final free task · Go Pro for unlimited')}
                   </Text>
                 </View>
               </View>

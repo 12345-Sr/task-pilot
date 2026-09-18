@@ -92,20 +92,20 @@ export const TaskHistoryScreen: React.FC = () => {
     const statusBadgeText = isDone
       ? isHindi ? '✓ Pura Hua' : '✓ Completed'
       : isMissed
-      ? isHindi ? '✗ Chhoot Gaya' : '✗ Missed'
-      : isHindi ? '● Active' : '● Active';
+        ? isHindi ? '✗ Chhoot Gaya' : '✗ Missed'
+        : isHindi ? '● Active' : '● Active';
 
     const statusBadgeStyle = isDone
       ? styles.badgeDone
       : isMissed
-      ? styles.badgeMissed
-      : styles.badgeActive;
+        ? styles.badgeMissed
+        : styles.badgeActive;
 
     const statusTextStyle = isDone
       ? styles.badgeTextDone
       : isMissed
-      ? styles.badgeTextMissed
-      : styles.badgeTextActive;
+        ? styles.badgeTextMissed
+        : styles.badgeTextActive;
 
     const createdFormatted = formatTimestamp(item.createdAt);
     const scheduleFormatted = formatScheduleDate(item.date || item.targetDate, item.time || item.deadlineTime);
@@ -312,8 +312,8 @@ export const TaskHistoryScreen: React.FC = () => {
                 {searchQuery
                   ? isHindi ? `"${searchQuery}" ke liye koi result nahi mila.` : `No tasks match "${searchQuery}".`
                   : isHindi
-                  ? 'Aap jo bhi task banayenge, uska poora record yahan hamesha surakshit rahega.'
-                  : 'Every task you create will be safely recorded and archived here.'}
+                    ? 'Aap jo bhi task banayenge, uska poora record yahan hamesha surakshit rahega.'
+                    : 'Every task you create will be safely recorded and archived here.'}
               </Text>
 
               {searchQuery ? (
