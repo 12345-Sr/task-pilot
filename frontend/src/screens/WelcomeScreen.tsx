@@ -159,7 +159,7 @@ const FEATURE_DATA: Record<
   },
   ta: {
     pillarsTitle: 'TaskAlert எவ்வாறு செயல்படுகிறது?',
-    trialBadge: '🎉 3 நாள் இலவச சோதனை சேர்க்கப்பட்டுள்ளது',
+    trialBadge: '🎉 3 நாள் இலவச சோதனை',
     trialSubtitle: 'கிரெடிட் கார்டு தேவையில்லை',
     pillars: [
       {
@@ -172,10 +172,10 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'எச்சரிக்கை',
+        badge: 'அலர்ட்',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
-        title: 'முன்கூட்டியே நினைவூட்டல்',
+        title: 'நேரத்திற்கு முன் அலர்ட்',
         desc: 'பணிகளை முடிக்க சரியான நேரத்தில் நினைவூட்டல்கள் கிடைக்கும்.',
       },
       {
@@ -183,7 +183,7 @@ const FEATURE_DATA: Record<
         badge: 'மாலை 8:00',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
-        title: 'மாலை உறுதிப்படுத்தல் & ஸ்ட்ரீக்',
+        title: 'மாலை உறுதிப்படுத்தல்',
         desc: 'முடிந்த பணிகளை குறித்து (✓/✗) உங்கள் தினசரி ஸ்ட்ரீக்கை உயர்த்துங்கள்.',
       },
     ],
@@ -573,6 +573,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: 0.2,
+    flex: 1,
+    flexShrink: 1,
   },
   pillarCardsList: {
     gap: 6,
@@ -620,6 +622,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   pillarBadgeText: {
     fontSize: 9,

@@ -848,7 +848,7 @@ export const translations: Record<string, Record<string, string>> = {
     login_button: 'உள்நுழைக',
     login_title: 'மீண்டும் நல்வரவு',
     login_subtitle: 'சரியான நேரத்தில் அலர்ட் பெறுங்கள்',
-    forgot_password: 'கடவுச்சொல்லை மறந்துவிட்டீர்களா?',
+    forgot_password: 'மறந்துவிட்டீர்களா?',
     dont_have_account: 'புதியவரா?',
     greeting_morning: 'வணக்கம்',
     tasks_pending_badge: 'மீதமுள்ள பணிகள்',

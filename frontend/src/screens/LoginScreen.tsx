@@ -220,13 +220,18 @@ export const LoginScreen: React.FC = () => {
             {/* Password Field */}
             <View style={styles.fieldGroup}>
               <View style={styles.passwordHeader}>
-                <Text style={styles.fieldLabel}>{t(language, 'password_label')}</Text>
+                <Text style={styles.fieldLabel} numberOfLines={1}>
+                  {t(language, 'password_label')}
+                </Text>
                 <TouchableOpacity
+                  style={styles.forgotBtn}
                   onPress={() =>
                     navigation.navigate('ForgotPassword', { email: email.trim() })
                   }
                 >
-                  <Text style={styles.forgotLink}>{t(language, 'forgot_password')}</Text>
+                  <Text style={styles.forgotLink} numberOfLines={1}>
+                    {t(language, 'forgot_password')}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrapper}>
@@ -465,12 +470,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#334155',
     marginBottom: 4,
+    flex: 1,
   },
   passwordHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+    gap: 8,
+  },
+  forgotBtn: {
+    flexShrink: 0,
   },
   forgotLink: {
     fontSize: 11.5,

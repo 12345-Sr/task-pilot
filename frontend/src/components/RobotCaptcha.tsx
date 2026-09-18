@@ -24,7 +24,7 @@ function generateRandomCaptcha(): { code: string; displayChars: { char: string; 
   for (let i = 0; i < 5; i++) {
     const char = CHAR_SET.charAt(Math.floor(Math.random() * CHAR_SET.length));
     code += char;
-    const rot = `${(Math.random() * 26 - 13).toFixed(1)}deg`;
+    const rot = `${(Math.random() * 20 - 10).toFixed(1)}deg`;
     const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
     displayChars.push({ char, rot, color });
   }
@@ -34,7 +34,6 @@ function generateRandomCaptcha(): { code: string; displayChars: { char: string; 
 
 export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language = 'hi' }) => {
   const [isVerified, setIsVerified] = useState(false);
-  const [showChallenge, setShowChallenge] = useState(false);
   const [captchaData, setCaptchaData] = useState<{ code: string; displayChars: { char: string; rot: string; color: string }[] }>(() => generateRandomCaptcha());
   const [userInput, setUserInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -46,22 +45,10 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
     setErrorMsg('');
   };
 
-  const handleCheckboxPress = () => {
-    if (isVerified || isChecking) return;
-    setIsChecking(true);
-    setErrorMsg('');
-    setTimeout(() => {
-      setIsChecking(false);
-      setIsVerified(true);
-      setShowChallenge(false);
-      onVerify(true);
-    }, 400);
-  };
-
   const handleVerify = () => {
     setErrorMsg('');
     if (!userInput.trim()) {
-      setErrorMsg(language === 'hi' ? 'Kripya upar dikhaya gaya code likhein' : 'Please enter the code shown above');
+      setErrorMsg(language === 'hi' ? 'Upar ka code likhein' : 'Type code shown above');
       return;
     }
 
@@ -70,335 +57,260 @@ export const RobotCaptcha: React.FC<RobotCaptchaProps> = ({ onVerify, language =
       setIsChecking(false);
       if (userInput.trim().toUpperCase() === captchaData.code.toUpperCase()) {
         setIsVerified(true);
-        setShowChallenge(false);
         onVerify(true);
       } else {
-        setErrorMsg(language === 'hi' ? 'Galat code! Naya code try karein.' : 'Incorrect code! Please try again.');
+        setErrorMsg(language === 'hi' ? 'Galat code! Naya try karein.' : 'Incorrect! Try new code.');
         refreshCaptcha();
       }
-    }, 400);
+    }, 300);
   };
 
-  return (
-    <View style={styles.container}>
-      {isVerified ? (
-        <View style={styles.cardVerified}>
-          <View style={styles.leftRow}>
-            <View style={[styles.checkbox, styles.checkboxVerified]}>
-              <Text style={styles.checkmark}>✓</Text>
-            </View>
-            <View>
-              <Text style={[styles.label, { color: '#16A34A' }]}>
-                {language === 'hi' ? '✓ Security Code Verified' : '✓ Security Verified'}
-              </Text>
-              <Text style={styles.subLabel}>
-                {language === 'hi' ? 'Suraksha jaanch safal rahi' : 'Human verification complete'}
-              </Text>
-            </View>
+  if (isVerified) {
+    return (
+      <View style={styles.verifiedCard}>
+        <View style={styles.verifiedLeft}>
+          <View style={styles.verifiedCheckBadge}>
+            <Text style={styles.verifiedCheckmark}>✓</Text>
           </View>
-          <Text style={{ fontSize: 20 }}>🛡️</Text>
-        </View>
-      ) : !showChallenge ? (
-        <TouchableOpacity
-          style={[styles.card, isChecking && styles.cardActive]}
-          onPress={handleCheckboxPress}
-          activeOpacity={0.8}
-        >
-          <View style={styles.leftRow}>
-            <View style={[styles.checkbox, isChecking && styles.checkboxActive]}>
-              {isChecking ? (
-                <ActivityIndicator color={colors.primary} size="small" />
-              ) : null}
-            </View>
-            <View>
-              <Text style={styles.label}>
-                {language === 'hi' ? 'Main robot nahi hoon' : "I am not a robot"}
-              </Text>
-              <Text style={styles.subLabel}>
-                {language === 'hi' ? '1-tap suraksha satyapan' : '1-tap security verification'}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.badgeContainer}>
-            <Text style={styles.badgeIcon}>🛡️</Text>
-            <Text style={styles.badgeText}>TASKALERT</Text>
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.challengeBox}>
-          <View style={styles.challengeHeader}>
-            <Text style={styles.challengeTitle}>
-              {language === 'hi' ? 'Suraksha Verification Code' : 'Security Verification Code'}
+          <View>
+            <Text style={styles.verifiedTitle}>
+              {language === 'hi' ? '✓ Security Code Verified' : '✓ Security Verified'}
             </Text>
-            <TouchableOpacity
-              onPress={refreshCaptcha}
-              style={styles.refreshBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            <Text style={styles.verifiedSub}>
+              {language === 'hi' ? 'Suraksha jaanch safal rahi' : 'Human verification complete'}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.shieldIcon}>🛡️</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.compactContainer}>
+      {/* Top compact row: Label on left, Visual Code Display + Refresh button on right */}
+      <View style={styles.topRow}>
+        <View style={styles.labelRow}>
+          <Text style={styles.shieldIconSmall}>🛡️</Text>
+          <Text style={styles.labelText}>
+            {language === 'hi' ? 'Suraksha Verification Code' : 'Security Verification Code'}
+          </Text>
+        </View>
+
+        {/* Visual Captcha Display Badge */}
+        <View style={styles.captchaDisplayBadge}>
+          <View style={styles.noiseLine} />
+          {captchaData.displayChars.map((item, idx) => (
+            <Text
+              key={idx}
+              style={[
+                styles.captchaChar,
+                {
+                  color: item.color,
+                  transform: [{ rotate: item.rot }],
+                },
+              ]}
             >
-              <Text style={styles.refreshText}>🔄 {language === 'hi' ? 'Naya Code' : 'New Code'}</Text>
-            </TouchableOpacity>
-          </View>
+              {item.char}
+            </Text>
+          ))}
+          <TouchableOpacity
+            onPress={refreshCaptcha}
+            style={styles.refreshIconBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
+            <Text style={styles.refreshIcon}>🔄</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-          {/* Visual Captcha Canvas Simulation */}
-          <View style={styles.captchaDisplay}>
-            {/* Background noise lines */}
-            <View style={styles.noiseLine1} />
-            <View style={styles.noiseLine2} />
-            <View style={styles.noiseLine3} />
-
-            {captchaData.displayChars.map((item, idx) => (
-              <Text
-                key={idx}
-                style={[
-                  styles.captchaChar,
-                  {
-                    color: item.color,
-                    transform: [{ rotate: item.rot }],
-                  },
-                ]}
-              >
-                {item.char}
-              </Text>
-            ))}
-          </View>
-
-          {/* Input Field */}
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder={language === 'hi' ? 'Upar ka 5-akshar code likhein' : 'Type 5-letter code here'}
-              placeholderTextColor="#94A3B8"
-              value={userInput}
-              onChangeText={(text) => {
-                setUserInput(text);
-                if (errorMsg) setErrorMsg('');
-              }}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={6}
-            />
-            <TouchableOpacity
-              style={styles.verifyBtn}
-              onPress={handleVerify}
-              disabled={isChecking}
-              activeOpacity={0.8}
-            >
-              {isChecking ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.verifyBtnText}>
-                  {language === 'hi' ? 'Jaanchen' : 'Verify'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {errorMsg ? (
-            <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
+      {/* Bottom compact row: Input Field + Verify Button */}
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          placeholder={language === 'hi' ? 'Upar ka 5-akshar code likhein' : 'Type 5-letter code here'}
+          placeholderTextColor="#94A3B8"
+          value={userInput}
+          onChangeText={(text) => {
+            setUserInput(text);
+            if (errorMsg) setErrorMsg('');
+            // Instant auto-verify if typed 5 matching characters
+            if (text.trim().length === 5 && text.trim().toUpperCase() === captchaData.code.toUpperCase()) {
+              setIsVerified(true);
+              onVerify(true);
+            }
+          }}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={5}
+        />
+        <TouchableOpacity
+          style={styles.verifyBtn}
+          onPress={handleVerify}
+          disabled={isChecking}
+          activeOpacity={0.82}
+        >
+          {isChecking ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.helperText}>
-              {language === 'hi'
-                ? 'Bot aur spam rokne ke liye yeh code verify karein'
-                : 'Enter code to verify you are a human'}
+            <Text style={styles.verifyBtnText}>
+              {language === 'hi' ? 'Jaanchen' : 'Verify'}
             </Text>
           )}
-        </View>
-      )}
+        </TouchableOpacity>
+      </View>
+
+      {errorMsg ? (
+        <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  compactContainer: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginVertical: 4,
   },
-  cardActive: {
-    borderColor: colors.primaryOrange,
-    backgroundColor: '#FFFBF5',
-  },
-  cardVerified: {
-    borderColor: '#16A34A',
-    backgroundColor: '#F0FDF4',
-  },
-  leftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  checkbox: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#94A3B8',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxActive: {
-    borderColor: colors.primaryOrange,
-  },
-  checkboxVerified: {
-    borderColor: '#16A34A',
-    backgroundColor: '#16A34A',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  subLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  badgeContainer: {
-    alignItems: 'center',
-    opacity: 0.8,
-  },
-  badgeIcon: {
-    fontSize: 18,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  challengeBox: {
-    marginTop: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#FED7AA',
-    padding: 14,
-  },
-  challengeHeader: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
-  challengeTitle: {
-    fontSize: 12,
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    marginRight: 6,
+  },
+  shieldIconSmall: {
+    fontSize: 13,
+  },
+  labelText: {
+    fontSize: 11.5,
     fontWeight: '700',
     color: '#334155',
   },
-  refreshBtn: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-  },
-  refreshText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primaryOrange,
-  },
-  captchaDisplay: {
-    height: 54,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+  captchaDisplayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#CBD5E1',
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    height: 28,
     position: 'relative',
     overflow: 'hidden',
-    marginBottom: 12,
+    gap: 6,
+    flexShrink: 0,
   },
-  noiseLine1: {
+  noiseLine: {
     position: 'absolute',
-    top: 14,
-    left: -20,
-    right: -20,
-    height: 2,
-    backgroundColor: 'rgba(234, 88, 12, 0.25)',
-    transform: [{ rotate: '-6deg' }],
-  },
-  noiseLine2: {
-    position: 'absolute',
-    bottom: 16,
-    left: -20,
-    right: -20,
+    top: 13,
+    left: -10,
+    right: -10,
     height: 1.5,
-    backgroundColor: 'rgba(37, 99, 235, 0.25)',
-    transform: [{ rotate: '4deg' }],
-  },
-  noiseLine3: {
-    position: 'absolute',
-    top: 26,
-    left: -20,
-    right: -20,
-    height: 1,
-    backgroundColor: 'rgba(22, 163, 74, 0.25)',
-    transform: [{ rotate: '-2deg' }],
+    backgroundColor: 'rgba(234, 88, 12, 0.25)',
+    transform: [{ rotate: '-4deg' }],
   },
   captchaChar: {
-    fontSize: 26,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(0,0,0,0.12)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
+    letterSpacing: 2,
+  },
+  refreshIconBtn: {
+    marginLeft: 3,
+    padding: 2,
+  },
+  refreshIcon: {
+    fontSize: 11,
   },
   inputRow: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   input: {
     flex: 1,
-    height: 44,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    height: 38,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#CBD5E1',
     borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    paddingHorizontal: 10,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
-    backgroundColor: '#F8FAFC',
     letterSpacing: 2,
   },
   verifyBtn: {
-    backgroundColor: colors.primaryOrange,
-    paddingHorizontal: 16,
+    backgroundColor: colors.primary,
+    height: 38,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   verifyBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
-  helperText: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 8,
-  },
   errorText: {
-    fontSize: 12,
+    fontSize: 10.5,
     color: '#DC2626',
     fontWeight: '600',
-    marginTop: 8,
+    marginTop: 3,
+  },
+  verifiedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.2,
+    borderColor: '#16A34A',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    marginVertical: 4,
+  },
+  verifiedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  verifiedCheckBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifiedCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  verifiedTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#16A34A',
+  },
+  verifiedSub: {
+    fontSize: 10,
+    color: '#15803D',
+  },
+  shieldIcon: {
+    fontSize: 16,
   },
 });
 
