@@ -184,7 +184,8 @@ export function useTaskHistory(filterStatus: 'all' | 'done' | 'pending' | 'misse
   return useQuery({
     queryKey: [...QUERY_KEYS.TASK_HISTORY, filterStatus, searchQuery, userId || 'anon'],
     queryFn: async () => {
-      const localItems = await taskHistoryService.getLocalHistory(userId);
+      let serverTasks: any[] = [];
+      let serverStats: any = null;
 
       try {
         const params = new URLSearchParams();
@@ -193,66 +194,49 @@ export function useTaskHistory(filterStatus: 'all' | 'done' | 'pending' | 'misse
 
         const queryStr = params.toString() ? `?${params.toString()}` : '';
         const res: any = await apiClient.get(`/tasks/history${queryStr}`);
-
-        const serverTasks: any[] = res?.tasks || [];
-        const mappedServer = serverTasks.map(mapDbTask);
-        const synced = await taskHistoryService.syncWithServer(mappedServer, userId);
-
-        let filtered = synced;
-        if (filterStatus !== 'all') {
-          filtered = filtered.filter((t) => {
-            const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
-            const isMissed = t.confirmationStatus === 'MISSED';
-            if (filterStatus === 'done') return isDone;
-            if (filterStatus === 'missed') return isMissed;
-            if (filterStatus === 'pending') return !isDone && !isMissed;
-            return true;
-          });
+        serverTasks = res?.tasks || [];
+        serverStats = res?.stats || null;
+      } catch (histErr) {
+        // Resilient fallback to /tasks (supported across all backend versions to fetch DB tasks)
+        try {
+          const res: any = await apiClient.get('/tasks');
+          serverTasks = res?.tasks ?? res?.data ?? (Array.isArray(res) ? res : []);
+        } catch (tasksErr) {
+          serverTasks = [];
         }
-
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          filtered = filtered.filter(
-            (t) =>
-              t.title?.toLowerCase().includes(q) ||
-              t.description?.toLowerCase().includes(q) ||
-              t.notes?.toLowerCase().includes(q)
-          );
-        }
-
-        const stats = res?.stats || taskHistoryService.computeStats(synced);
-        return {
-          tasks: filtered,
-          allTasks: synced,
-          stats,
-        };
-      } catch (err) {
-        let filtered = localItems;
-        if (filterStatus !== 'all') {
-          filtered = filtered.filter((t) => {
-            const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
-            const isMissed = t.confirmationStatus === 'MISSED';
-            if (filterStatus === 'done') return isDone;
-            if (filterStatus === 'missed') return isMissed;
-            if (filterStatus === 'pending') return !isDone && !isMissed;
-            return true;
-          });
-        }
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          filtered = filtered.filter(
-            (t) =>
-              t.title?.toLowerCase().includes(q) ||
-              t.description?.toLowerCase().includes(q) ||
-              t.notes?.toLowerCase().includes(q)
-          );
-        }
-        return {
-          tasks: filtered,
-          allTasks: localItems,
-          stats: taskHistoryService.computeStats(localItems),
-        };
       }
+
+      const mappedServer = Array.isArray(serverTasks) ? serverTasks.map(mapDbTask) : [];
+      const synced = await taskHistoryService.syncWithServer(mappedServer, userId);
+
+      let filtered = synced;
+      if (filterStatus !== 'all') {
+        filtered = filtered.filter((t) => {
+          const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
+          const isMissed = t.confirmationStatus === 'MISSED';
+          if (filterStatus === 'done') return isDone;
+          if (filterStatus === 'missed') return isMissed;
+          if (filterStatus === 'pending') return !isDone && !isMissed;
+          return true;
+        });
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (t) =>
+            t.title?.toLowerCase().includes(q) ||
+            t.description?.toLowerCase().includes(q) ||
+            t.notes?.toLowerCase().includes(q)
+        );
+      }
+
+      const stats = serverStats || taskHistoryService.computeStats(synced);
+      return {
+        tasks: filtered,
+        allTasks: synced,
+        stats,
+      };
     },
     staleTime: 1000 * 15,
   });

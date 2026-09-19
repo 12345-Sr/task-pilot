@@ -64,8 +64,8 @@ class TaskHistoryService {
         status: task.completed ? 'done' : (task.confirmationStatus === 'MISSED' ? 'missed' : 'pending'),
         action: 'CREATED',
         created_at: createdAtStr,
-      }).catch((apiErr) => {
-        console.log('[TASK HISTORY] DB history save log:', apiErr?.message || apiErr);
+      }).catch(() => {
+        // Silent fallback: task is already preserved directly in DB via POST /api/tasks
       });
 
       return updated;

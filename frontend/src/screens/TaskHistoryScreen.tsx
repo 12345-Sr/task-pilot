@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,12 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { colors, spacing, radius, shadows } from '../theme';
 import { useAppStore } from '../store';
-import { t } from '../i18n';
 import { useTaskHistory } from '../hooks';
 import PriorityChip from '../components/PriorityChip';
 import { TaskHistoryItem } from '../services/history/taskHistory.service';
@@ -81,7 +79,7 @@ export const TaskHistoryScreen: React.FC = () => {
     const dStr = dateVal ? String(dateVal).slice(0, 10) : '';
     const tStr = timeVal ? String(timeVal).slice(0, 5) : '';
     if (!dStr && !tStr) return '';
-    return `⏰ ${dStr} ${tStr}`.trim();
+    return `${dStr} ${tStr}`.trim();
   };
 
   // Render individual task card in timeline
@@ -93,7 +91,13 @@ export const TaskHistoryScreen: React.FC = () => {
       ? isHindi ? '✓ Pura Hua' : '✓ Completed'
       : isMissed
         ? isHindi ? '✗ Chhoot Gaya' : '✗ Missed'
-        : isHindi ? '● Active' : '● Active';
+        : isHindi ? '⏳ Active' : '⏳ In Progress';
+
+    const accentColor = isDone
+      ? '#10B981'
+      : isMissed
+        ? '#EF4444'
+        : '#6366F1';
 
     const statusBadgeStyle = isDone
       ? styles.badgeDone
@@ -116,37 +120,51 @@ export const TaskHistoryScreen: React.FC = () => {
         activeOpacity={0.88}
         onPress={() => navigation.navigate('TaskDetail', { taskId: item.id })}
       >
-        <View style={styles.cardHeaderRow}>
-          <PriorityChip priority={item.priority} size="sm" />
-          <View style={[styles.statusBadge, statusBadgeStyle]}>
-            <Text style={[styles.statusBadgeText, statusTextStyle]}>{statusBadgeText}</Text>
+        {/* Color accent left indicator bar */}
+        <View style={[styles.cardAccentBar, { backgroundColor: accentColor }]} />
+
+        <View style={styles.cardInner}>
+          {/* Header Row: Priority Chip & Status Badge */}
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <PriorityChip priority={item.priority} size="sm" />
+              <View style={[styles.statusBadge, statusBadgeStyle]}>
+                <Text style={[styles.statusBadgeText, statusTextStyle]}>{statusBadgeText}</Text>
+              </View>
+            </View>
+            <Text style={styles.cardChevron}>›</Text>
           </View>
-        </View>
 
-        <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
-          {item.title}
-        </Text>
-
-        {item.description ? (
-          <Text style={styles.taskDescription} numberOfLines={2}>
-            📝 {item.description}
+          {/* Title */}
+          <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
+            {item.title}
           </Text>
-        ) : null}
 
-        <View style={styles.cardFooter}>
-          {createdFormatted ? (
-            <View style={styles.timeRow}>
-              <Text style={styles.metaLabel}>{isHindi ? 'Banaya gaya:' : 'Created:'}</Text>
-              <Text style={styles.metaValue}>{createdFormatted}</Text>
+          {/* Description */}
+          {item.description ? (
+            <View style={styles.descBox}>
+              <Text style={styles.taskDescription} numberOfLines={2}>
+                📝 {item.description}
+              </Text>
             </View>
           ) : null}
 
-          {scheduleFormatted ? (
-            <View style={styles.timeRow}>
-              <Text style={styles.metaLabel}>{isHindi ? 'Schedule:' : 'Due:'}</Text>
-              <Text style={styles.metaValue}>{scheduleFormatted}</Text>
-            </View>
-          ) : null}
+          {/* Footer Metadata */}
+          <View style={styles.cardFooter}>
+            {createdFormatted ? (
+              <View style={styles.timeTag}>
+                <Text style={styles.timeTagLabel}>{isHindi ? 'Banaya:' : 'Created:'}</Text>
+                <Text style={styles.timeTagValue}>{createdFormatted}</Text>
+              </View>
+            ) : null}
+
+            {scheduleFormatted ? (
+              <View style={styles.timeTag}>
+                <Text style={styles.timeTagLabel}>{isHindi ? 'Schedule:' : 'Due:'}</Text>
+                <Text style={styles.timeTagValue}>⏰ {scheduleFormatted}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -154,39 +172,58 @@ export const TaskHistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      {/* Top Header Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backBtnText}>‹</Text>
-        </TouchableOpacity>
+      {/* Premium Hero Gradient Header */}
+      <LinearGradient
+        colors={['#1E1B4B', '#312E81', '#4338CA']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroHeader}
+      >
+        {/* Top bar with back and refresh buttons */}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.heroNavBtn}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Go back"
+          >
+            <Text style={styles.heroNavBtnText}>‹</Text>
+          </TouchableOpacity>
 
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>
-            {isHindi ? '📜 Tasks Itihaas' : '📜 Tasks Created History'}
-          </Text>
-          <Text style={styles.headerSub}>
-            {isHindi ? 'Aapke sabhi banaye gaye tasks ka record' : 'Complete lifetime history of created tasks'}
-          </Text>
+          <View style={styles.heroTitleWrap}>
+            <Text style={styles.heroTitle}>
+              {isHindi ? '📜 टास्क इतिहास (Task History)' : '📜 Task History & Audit'}
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              {isHindi ? 'Aapke sabhi banaye gaye tasks ka safe record' : 'Permanent database record of all created tasks'}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.heroNavBtn}
+            onPress={() => refetch()}
+            activeOpacity={0.75}
+            accessibilityLabel="Refresh history"
+          >
+            <Text style={styles.heroSyncIcon}>🔄</Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.refreshBtn}
-          onPress={() => refetch()}
-          activeOpacity={0.7}
-          accessibilityLabel="Refresh history"
-        >
-          <Text style={styles.refreshBtnText}>🔄</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Hero Vault Status Badge */}
+        <View style={styles.heroVaultBadge}>
+          <Text style={styles.heroVaultDot}>●</Text>
+          <Text style={styles.heroVaultText}>
+            {isHindi
+              ? `Cloud & Database Synced · Kul ${stats.totalCreated} Kaam`
+              : `Cloud & Database Synced · ${stats.totalCreated} Total Tasks`}
+          </Text>
+        </View>
+      </LinearGradient>
 
+      {/* Main Timeline List */}
       <FlatList<TaskHistoryItem>
         data={tasks}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -197,43 +234,67 @@ export const TaskHistoryScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
+            colors={['#6366F1']}
+            tintColor="#6366F1"
           />
         }
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            {/* KPI Stat Cards Grid */}
+            {/* KPI Stat Cards Grid - Interactive! */}
             <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>📝</Text>
+              <TouchableOpacity
+                style={[styles.statCard, activeTab === 'all' && styles.statCardSelected]}
+                onPress={() => setActiveTab('all')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.statIconBox, { backgroundColor: '#EEF2FF' }]}>
+                  <Text style={styles.statIcon}>📝</Text>
+                </View>
                 <Text style={styles.statNumber}>{stats.totalCreated}</Text>
-                <Text style={styles.statLabel}>{isHindi ? 'Total Tasks' : 'Total Created'}</Text>
-              </View>
+                <Text style={styles.statLabel}>{isHindi ? 'Total' : 'Total'}</Text>
+              </TouchableOpacity>
 
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>✅</Text>
-                <Text style={[styles.statNumber, { color: colors.successGreen }]}>
+              <TouchableOpacity
+                style={[styles.statCard, activeTab === 'done' && styles.statCardSelected]}
+                onPress={() => setActiveTab('done')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.statIconBox, { backgroundColor: '#ECFDF5' }]}>
+                  <Text style={styles.statIcon}>✓</Text>
+                </View>
+                <Text style={[styles.statNumber, { color: '#10B981' }]}>
                   {stats.totalCompleted}
                 </Text>
-                <Text style={styles.statLabel}>{isHindi ? 'Pura Hua' : 'Completed'}</Text>
-              </View>
+                <Text style={styles.statLabel}>{isHindi ? 'Pura' : 'Done'}</Text>
+              </TouchableOpacity>
 
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>⏳</Text>
-                <Text style={[styles.statNumber, { color: colors.primaryBlue }]}>
+              <TouchableOpacity
+                style={[styles.statCard, activeTab === 'pending' && styles.statCardSelected]}
+                onPress={() => setActiveTab('pending')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
+                  <Text style={styles.statIcon}>⏳</Text>
+                </View>
+                <Text style={[styles.statNumber, { color: '#3B82F6' }]}>
                   {stats.activeTasks}
                 </Text>
-                <Text style={styles.statLabel}>{isHindi ? 'Active' : 'In Progress'}</Text>
-              </View>
+                <Text style={styles.statLabel}>{isHindi ? 'Active' : 'Active'}</Text>
+              </TouchableOpacity>
 
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>📈</Text>
-                <Text style={[styles.statNumber, { color: colors.primaryPurple }]}>
+              <TouchableOpacity
+                style={[styles.statCard, activeTab === 'missed' && styles.statCardSelected]}
+                onPress={() => setActiveTab('missed')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.statIconBox, { backgroundColor: '#FAF5FF' }]}>
+                  <Text style={styles.statIcon}>⚡</Text>
+                </View>
+                <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>
                   {stats.completionRate}%
                 </Text>
-                <Text style={styles.statLabel}>{isHindi ? 'Success Rate' : 'Success Rate'}</Text>
-              </View>
+                <Text style={styles.statLabel}>{isHindi ? 'Rate' : 'Success'}</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Live Search Bar */}
@@ -241,7 +302,7 @@ export const TaskHistoryScreen: React.FC = () => {
               <Text style={styles.searchIcon}>🔍</Text>
               <TextInput
                 style={styles.searchInput}
-                placeholder={isHindi ? 'Kaam ke naam se khojein...' : 'Search tasks by title or notes...'}
+                placeholder={isHindi ? 'Kaam ke naam ya description se khojein...' : 'Search task history by title or notes...'}
                 placeholderTextColor="#94A3B8"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -255,12 +316,12 @@ export const TaskHistoryScreen: React.FC = () => {
               )}
             </View>
 
-            {/* Filter Tabs */}
+            {/* Segmented Filter Pills */}
             <View style={styles.tabsRow}>
               {(
                 [
                   { id: 'all', label: isHindi ? 'Sabhi' : 'All', count: stats.totalCreated },
-                  { id: 'done', label: isHindi ? 'Pura' : 'Completed', count: stats.totalCompleted },
+                  { id: 'done', label: isHindi ? 'Pura Hua' : 'Completed', count: stats.totalCompleted },
                   { id: 'pending', label: isHindi ? 'Active' : 'Active', count: stats.activeTasks },
                   { id: 'missed', label: isHindi ? 'Missed' : 'Missed', count: stats.totalMissed },
                 ] as const
@@ -269,13 +330,34 @@ export const TaskHistoryScreen: React.FC = () => {
                 return (
                   <TouchableOpacity
                     key={tab.id}
-                    style={[styles.tabBtn, isActive && styles.tabBtnActive]}
                     onPress={() => setActiveTab(tab.id)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.85}
+                    style={styles.tabTouch}
                   >
-                    <Text style={[styles.tabBtnText, isActive && styles.tabBtnTextActive]}>
-                      {tab.label} ({tab.count})
-                    </Text>
+                    {isActive ? (
+                      <LinearGradient
+                        colors={['#4F46E5', '#7C3AED']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.tabBtnActive}
+                      >
+                        <Text style={styles.tabBtnTextActive}>
+                          {tab.label}
+                        </Text>
+                        <View style={styles.tabBadgeActive}>
+                          <Text style={styles.tabBadgeTextActive}>{tab.count}</Text>
+                        </View>
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.tabBtnInactive}>
+                        <Text style={styles.tabBtnTextInactive}>
+                          {tab.label}
+                        </Text>
+                        <View style={styles.tabBadgeInactive}>
+                          <Text style={styles.tabBadgeTextInactive}>{tab.count}</Text>
+                        </View>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -283,37 +365,46 @@ export const TaskHistoryScreen: React.FC = () => {
 
             {/* Timeline Header Row */}
             <View style={styles.timelineHeaderRow}>
-              <Text style={styles.timelineHeading}>
-                {isHindi ? '🕒 Creation Timeline' : '🕒 Creation Timeline'}
-              </Text>
-              <Text style={styles.timelineCountBadge}>
-                {tasks.length} {isHindi ? 'records' : 'records'}
-              </Text>
+              <View style={styles.timelineHeadingGroup}>
+                <Text style={styles.timelineHeading}>
+                  {isHindi ? '🕒 Creation Timeline' : '🕒 Creation Timeline'}
+                </Text>
+                <Text style={styles.timelineSubheading}>
+                  {isHindi ? 'Navinatam se purana kram' : 'Sorted newest to oldest'}
+                </Text>
+              </View>
+              <View style={styles.countPill}>
+                <Text style={styles.countPillText}>
+                  {tasks.length} {isHindi ? 'records' : 'tasks'}
+                </Text>
+              </View>
             </View>
           </View>
         }
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.emptyContainer}>
-              <ActivityIndicator color={colors.primary} size="large" />
+              <ActivityIndicator color="#6366F1" size="large" />
               <Text style={styles.emptySub}>
-                {isHindi ? 'Itihaas load ho raha hai...' : 'Loading task history...'}
+                {isHindi ? 'Database se itihaas load ho raha hai...' : 'Loading task history from database...'}
               </Text>
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📜</Text>
+              <View style={styles.emptyIconCircle}>
+                <Text style={styles.emptyIcon}>📜</Text>
+              </View>
               <Text style={styles.emptyTitle}>
                 {searchQuery
                   ? isHindi ? 'Koi task nahi mila' : 'No matching tasks found'
-                  : isHindi ? 'Abhi tak koi task nahi banaya' : 'No task history recorded yet'}
+                  : isHindi ? 'Abhi tak koi task record nahi hai' : 'No task history recorded yet'}
               </Text>
               <Text style={styles.emptySub}>
                 {searchQuery
-                  ? isHindi ? `"${searchQuery}" ke liye koi result nahi mila.` : `No tasks match "${searchQuery}".`
+                  ? isHindi ? `"${searchQuery}" ke anuroop koi record nahi mila.` : `No tasks match "${searchQuery}". Try a different keyword.`
                   : isHindi
-                    ? 'Aap jo bhi task banayenge, uska poora record yahan hamesha surakshit rahega.'
-                    : 'Every task you create will be safely recorded and archived here.'}
+                    ? 'Aap jo bhi task banayenge, uska poora record yahan database me hamesha surakshit rahega.'
+                    : 'Every task you add is securely recorded and permanently archived here in your database.'}
               </Text>
 
               {searchQuery ? (
@@ -333,13 +424,13 @@ export const TaskHistoryScreen: React.FC = () => {
                   activeOpacity={0.88}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#3B82F6']}
+                    colors={['#4F46E5', '#7C3AED']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.createTaskGradient}
                   >
                     <Text style={styles.createTaskGradientText}>
-                      {isHindi ? '+ Naya Task Banayein' : '+ Create Your First Task'}
+                      {isHindi ? '+ Naya Task Jodein' : '+ Create Your First Task'}
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -357,112 +448,143 @@ export default TaskHistoryScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
+  },
+  heroHeader: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    ...shadows.card,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadows.soft,
+    paddingVertical: 8,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+  heroNavBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  backBtnText: {
+  heroNavBtnText: {
     fontSize: 26,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
+    fontWeight: '600',
     lineHeight: 28,
     marginTop: -2,
   },
-  headerTitleWrap: {
+  heroSyncIcon: {
+    fontSize: 16,
+  },
+  heroTitleWrap: {
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 8,
   },
-  headerTitle: {
+  heroTitle: {
     fontSize: 16.5,
-    fontWeight: '800',
-    color: colors.textPrimary,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
-  headerSub: {
+  heroSubtitle: {
     fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 1,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+    textAlign: 'center',
   },
-  refreshBtn: {
-    width: 36,
-    height: 36,
+  heroVaultBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    marginTop: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    gap: 6,
   },
-  refreshBtnText: {
-    fontSize: 15,
+  heroVaultDot: {
+    fontSize: 8,
+    color: '#34D399',
+  },
+  heroVaultText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   listContent: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
   },
   headerContainer: {
-    gap: spacing.sm + 2,
+    gap: 12,
     marginBottom: spacing.sm,
   },
   statsGrid: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 4,
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     ...shadows.soft,
   },
+  statCardSelected: {
+    borderColor: '#6366F1',
+    backgroundColor: '#F5F3FF',
+    transform: [{ scale: 1.02 }],
+  },
+  statIconBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
   statIcon: {
-    fontSize: 16,
-    marginBottom: 2,
+    fontSize: 14,
+    fontWeight: '800',
   },
   statNumber: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '900',
-    color: colors.textPrimary,
+    color: '#0F172A',
   },
   statLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: '#64748B',
     marginTop: 2,
     textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 44,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    height: 46,
+    ...shadows.soft,
   },
   searchIcon: {
     fontSize: 15,
@@ -471,7 +593,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 13.5,
-    color: colors.textPrimary,
+    color: '#0F172A',
     paddingVertical: 0,
   },
   searchClearBtn: {
@@ -480,70 +602,136 @@ const styles = StyleSheet.create({
   searchClearText: {
     fontSize: 13,
     color: '#94A3B8',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   tabsRow: {
     flexDirection: 'row',
     gap: 6,
   },
-  tabBtn: {
+  tabTouch: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tabBtnActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: colors.primaryPurple,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+    gap: 4,
+    ...shadows.soft,
   },
-  tabBtnText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: colors.textSecondary,
+  tabBtnInactive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 4,
   },
   tabBtnTextActive: {
-    color: colors.primaryPurple,
+    fontSize: 11,
     fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  tabBtnTextInactive: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tabBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 10,
+  },
+  tabBadgeInactive: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 10,
+  },
+  tabBadgeTextActive: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  tabBadgeTextInactive: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#64748B',
   },
   timelineHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 4,
+    paddingTop: 6,
     paddingHorizontal: 2,
   },
-  timelineHeading: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.textPrimary,
+  timelineHeadingGroup: {
+    gap: 1,
   },
-  timelineCountBadge: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6366F1',
+  timelineHeading: {
+    fontSize: 14.5,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  timelineSubheading: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  countPill: {
     backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  countPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#4F46E5',
   },
   taskCard: {
-    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
+    marginBottom: 11,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
     ...shadows.card,
-    gap: 6,
+  },
+  cardAccentBar: {
+    width: 5,
+  },
+  cardInner: {
+    flex: 1,
+    padding: 14,
+    gap: 7,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  cardChevron: {
+    fontSize: 20,
+    color: '#CBD5E1',
+    fontWeight: '700',
+    marginTop: -4,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -551,41 +739,55 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   badgeDone: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
   badgeMissed: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
   badgeActive: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
   },
   statusBadgeText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '800',
   },
   badgeTextDone: {
-    color: '#15803D',
+    color: '#059669',
   },
   badgeTextMissed: {
-    color: '#B91C1C',
+    color: '#DC2626',
   },
   badgeTextActive: {
-    color: '#1D4ED8',
+    color: '#2563EB',
   },
   taskTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    lineHeight: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    lineHeight: 21,
   },
   taskTitleDone: {
     textDecorationLine: 'line-through',
     color: '#94A3B8',
   },
+  descBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderLeftWidth: 2.5,
+    borderLeftColor: '#CBD5E1',
+  },
   taskDescription: {
-    fontSize: 12.5,
-    color: '#64748B',
-    lineHeight: 18,
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 17,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -596,57 +798,76 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     marginTop: 2,
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
   },
-  timeRow: {
+  timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     gap: 4,
   },
-  metaLabel: {
-    fontSize: 10.5,
+  timeTagLabel: {
+    fontSize: 10,
     color: '#94A3B8',
-    fontWeight: '600',
-  },
-  metaValue: {
-    fontSize: 11,
-    color: '#475569',
     fontWeight: '700',
+  },
+  timeTagValue: {
+    fontSize: 10.5,
+    color: '#334155',
+    fontWeight: '800',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: 50,
     paddingHorizontal: 24,
-    gap: 10,
+    gap: 12,
   },
-  emptyIcon: {
-    fontSize: 48,
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#C7D2FE',
     marginBottom: 4,
   },
+  emptyIcon: {
+    fontSize: 34,
+  },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
+    fontSize: 16.5,
+    fontWeight: '900',
+    color: '#0F172A',
     textAlign: 'center',
   },
   emptySub: {
     fontSize: 13,
-    color: colors.textSecondary,
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 19,
+    maxWidth: 300,
   },
   emptyActionBtn: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    marginTop: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
   },
   emptyActionBtnText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
+    fontWeight: '800',
+    color: '#4F46E5',
   },
   createTaskGradientTouch: {
     marginTop: 8,
@@ -656,14 +877,14 @@ const styles = StyleSheet.create({
   },
   createTaskGradient: {
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
   createTaskGradientText: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
 });
