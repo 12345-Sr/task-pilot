@@ -212,8 +212,9 @@ export function useTaskHistory(filterStatus: 'all' | 'done' | 'pending' | 'misse
       let filtered = synced;
       if (filterStatus !== 'all') {
         filtered = filtered.filter((t) => {
-          const isDone = t.completed || t.confirmationStatus === 'COMPLETED';
-          const isMissed = t.confirmationStatus === 'MISSED';
+          const statusStr = String((t as any).status || t.confirmationStatus || '').toLowerCase();
+          const isDone = t.completed || statusStr === 'completed' || statusStr === 'done';
+          const isMissed = statusStr === 'missed';
           if (filterStatus === 'done') return isDone;
           if (filterStatus === 'missed') return isMissed;
           if (filterStatus === 'pending') return !isDone && !isMissed;

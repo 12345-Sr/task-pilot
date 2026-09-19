@@ -391,9 +391,8 @@ router.post('/history', requireUser, async (req, res) => {
     const isImportant = priority === 'important' || pStr === 'URGENT' || pStr === 'HIGH' || pStr === 'ZAROORI' || pStr === 'IMPORTANT';
     const targetTaskId = taskId || task_id || null;
 
-    let targetStatus = status || 'pending';
-    if (targetStatus === 'COMPLETED') targetStatus = 'done';
-    if (targetStatus === 'MISSED') targetStatus = 'missed';
+    let targetStatus = String(status || 'pending').toLowerCase();
+    if (targetStatus === 'completed') targetStatus = 'done';
 
     // If task_id is already in task_history for this user, update it; otherwise insert
     let existing;
@@ -456,7 +455,7 @@ router.get('/history', requireUser, async (req, res) => {
     await db.query(`
       INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
       SELECT t.user_id, t.id, t.title, t.description, t.notes, t.task_date, t.task_time, t.priority,
-             COALESCE(t.status, 'pending'), 'CREATED', t.created_at, now()
+             COALESCE(LOWER(t.status), 'pending'), 'CREATED', t.created_at, now()
       FROM tasks t
       WHERE t.user_id = $1
         AND NOT EXISTS (SELECT 1 FROM task_history th WHERE th.task_id = t.id AND th.user_id = t.user_id)
@@ -487,12 +486,13 @@ router.get('/history', requireUser, async (req, res) => {
     let pIdx = 2;
 
     if (status && status !== 'all') {
-      if (status === 'done' || status === 'completed') {
-        query += ` AND th.status = 'done'`;
-      } else if (status === 'missed') {
-        query += ` AND th.status = 'missed'`;
-      } else if (status === 'pending' || status === 'active') {
-        query += ` AND (th.status IS NULL OR th.status = 'pending')`;
+      const sLower = String(status).toLowerCase();
+      if (sLower === 'done' || sLower === 'completed') {
+        query += ` AND (LOWER(th.status) = 'done' OR LOWER(th.status) = 'completed')`;
+      } else if (sLower === 'missed') {
+        query += ` AND LOWER(th.status) = 'missed'`;
+      } else if (sLower === 'pending' || sLower === 'active') {
+        query += ` AND (th.status IS NULL OR LOWER(th.status) = 'pending' OR LOWER(th.status) = 'active')`;
       }
     }
 
@@ -512,9 +512,9 @@ router.get('/history', requireUser, async (req, res) => {
     const statsR = await db.query(`
       SELECT
         COUNT(*)::int AS total_created,
-        COUNT(*) FILTER (WHERE status = 'done')::int AS total_completed,
-        COUNT(*) FILTER (WHERE status = 'missed')::int AS total_missed,
-        COUNT(*) FILTER (WHERE (status IS NULL OR status = 'pending') AND status != 'deleted')::int AS active_tasks,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'done' OR LOWER(status) = 'completed')::int AS total_completed,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'missed')::int AS total_missed,
+        COUNT(*) FILTER (WHERE (status IS NULL OR LOWER(status) = 'pending' OR LOWER(status) = 'active') AND LOWER(status) != 'deleted')::int AS active_tasks,
         COUNT(*) FILTER (WHERE priority = 'important' OR UPPER(priority) = 'URGENT')::int AS important_tasks
       FROM task_history
       WHERE user_id = $1

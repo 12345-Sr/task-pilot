@@ -6,6 +6,7 @@ export interface TaskHistoryItem extends Task {
   createdAtTimestamp?: number;
   completedAtTimestamp?: number;
   isDeleted?: boolean;
+  repeatMonthly?: boolean;
 }
 
 export interface TaskHistoryStats {

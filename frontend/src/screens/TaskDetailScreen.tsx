@@ -32,7 +32,7 @@ export const TaskDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { language, isPremium, setPaywallVisible, taskDescriptions, setTaskDescription } = useAppStore();
-  const { taskId } = route.params || {};
+  const { taskId, isReadOnly = false, task: paramTask } = route.params || {};
 
   const { data: tasks, isLoading } = useTodayTasks();
   const updateMutation = useUpdateTask();
@@ -44,7 +44,7 @@ export const TaskDetailScreen: React.FC = () => {
   const [confirmRepeatVisible, setConfirmRepeatVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  const task: Task | undefined = (tasks || []).find((t) => t.id === taskId);
+  const task: Task | undefined = (tasks || []).find((t) => t.id === taskId) || paramTask;
 
   // Check if first alert has arrived
   const hasFirstAlertFired = useMemo(() => {
@@ -229,30 +229,32 @@ export const TaskDetailScreen: React.FC = () => {
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {language === 'en' || language === 'hi' ? 'Reminder Detail' : language === 'mr' ? 'कामाचा तपशील' : language === 'bn' ? 'কাজের বিবরণ' : language === 'ta' ? 'பணி விவரங்கள்' : language === 'te' ? 'పని వివరాలు' : language === 'gu' ? 'કામની વિગતો' : language === 'pa' ? 'ਕੰਮ ਦਾ ਵੇਰਵਾ' : 'Reminder Detail'}
         </Text>
-        <View style={styles.topBarActions}>
-          <TouchableOpacity
-            onPress={() => setEditModalVisible(true)}
-            style={styles.editTopBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Edit Task"
-          >
-            <Text style={styles.editTopBtnText}>✏️</Text>
-          </TouchableOpacity>
-          {!hasFirstAlertFired ? (
+        {!isReadOnly && (
+          <View style={styles.topBarActions}>
             <TouchableOpacity
-              onPress={() => setConfirmDeleteVisible(true)}
-              style={styles.deleteTopBtn}
+              onPress={() => setEditModalVisible(true)}
+              style={styles.editTopBtn}
               accessibilityRole="button"
-              accessibilityLabel="Delete Task"
+              accessibilityLabel="Edit Task"
             >
-              <Text style={styles.deleteIconText}>🗑️</Text>
+              <Text style={styles.editTopBtnText}>✏️</Text>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.lockedTopBadge} accessibilityLabel="Task Alert Sent (Locked)">
-              <Text style={styles.lockedTopIcon}>🔒</Text>
-            </View>
-          )}
-        </View>
+            {!hasFirstAlertFired ? (
+              <TouchableOpacity
+                onPress={() => setConfirmDeleteVisible(true)}
+                style={styles.deleteTopBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Delete Task"
+              >
+                <Text style={styles.deleteIconText}>🗑️</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.lockedTopBadge} accessibilityLabel="Task Alert Sent (Locked)">
+                <Text style={styles.lockedTopIcon}>🔒</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       <ScrollView
@@ -270,8 +272,8 @@ export const TaskDetailScreen: React.FC = () => {
               isDone
                 ? styles.statusBadgeDone
                 : isMissed
-                ? styles.statusBadgeMissed
-                : styles.statusBadgePending,
+                  ? styles.statusBadgeMissed
+                  : styles.statusBadgePending,
             ]}
           >
             <Text
@@ -280,15 +282,15 @@ export const TaskDetailScreen: React.FC = () => {
                 isDone
                   ? styles.statusTextDone
                   : isMissed
-                  ? styles.statusTextMissed
-                  : styles.statusTextPending,
+                    ? styles.statusTextMissed
+                    : styles.statusTextPending,
               ]}
             >
               {isDone
                 ? `✓ ${t(language, 'stat_done')}`
                 : isMissed
-                ? `✗ ${t(language, 'stat_missed')}`
-                : `⏳ ${t(language, 'stat_pending')}`}
+                  ? `✗ ${t(language, 'stat_missed')}`
+                  : `⏳ ${t(language, 'stat_pending')}`}
             </Text>
           </View>
         </View>
@@ -351,26 +353,28 @@ export const TaskDetailScreen: React.FC = () => {
         <View style={styles.notesCard}>
           <View style={styles.notesHeaderRow}>
             <Text style={styles.notesHeader}>📄 {t(language, 'notes_label')}</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (isEditingNotes) {
-                  handleSaveNotes();
-                } else {
-                  setEditedNotes(resolvedDesc);
-                  setIsEditingNotes(true);
-                }
-              }}
-              activeOpacity={0.7}
-              style={styles.notesActionBtn}
-            >
-              <Text style={styles.notesActionBtnText}>
-                {isEditingNotes
-                  ? (language === 'hi' ? '✓ Save' : '✓ Save')
-                  : resolvedDesc
-                  ? (language === 'hi' ? 'Badlein ✏️' : 'Edit ✏️')
-                  : (language === 'hi' ? '+ Note Jodein' : '+ Add Note')}
-              </Text>
-            </TouchableOpacity>
+            {!isReadOnly && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (isEditingNotes) {
+                    handleSaveNotes();
+                  } else {
+                    setEditedNotes(resolvedDesc);
+                    setIsEditingNotes(true);
+                  }
+                }}
+                activeOpacity={0.7}
+                style={styles.notesActionBtn}
+              >
+                <Text style={styles.notesActionBtnText}>
+                  {isEditingNotes
+                    ? (language === 'hi' ? '✓ Save' : '✓ Save')
+                    : resolvedDesc
+                      ? (language === 'hi' ? 'Badlein ✏️' : 'Edit ✏️')
+                      : (language === 'hi' ? '+ Note Jodein' : '+ Add Note')}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {isEditingNotes ? (
@@ -410,94 +414,108 @@ export const TaskDetailScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Toggle Complete CTA */}
-        <TouchableOpacity
-          style={[
-            styles.toggleActionButton,
-            isDone ? styles.buttonIncomplete : styles.buttonComplete,
-          ]}
-          activeOpacity={0.85}
-          onPress={handleToggleComplete}
-          disabled={completeMutation.isPending}
-        >
-          {completeMutation.isPending ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.toggleActionText}>
-              {isDone
-                ? t(language, 'mark_incomplete_btn')
-                : language === 'hi'
-                ? '✓ Kaam Ho Gaya'
-                : t(language, 'mark_complete_btn')}
-            </Text>
-          )}
-        </TouchableOpacity>
+        {/* Action Buttons - ONLY SHOWN IF NOT READ-ONLY */}
+        {!isReadOnly ? (
+          <>
+            {/* Toggle Complete CTA */}
+            <TouchableOpacity
+              style={[
+                styles.toggleActionButton,
+                isDone ? styles.buttonIncomplete : styles.buttonComplete,
+              ]}
+              activeOpacity={0.85}
+              onPress={handleToggleComplete}
+              disabled={completeMutation.isPending}
+            >
+              {completeMutation.isPending ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <Text style={styles.toggleActionText}>
+                  {isDone
+                    ? t(language, 'mark_incomplete_btn')
+                    : language === 'hi'
+                      ? '✓ Kaam Ho Gaya'
+                      : t(language, 'mark_complete_btn')}
+                </Text>
+              )}
+            </TouchableOpacity>
 
-        {/* Task Left / Could Not Complete Button */}
-        <TouchableOpacity
-          style={[
-            styles.taskLeftButton,
-            isMissed && styles.taskLeftButtonActive,
-          ]}
-          activeOpacity={0.85}
-          onPress={handleMarkTaskLeft}
-          disabled={completeMutation.isPending}
-        >
-          {completeMutation.isPending ? (
-            <ActivityIndicator color={isMissed ? colors.surface : '#DC2626'} />
-          ) : (
-            <Text style={[styles.taskLeftText, isMissed && styles.taskLeftTextActive]}>
-              {isMissed ? t(language, 'task_left_marked_btn') : t(language, 'task_left_btn')}
-            </Text>
-          )}
-        </TouchableOpacity>
+            {/* Task Left / Could Not Complete Button */}
+            <TouchableOpacity
+              style={[
+                styles.taskLeftButton,
+                isMissed && styles.taskLeftButtonActive,
+              ]}
+              activeOpacity={0.85}
+              onPress={handleMarkTaskLeft}
+              disabled={completeMutation.isPending}
+            >
+              {completeMutation.isPending ? (
+                <ActivityIndicator color={isMissed ? colors.surface : '#DC2626'} />
+              ) : (
+                <Text style={[styles.taskLeftText, isMissed && styles.taskLeftTextActive]}>
+                  {isMissed ? t(language, 'task_left_marked_btn') : t(language, 'task_left_btn')}
+                </Text>
+              )}
+            </TouchableOpacity>
 
-        {/* Repeat Monthly (PRO) Button */}
-        <TouchableOpacity
-          style={styles.repeatMonthlyButton}
-          activeOpacity={0.85}
-          onPress={handleRepeatMonthlyPress}
-          disabled={repeatMonthlyMutation.isPending}
-        >
-          {repeatMonthlyMutation.isPending ? (
-            <ActivityIndicator color="#92400E" />
-          ) : (
-            <View style={styles.repeatMonthlyRow}>
-              <Text style={styles.repeatMonthlyText}>
-                {t(language, 'repeat_monthly_btn')}
-              </Text>
-              {!isPremium && (
-                <View style={styles.proPillBadge}>
-                  <Text style={styles.proPillBadgeText}>PRO</Text>
+            {/* Repeat Monthly (PRO) Button */}
+            <TouchableOpacity
+              style={styles.repeatMonthlyButton}
+              activeOpacity={0.85}
+              onPress={handleRepeatMonthlyPress}
+              disabled={repeatMonthlyMutation.isPending}
+            >
+              {repeatMonthlyMutation.isPending ? (
+                <ActivityIndicator color="#92400E" />
+              ) : (
+                <View style={styles.repeatMonthlyRow}>
+                  <Text style={styles.repeatMonthlyText}>
+                    {t(language, 'repeat_monthly_btn')}
+                  </Text>
+                  {!isPremium && (
+                    <View style={styles.proPillBadge}>
+                      <Text style={styles.proPillBadgeText}>PRO</Text>
+                    </View>
+                  )}
                 </View>
               )}
-            </View>
-          )}
-        </TouchableOpacity>
+            </TouchableOpacity>
 
-        {/* Secondary Delete Button OR Alert-Locked Notice */}
-        {!hasFirstAlertFired ? (
-          <TouchableOpacity
-            style={styles.deleteOutlineButton}
-            activeOpacity={0.7}
-            onPress={() => setConfirmDeleteVisible(true)}
-          >
-            <Text style={styles.deleteOutlineText}>{t(language, 'delete_task_btn')}</Text>
-          </TouchableOpacity>
+            {/* Secondary Delete Button OR Alert-Locked Notice */}
+            {!hasFirstAlertFired ? (
+              <TouchableOpacity
+                style={styles.deleteOutlineButton}
+                activeOpacity={0.7}
+                onPress={() => setConfirmDeleteVisible(true)}
+              >
+                <Text style={styles.deleteOutlineText}>{t(language, 'delete_task_btn')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.alertLockedCard}>
+                <View style={styles.alertLockedHeader}>
+                  <Text style={styles.alertLockedIconBig}>🔒</Text>
+                  <Text style={styles.alertLockedTitle}>
+                    {language === 'hi'
+                      ? 'Pehla Alert Aa Chuka Hai (Locked)'
+                      : 'First Alert Sent (Locked)'}
+                  </Text>
+                </View>
+                <Text style={styles.alertLockedDesc}>
+                  {language === 'hi'
+                    ? 'Is kaam ka reminder alert bheja ja chuka hai. Alert aane ke baad kaam ko delete nahi kiya ja sakta.'
+                    : 'The first reminder alert has already arrived for this task. It cannot be deleted once alerted.'}
+                </Text>
+              </View>
+            )}
+          </>
         ) : (
-          <View style={styles.alertLockedCard}>
-            <View style={styles.alertLockedHeader}>
-              <Text style={styles.alertLockedIconBig}>🔒</Text>
-              <Text style={styles.alertLockedTitle}>
-                {language === 'hi'
-                  ? 'Pehla Alert Aa Chuka Hai (Locked)'
-                  : 'First Alert Sent (Locked)'}
-              </Text>
-            </View>
-            <Text style={styles.alertLockedDesc}>
+          <View style={styles.readOnlyDetailNotice}>
+            <Text style={styles.readOnlyDetailNoticeIcon}>🔒</Text>
+            <Text style={styles.readOnlyDetailNoticeText}>
               {language === 'hi'
-                ? 'Is kaam ka reminder alert bheja ja chuka hai. Alert aane ke baad kaam ko delete nahi kiya ja sakta.'
-                : 'The first reminder alert has already arrived for this task. It cannot be deleted once alerted.'}
+                ? 'Yeh task history ka permanent record hai. Isme koi delete ya badlaav ka button nahi hai.'
+                : 'This is a permanent historical audit record. Mutation and delete actions are disabled.'}
             </Text>
           </View>
         )}
@@ -966,6 +984,27 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#64748B',
     lineHeight: 16,
+  },
+  readOnlyDetailNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: radius.md,
+    padding: 14,
+    gap: 10,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  readOnlyDetailNoticeIcon: {
+    fontSize: 18,
+  },
+  readOnlyDetailNoticeText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+    fontWeight: '600',
   },
 });
 
