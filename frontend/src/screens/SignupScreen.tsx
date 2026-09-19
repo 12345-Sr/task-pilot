@@ -92,17 +92,27 @@ export const SignupScreen: React.FC = () => {
             setOtp(String(data.devOtp));
           }
           const defaultSuccess = language === 'hi'
-            ? '📧 6-digit OTP aapke mail inbox par bhej diya gaya hai! Kripya apna inbox check karein aur code darj karein.'
-            : '📧 6-digit verification code sent to your mail inbox! Please check your email and enter code below.';
-          const rawMsg = data?.message || defaultSuccess;
-          // Clean out any residual 'Gmail' mention if returned by older server
-          const cleanMsg = rawMsg.replace(/Gmail/gi, 'mail');
+            ? '📧 6-digit OTP aapke email par bhej diya gaya hai! Kripya apna inbox check karein aur code darj karein.'
+            : '📧 6-digit verification code has been sent to your email! Please check your inbox and enter the code below.';
+
+          // Sanitize any residual 'Gmail', 'Gmails', or 'emails' server string
+          const rawMsg = data?.message
+            ? String(data.message)
+                .replace(/gmails?/gi, 'email')
+                .replace(/\bemails\b/gi, 'email')
+                .replace(/\bmail inbox\b/gi, 'inbox')
+            : defaultSuccess;
+
+          const displayMsg = (language === 'hi' && (!data?.message || data.message.includes('Verification code')))
+            ? defaultSuccess
+            : rawMsg;
+
           setSuccessMsg(
             data?.devOtp
               ? (language === 'hi'
                 ? `OTP Code: ${data.devOtp} (In-App verify). Check inbox or submit directly!`
-                : `Verification code: ${data.devOtp}. Check mail inbox or continue with code.`)
-              : cleanMsg
+                : `Verification code: ${data.devOtp}. Check email inbox or continue with code.`)
+              : displayMsg
           );
         },
         onError: (err: any) => {

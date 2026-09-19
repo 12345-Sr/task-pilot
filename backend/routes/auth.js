@@ -195,7 +195,7 @@ router.post('/send-register-otp', async (req, res) => {
       console.log(`[AUTH] Registration OTP email successfully dispatched to ${trimmedEmail} via ${sendResult.provider} (OTP: ${otp})`);
       return res.json({
         ok: true,
-        message: 'Verification code has been sent to your email inbox. Please check your emails.',
+        message: 'Verification code has been sent to your email. Please check your inbox.',
       });
     } catch (mailErr) {
       console.warn(`[AUTH] Email delivery warning (${mailErr.message}). Falling back to instant in-app OTP for ${trimmedEmail}. OTP is: ${otp}`);
