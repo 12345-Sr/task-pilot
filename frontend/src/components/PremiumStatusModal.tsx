@@ -179,11 +179,11 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
             <Text style={styles.heroSubtitle}>
               {isPremium
                 ? (isHinglish
-                    ? 'Aapke pass sabhi premium productivity features ka unlimited access hai.'
-                    : 'You have unlimited access to all productivity features.')
+                  ? 'Aapke pass sabhi premium productivity features ka unlimited access hai.'
+                  : 'You have unlimited access to all productivity features.')
                 : (isHinglish
-                    ? 'Aap abhi Free tier par hain. Unlimited daily reminders aur advance audio alerts ke liye Pro upgrade karein.'
-                    : 'You are on the Free tier. Upgrade to Pro for unlimited reminders and advance sound alerts.')}
+                  ? 'Aap abhi Free tier par hain. Unlimited daily reminders aur advance audio alerts ke liye Pro upgrade karein.'
+                  : 'You are on the Free tier. Upgrade to Pro for unlimited reminders and advance sound alerts.')}
             </Text>
 
             {/* Validity Box */}
@@ -314,11 +314,11 @@ export const PremiumStatusModal: React.FC<PremiumStatusModalProps> = ({
             <Text style={[styles.infoText, !isPremium && styles.infoTextFree]}>
               {isPremium
                 ? (isHinglish
-                    ? `Yeh plan ${daysRemaining} din tak poori tarah active rahega. Jab validity date (${formattedEndDate}) complete hogi, tab app wapas free plan par shift ho jayegi aur screen par 'Upgrade' ka option dobara dikhne lagega, jisse aap asani se renew kar sakenge.`
-                    : `Your Pro plan is active for ${daysRemaining} more days. Once this period expires on ${formattedEndDate}, the app will switch back to the free plan and the 'Upgrade' option will reappear so you can renew anytime.`)
+                  ? `Yeh plan ${daysRemaining} din tak poori tarah active rahega. Jab validity date (${formattedEndDate}) complete hogi, tab app wapas free plan par shift ho jayegi aur screen par 'Upgrade' ka option dobara dikhne lagega, jisse aap asani se renew kar sakenge.`
+                  : `Your Pro plan is active for ${daysRemaining} more days. Once this period expires on ${formattedEndDate}, the app will switch back to the free plan and the 'Upgrade' option will reappear so you can renew anytime.`)
                 : (isHinglish
-                    ? 'Payment poora hone par Pro plan turant activate ho jaata hai aur sabhi upgrade buttons hat kar yeh Status Page show hota hai. Plan period khatam hone par upgrade option wapas aa jaata hai.'
-                    : 'Upon successful payment, Pro plan activates immediately and upgrade buttons are replaced by this Status Page. When the period ends, upgrade options reappear.')}
+                  ? 'Payment poora hone par Pro plan turant activate ho jaata hai aur sabhi upgrade buttons hat kar yeh Status Page show hota hai. Plan period khatam hone par upgrade option wapas aa jaata hai.'
+                  : 'Upon successful payment, Pro plan activates immediately and upgrade buttons are replaced by this Status Page. When the period ends, upgrade options reappear.')}
             </Text>
           </View>
 

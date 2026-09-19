@@ -143,7 +143,7 @@ export const AddTaskScreen: React.FC = () => {
 
           const userId = useAppStore.getState().user?.id;
           if (createdTask) {
-            taskHistoryService.recordCreatedTask(createdTask, userId).catch(() => {});
+            taskHistoryService.recordCreatedTask(createdTask, userId).catch(() => { });
           }
 
           if (createdTask?.id && taskDesc) {

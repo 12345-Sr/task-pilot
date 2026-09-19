@@ -231,14 +231,14 @@ export const LanguageScreen: React.FC = () => {
     ]).start();
 
     if (isAuthenticated) {
-      userRepository.updateLanguage(code).catch(() => {});
+      userRepository.updateLanguage(code).catch(() => { });
     }
   };
 
   const handleContinue = () => {
     setLanguage(selectedCode);
     if (isAuthenticated) {
-      userRepository.updateLanguage(selectedCode).catch(() => {});
+      userRepository.updateLanguage(selectedCode).catch(() => { });
     }
     if (navigation.canGoBack()) {
       navigation.goBack();

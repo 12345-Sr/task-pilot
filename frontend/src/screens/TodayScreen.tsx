@@ -292,19 +292,19 @@ export const TodayScreen: React.FC = () => {
                 <Text style={styles.freeQuotaSub}>
                   {freeUsed === 0
                     ? (language === 'hi'
-                        ? '3 free tasks uplabdh hain. Naya task jodein!'
-                        : '3 free tasks available. Add your first task!')
+                      ? '3 free tasks uplabdh hain. Naya task jodein!'
+                      : '3 free tasks available. Add your first task!')
                     : freeUsed === 1
-                    ? (language === 'hi'
+                      ? (language === 'hi'
                         ? '1 kaam ban chuka hai. 2 aur free tasks bache hain!'
                         : '1 task created. 2 free tasks remaining!')
-                    : freeUsed === 2
-                    ? (language === 'hi'
-                        ? '2 kaam ban chuke hain. Sirf 1 aakhri free task bacha hai!'
-                        : '2 tasks created. Only 1 final free task left!')
-                    : (language === 'hi'
-                        ? 'Saare 3 free tasks ban gaye. Unlimited ke liye Pro upgrade karein.'
-                        : 'All 3 free tasks used. Upgrade to Pro for unlimited tasks.')}
+                      : freeUsed === 2
+                        ? (language === 'hi'
+                          ? '2 kaam ban chuke hain. Sirf 1 aakhri free task bacha hai!'
+                          : '2 tasks created. Only 1 final free task left!')
+                        : (language === 'hi'
+                          ? 'Saare 3 free tasks ban gaye. Unlimited ke liye Pro upgrade karein.'
+                          : 'All 3 free tasks used. Upgrade to Pro for unlimited tasks.')}
                 </Text>
               </View>
             );
@@ -408,8 +408,8 @@ export const TodayScreen: React.FC = () => {
                           ? t(language, 'briefing_today_pending')
                           : t(language, 'briefing_today_done')
                         : scheduledTasks.length > 0
-                        ? t(language, 'briefing_tomorrow_tasks')
-                        : t(language, 'no_scheduled_tasks_sub')}
+                          ? t(language, 'briefing_tomorrow_tasks')
+                          : t(language, 'no_scheduled_tasks_sub')}
                     </Text>
                   </View>
                 </View>
