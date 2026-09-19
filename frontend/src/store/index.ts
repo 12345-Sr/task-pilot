@@ -68,9 +68,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPremiumStatusVisible: (premiumStatusVisible) => set({ premiumStatusVisible }),
   setSelectedTaskId: (selectedTaskId) => set({ selectedTaskId }),
   setFreeLifetimeCreated: (count) =>
-    set((state) => ({
-      // Monotonic: lifetime creation count NEVER decreases when a task is deleted
-      freeLifetimeCreated: Math.min(3, Math.max(state.freeLifetimeCreated || 0, count || 0)),
+    set(() => ({
+      freeLifetimeCreated: Math.min(3, Math.max(0, count || 0)),
     })),
   setTaskDescription: (key, description) =>
     set((state) => ({

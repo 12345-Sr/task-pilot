@@ -138,14 +138,6 @@ export const AddTaskScreen: React.FC = () => {
       },
       {
         onSuccess: async (createdTask: any) => {
-          // Record task creation for lifetime counter
-          useAppStore.getState().recordTaskCreation(selectedDate);
-
-          const userId = useAppStore.getState().user?.id;
-          if (createdTask) {
-            taskHistoryService.recordCreatedTask(createdTask, userId).catch(() => { });
-          }
-
           if (createdTask?.id && taskDesc) {
             useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
           }

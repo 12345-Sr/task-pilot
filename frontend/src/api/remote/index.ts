@@ -175,6 +175,9 @@ export class RemoteTasksRepository implements TasksRepository {
 
     try {
       const res: any = await apiClient.post('/tasks', payload);
+      if (typeof res?.lifetime_tasks_created === 'number') {
+        useAppStore.getState().setFreeLifetimeCreated(res.lifetime_tasks_created);
+      }
       const created = mapDbTask(res?.task || res?.data || res);
       // Ensure description is preserved even if the cloud API response omitted the field
       if (descValue) {

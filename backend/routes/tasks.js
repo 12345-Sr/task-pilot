@@ -238,15 +238,19 @@ router.post('/', requireUser, async (req, res, next) => {
     }
 
     // Safely increment lifetime_tasks_created count for this user
-    db.query(
-      `INSERT INTO subscriptions (user_id, status, lifetime_tasks_created)
-       VALUES ($1, 'free', 1)
-       ON CONFLICT (user_id)
-       DO UPDATE SET
-         lifetime_tasks_created = GREATEST(COALESCE(subscriptions.lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)),
-         updated_at = now()`,
-      [req.userId]
-    ).catch(() => {});
+    try {
+      await db.query(
+        `INSERT INTO subscriptions (user_id, status, lifetime_tasks_created)
+         VALUES ($1, 'free', 1)
+         ON CONFLICT (user_id)
+         DO UPDATE SET
+           lifetime_tasks_created = GREATEST(COALESCE(subscriptions.lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)),
+           updated_at = now()`,
+        [req.userId]
+      );
+    } catch (subErr) {
+      console.log('[DB] subscriptions lifetime update error:', subErr.message);
+    }
 
     // Save directly to task_history table in database
     const createdTask = result.rows[0];
@@ -310,7 +314,14 @@ router.post('/', requireUser, async (req, res, next) => {
       })
       .catch(() => {});
 
-    res.status(201).json({ task: result.rows[0], recurringCount });
+    const accessAfter = await getAccessStatus(req.userId);
+    res.status(201).json({
+      task: result.rows[0],
+      recurringCount,
+      lifetime_tasks_created: accessAfter.used ?? accessAfter.lifetimeUsed ?? 0,
+      used: accessAfter.used ?? accessAfter.lifetimeUsed ?? 0,
+      limit: FREE_DAILY_LIMIT,
+    });
   } catch (err) {
     console.error('Error creating task:', err);
     res.status(500).json({ error: err.message || 'Failed to create task' });
