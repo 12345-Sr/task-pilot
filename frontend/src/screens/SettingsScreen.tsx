@@ -64,6 +64,14 @@ export const SettingsScreen: React.FC = () => {
   const { data: user } = useUserProfile();
   useSubscription();
 
+  const formattedExpiry = subscriptionInfo?.currentPeriodEnd
+    ? new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : (isHindi ? '30 Din Active' : '30 Days Active');
+
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [morningNotification, setMorningNotification] = useState(true);
   const [eveningNotification, setEveningNotification] = useState(true);
@@ -114,7 +122,7 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.title}>{t(language, 'tab_settings')}</Text>
         </View>
 
-        {/* User Card */}
+        {/* User Profile Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
@@ -122,155 +130,128 @@ export const SettingsScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || 'User'}</Text>
-            <Text style={styles.userEmail}>{user?.email || ''}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <View style={[styles.planPill, isPremium && styles.planPillPro]}>
-                <Text style={[styles.planPillText, isPremium && styles.planPillProText]}>
-                  {isPremium ? '👑 ' + t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
-                </Text>
-              </View>
-              {isPremium ? (
-                <TouchableOpacity
-                  style={styles.miniProBtn}
-                  activeOpacity={0.8}
-                  onPress={() => setPremiumStatusVisible(true)}
-                >
-                  <Text style={styles.miniProBtnText}>👑 {isHindi ? 'Pro Details' : 'Pro Details'}</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.miniUpgradeBtn}
-                  activeOpacity={0.8}
-                  onPress={() => setPaywallVisible(true)}
-                >
-                  <Text style={styles.miniUpgradeBtnText}>👑 {isHindi ? 'Upgrade' : 'Upgrade'}</Text>
-                </TouchableOpacity>
-              )}
+            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+              {user?.name || 'User'}
+            </Text>
+            {!!user?.email && (
+              <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+                {user.email}
+              </Text>
+            )}
+            <View style={[styles.planPill, isPremium ? styles.planPillPro : styles.planPillFree]}>
+              <Text style={[styles.planPillText, isPremium ? styles.planPillProText : styles.planPillFreeText]}>
+                {isPremium ? '👑 ' + t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Upgrade Banner if free plan OR Pro Status Banner if Premium */}
-        {isPremium ? (
-          <TouchableOpacity
-            style={styles.proActiveBanner}
-            activeOpacity={0.88}
-            onPress={() => setPremiumStatusVisible(true)}
-          >
-            <View style={styles.proActiveCrownWrap}>
-              <Text style={{ fontSize: 24 }}>👑</Text>
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.proActiveBannerTitle}>
-                  {isHindi ? 'TaskAlert Pro Active' : 'TaskAlert Pro Active'}
-                </Text>
-                <View style={styles.activePillSmall}>
-                  <Text style={styles.activePillSmallText}>ACTIVE ✓</Text>
-                </View>
-              </View>
-              <Text style={styles.proActiveBannerSub}>
-                {isHindi
-                  ? 'Aapka Pro subscription active hai. Validity aur membership details dekhein.'
-                  : 'Your Pro subscription is active. View validity and membership status.'}
-              </Text>
-            </View>
-            <View style={styles.proActiveBannerBtn}>
-              <Text style={styles.proActiveBannerBtnText}>
-                {isHindi ? 'Details →' : 'Details →'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.proBanner}
-            activeOpacity={0.88}
-            onPress={() => setPaywallVisible(true)}
-          >
-            <View style={styles.proBannerCrownWrap}>
-              <Text style={{ fontSize: 24 }}>👑</Text>
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.proBannerTitle}>
-                {isHindi ? 'TaskAlert Pro Upgrade Karein' : 'Upgrade to TaskAlert Pro'}
-              </Text>
-              <Text style={styles.proBannerSub}>
-                {isHindi
-                  ? '₹399/mahina • Unlimited daily reminders, sound alerts aur daily streak unlock karein.'
-                  : '₹399/month • Unlimited reminders, sound alarms & 30-day recurring tasks.'}
-              </Text>
-            </View>
-            <View style={styles.proBannerBtn}>
-              <Text style={styles.proBannerBtnText}>{isHindi ? 'Pay ₹399 →' : 'Pay ₹399 →'}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {/* Subscription & Plan Section */}
+        {/* Subscription & Membership Section (Single source of truth, no duplication) */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>{isHindi ? 'Subscription aur Plan' : 'Subscription & Plan'}</Text>
+          <Text style={styles.sectionHeader}>
+            {isHindi ? 'Subscription aur Membership' : 'Subscription & Membership'}
+          </Text>
 
-          {/* Row 1: Always accessible Pro Details & Status Modal */}
-          <TouchableOpacity
-            style={styles.settingRow}
-            activeOpacity={0.7}
-            onPress={() => setPremiumStatusVisible(true)}
-          >
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>👑</Text>
-              <View>
-                <Text style={styles.settingLabel}>
-                  {isPremium
-                    ? (isHindi ? '👑 Pro Subscription Status' : '👑 Pro Subscription Status')
-                    : (isHindi ? 'Pro Membership Details & Status' : 'Pro Membership Details & Status')}
-                </Text>
-                <Text style={styles.settingSubLabel}>
-                  {isPremium
-                    ? (isHindi ? 'Active • Plan validity aur details dekhein' : 'Active • View plan validity & details')
-                    : (isHindi ? 'Free Tier • Plan status aur benefits dekhein' : 'Free Tier • View status & unlocked perks')}
-                </Text>
+          {isPremium ? (
+            /* PAID USER: Premium Active Status Card */
+            <View style={styles.proCard}>
+              <View style={styles.proCardHeader}>
+                <View style={styles.proCrownWrap}>
+                  <Text style={{ fontSize: 22 }}>👑</Text>
+                </View>
+                <View style={styles.proTitleWrap}>
+                  <Text style={styles.proCardTitle}>
+                    {isHindi ? 'TaskAlert Pro Active' : 'TaskAlert Pro Active'}
+                  </Text>
+                  <Text style={styles.proCardPrice}>₹399 / {isHindi ? 'mahina' : 'month'}</Text>
+                </View>
+                <View style={styles.proActivePill}>
+                  <Text style={styles.proActivePillText}>ACTIVE ✓</Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.settingRight}>
-              {isPremium ? (
-                <View style={styles.activeBadgePill}>
-                  <Text style={styles.activeBadgePillText}>{isHindi ? 'Active ✓' : 'Active ✓'}</Text>
-                </View>
-              ) : (
-                <View style={styles.detailsBadgePill}>
-                  <Text style={styles.detailsBadgePillText}>{isHindi ? 'Details ›' : 'Details ›'}</Text>
-                </View>
-              )}
-              <Text style={styles.chevron}>›</Text>
-            </View>
-          </TouchableOpacity>
 
-          {/* Row 2: Upgrade Option (ONLY shown when !isPremium; REMOVED when isPremium!) */}
-          {!isPremium && (
-            <TouchableOpacity
-              style={styles.settingRow}
-              activeOpacity={0.7}
-              onPress={() => setPaywallVisible(true)}
-            >
-              <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>⚡</Text>
-                <View>
-                  <Text style={styles.settingLabel}>
-                    {isHindi ? 'Upgrade to TaskAlert Pro' : 'Upgrade to TaskAlert Pro'}
+              <View style={styles.proCardDivider} />
+
+              <View style={styles.proDetailsRow}>
+                <View style={styles.proDetailItem}>
+                  <Text style={styles.proDetailLabel}>{isHindi ? 'Validity / Renewal' : 'Validity / Renewal'}</Text>
+                  <Text style={styles.proDetailValue} numberOfLines={1}>{formattedExpiry}</Text>
+                </View>
+                <View style={styles.proDetailItem}>
+                  <Text style={styles.proDetailLabel}>{isHindi ? 'Plan Status' : 'Plan Status'}</Text>
+                  <Text style={[styles.proDetailValue, { color: '#16A34A' }]}>{isHindi ? 'Unlimited Access' : 'Unlimited Access'}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.proManageBtn}
+                activeOpacity={0.85}
+                onPress={() => setPremiumStatusVisible(true)}
+              >
+                <Text style={styles.proManageBtnText}>
+                  {isHindi ? '👑 Plan Details aur Invoice Dekhein →' : '👑 View Plan Details & Status →'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* FREE USER: Clean Pro Upgrade Card */
+            <View style={styles.upgradeCard}>
+              <View style={styles.upgradeCardHeader}>
+                <View style={styles.upgradeCrownWrap}>
+                  <Text style={{ fontSize: 22 }}>👑</Text>
+                </View>
+                <View style={styles.upgradeTitleWrap}>
+                  <Text style={styles.upgradeCardTitle}>
+                    {isHindi ? 'TaskAlert Pro Upgrade Karein' : 'Upgrade to TaskAlert Pro'}
                   </Text>
-                  <Text style={styles.settingSubLabel}>
-                    {isHindi ? '₹399/mahina • Unlimited daily reminders paayein' : '₹399/month • Unlock unlimited reminders'}
+                  <Text style={styles.upgradeCardPrice}>₹399 / {isHindi ? 'mahina' : 'month'}</Text>
+                </View>
+                <View style={styles.freePill}>
+                  <Text style={styles.freePillText}>{isHindi ? 'Free Tier' : 'Free Tier'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.upgradePerksList}>
+                <View style={styles.perkRow}>
+                  <Text style={styles.perkCheck}>✓</Text>
+                  <Text style={styles.perkText}>
+                    {isHindi ? 'Unlimited daily tasks aur sound reminders' : 'Unlimited daily tasks & sound reminders'}
+                  </Text>
+                </View>
+                <View style={styles.perkRow}>
+                  <Text style={styles.perkCheck}>✓</Text>
+                  <Text style={styles.perkText}>
+                    {isHindi ? 'Voice alarm aur custom alert tones' : 'Voice alarms & sound ringtones'}
+                  </Text>
+                </View>
+                <View style={styles.perkRow}>
+                  <Text style={styles.perkCheck}>✓</Text>
+                  <Text style={styles.perkText}>
+                    {isHindi ? 'Cloud backup aur priority support' : 'Cloud sync & priority support'}
                   </Text>
                 </View>
               </View>
-              <View style={styles.settingRight}>
-                <View style={styles.upgradeBadgePill}>
-                  <Text style={styles.upgradeBadgePillText}>{isHindi ? 'Pay ₹399' : 'Pay ₹399'}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </View>
-            </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.upgradeActionBtn}
+                activeOpacity={0.88}
+                onPress={() => setPaywallVisible(true)}
+              >
+                <Text style={styles.upgradeActionBtnText}>
+                  {isHindi ? '👑 Upgrade Now • Pay ₹399' : '👑 Upgrade Now • Pay ₹399'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.upgradeSecondaryBtn}
+                activeOpacity={0.7}
+                onPress={() => setPremiumStatusVisible(true)}
+              >
+                <Text style={styles.upgradeSecondaryBtnText}>
+                  {isHindi ? 'Plan ke sabhi features aur details dekhein ›' : 'Compare all plan features & details ›'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -286,7 +267,7 @@ export const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>📜</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>
                   {isHindi ? 'Tasks Banane Ka Itihaas' : 'Created Tasks History'}
                 </Text>
@@ -310,7 +291,12 @@ export const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🌐</Text>
-              <Text style={styles.settingLabel}>{t(language, 'language_title')}</Text>
+              <View style={styles.settingTextWrap}>
+                <Text style={styles.settingLabel}>{t(language, 'language_title')}</Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi ? 'App ki bhasha badlein' : 'Change app interface language'}
+                </Text>
+              </View>
             </View>
             <View style={styles.settingRight}>
               <Text style={styles.settingValue}>{currentLanguageLabel}</Text>
@@ -322,7 +308,7 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🌅</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>{t(language, 'morning_reminder_title')}</Text>
                 <Text style={styles.settingSubLabel}>{t(language, 'morning_reminder_sub')}</Text>
               </View>
@@ -339,7 +325,7 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🌙</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>{t(language, 'evening_review_title')}</Text>
                 <Text style={styles.settingSubLabel}>{t(language, 'evening_review_sub')}</Text>
               </View>
@@ -356,7 +342,12 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔔</Text>
-              <Text style={styles.settingLabel}>{t(language, 'sound_vibration_title')}</Text>
+              <View style={styles.settingTextWrap}>
+                <Text style={styles.settingLabel}>{t(language, 'sound_vibration_title')}</Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi ? 'Reminders ke audio alarms bajayein' : 'Audio alarms and reminder sounds'}
+                </Text>
+              </View>
             </View>
             <Switch
               value={soundEnabled}
@@ -379,7 +370,7 @@ export const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🎫</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>Help & Support</Text>
                 <Text style={styles.settingSubLabel}>
                   {isHindi ? 'Ticket darj karein ya help paayein' : 'Raise an issue or request assistance'}
@@ -399,7 +390,7 @@ export const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>📜</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>Terms & Conditions</Text>
                 <Text style={styles.settingSubLabel}>
                   {isHindi ? 'Service ke niyam aur shartein' : 'Terms of service & agreements'}
@@ -419,7 +410,7 @@ export const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🛡️</Text>
-              <View>
+              <View style={styles.settingTextWrap}>
                 <Text style={styles.settingLabel}>Privacy Policy</Text>
                 <Text style={styles.settingSubLabel}>
                   {isHindi ? 'Data security aur privacy policy' : 'Data protection & privacy policy'}
@@ -590,236 +581,289 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   userCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    backgroundColor: '#FFFDF7',
+    borderRadius: radius.lg,
     padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
     gap: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   avatarCircle: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.primaryOrange,
+    backgroundColor: '#EA580C',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   avatarText: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.surface,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   userInfo: {
     flex: 1,
+    minWidth: 0,
   },
   userName: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   userEmail: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 13,
+    color: '#64748B',
     marginTop: 2,
   },
   planPill: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceSecondary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: radius.full,
     marginTop: 6,
   },
   planPillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textPrimary,
+  },
+  planPillFree: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  planPillFreeText: {
+    color: '#475569',
   },
   planPillPro: {
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: '#FDE68A',
   },
   planPillProText: {
+    fontWeight: '800',
     color: '#B45309',
-    fontWeight: '800',
   },
-  miniUpgradeBtn: {
-    backgroundColor: '#EA580C',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-  },
-  miniUpgradeBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  miniProBtn: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-  },
-  miniProBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  proBanner: {
-    backgroundColor: '#FFF7ED',
+
+  /* Pro Card for Paid Users */
+  proCard: {
+    backgroundColor: '#F0FDF4',
     borderWidth: 1.5,
-    borderColor: '#F97316',
+    borderColor: '#86EFAC',
     borderRadius: radius.lg,
     padding: 16,
+    gap: 12,
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  proCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginVertical: 4,
   },
-  proBannerCrownWrap: {
+  proCrownWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
+  },
+  proTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  proCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: -0.2,
+  },
+  proCardPrice: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#166534',
+    marginTop: 2,
+  },
+  proActivePill: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    flexShrink: 0,
+  },
+  proActivePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: 0.5,
+  },
+  proCardDivider: {
+    height: 1,
+    backgroundColor: '#DCFCE7',
+  },
+  proDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  proDetailItem: {
+    flex: 1,
+    minWidth: 0,
+  },
+  proDetailLabel: {
+    fontSize: 11,
+    color: '#166534',
+    fontWeight: '600',
+  },
+  proDetailValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 2,
+  },
+  proManageBtn: {
+    backgroundColor: '#16A34A',
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  proManageBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  /* Upgrade Card for Free Users */
+  upgradeCard: {
+    backgroundColor: '#FFFDF7',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: radius.lg,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  upgradeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  upgradeCrownWrap: {
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: '#FDE68A',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  proBannerTitle: {
-    fontSize: 15,
+  upgradeTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  upgradeCardTitle: {
+    fontSize: 16,
     fontWeight: '800',
     color: '#9A3412',
     letterSpacing: -0.2,
   },
-  proBannerSub: {
-    fontSize: 12,
-    color: '#7C2D12',
-    marginTop: 3,
-    lineHeight: 16,
+  upgradeCardPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#EA580C',
+    marginTop: 2,
   },
-  proBannerBtn: {
-    flexShrink: 0,
-    backgroundColor: '#EA580C',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proBannerBtnText: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  proActiveBanner: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#22C55E',
-    borderRadius: radius.lg,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 4,
-  },
-  proActiveCrownWrap: {
-    flexShrink: 0,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proActiveBannerTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#15803D',
-    letterSpacing: -0.2,
-  },
-  activePillSmall: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+  freePill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: '#FDE68A',
+    flexShrink: 0,
   },
-  activePillSmallText: {
-    fontSize: 9.5,
+  freePillText: {
+    fontSize: 10,
     fontWeight: '800',
-    color: '#15803D',
+    color: '#B45309',
     letterSpacing: 0.3,
   },
-  proActiveBannerSub: {
-    fontSize: 12,
-    color: '#166534',
-    marginTop: 3,
-    lineHeight: 16,
+  upgradePerksList: {
+    gap: 6,
+    paddingVertical: 2,
   },
-  proActiveBannerBtn: {
-    flexShrink: 0,
-    backgroundColor: '#16A34A',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  perkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  perkCheck: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#16A34A',
+  },
+  perkText: {
+    fontSize: 12.5,
+    color: '#475569',
+    fontWeight: '500',
+    flex: 1,
+    minWidth: 0,
+  },
+  upgradeActionBtn: {
+    backgroundColor: '#EA580C',
     borderRadius: 12,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  proActiveBannerBtnText: {
-    fontSize: 12.5,
+  upgradeActionBtnText: {
+    fontSize: 13.5,
     fontWeight: '800',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
-  upgradeBadgePill: {
-    flexShrink: 0,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#F97316',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  upgradeSecondaryBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
   },
-  upgradeBadgePillText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#EA580C',
+  upgradeSecondaryBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#B45309',
   },
-  detailsBadgePill: {
-    flexShrink: 0,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  detailsBadgePillText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  activeBadgePill: {
-    flexShrink: 0,
-    backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  activeBadgePillText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#15803D',
-  },
+
   section: {
     gap: spacing.xs,
   },
@@ -834,8 +878,8 @@ const styles = StyleSheet.create({
   settingRow: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -847,7 +891,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: 12,
+    minWidth: 0,
+  },
+  settingTextWrap: {
+    flex: 1,
     minWidth: 0,
   },
   settingIcon: {
@@ -857,22 +905,28 @@ const styles = StyleSheet.create({
   settingLabel: {
     ...typography.bodyPrimary,
     color: colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 14,
   },
   settingSubLabel: {
     ...typography.caption,
     color: colors.textSecondary,
+    fontSize: 11.5,
+    marginTop: 2,
+    lineHeight: 15,
   },
   settingRight: {
     flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 6,
+    marginLeft: 8,
   },
   settingValue: {
     ...typography.caption,
     color: colors.primaryOrange,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 12,
   },
   chevron: {
     fontSize: 20,
