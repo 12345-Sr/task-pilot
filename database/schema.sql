@@ -1,6 +1,6 @@
 -- ============================================================
--- Task Pilot — Database Schema (PostgreSQL)
--- Run: psql -U postgres -d taskpilot -f schema.sql
+-- Task Alert — Database Schema (PostgreSQL)
+-- Run: psql -U postgres -d TaskAlert -f schema.sql
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- for gen_random_uuid()
@@ -144,7 +144,7 @@ JOIN users u ON u.id = t.user_id
 GROUP BY u.id, u.name, t.task_date;
 
 -- ---------- Seed admin login ----------
--- Default admin is auto-initialized on backend start (admin@taskpilot.com / Admin@1234).
+-- Default admin is auto-initialized on backend start (admin@TaskAlert.com / Admin@1234).
 -- To create an additional admin manually, run:
 -- node backend/scripts/create-admin.js "you@example.com" "your-password"
 
