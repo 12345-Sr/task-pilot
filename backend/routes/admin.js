@@ -232,34 +232,46 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/subscriptions?status=active
+// Returns only paid subscriptions (who paid ₹399 / active Pro). Free tier users are excluded.
 router.get('/subscriptions', requireAdmin, async (req, res) => {
-  const { status } = req.query;
+  const { status, includeFree } = req.query;
   const params = [];
-  let where = '';
-  if (status) { params.push(status); where = 'WHERE s.status = $1'; }
+  const whereClauses = [];
+
+  // Strictly exclude free / unpaid tier by default — only show users who paid ₹399
+  if (includeFree !== 'true') {
+    whereClauses.push("(s.status != 'free' AND (s.plan_price >= 399 OR s.payment_provider IS NOT NULL OR s.status = 'active'))");
+  }
+
+  if (status) {
+    params.push(status);
+    whereClauses.push(`s.status = $${params.length}`);
+  }
+
+  const where = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
   try {
     const result = await db.query(
       `SELECT s.*, u.name, u.email,
          CASE
            WHEN s.status = 'active' THEN 'Pro Plan'
-           WHEN s.status = 'free' THEN 'Free Tier'
+           WHEN s.status = 'expired' THEN 'Pro Plan (Expired)'
+           WHEN s.status = 'cancelled' THEN 'Pro Plan (Cancelled)'
            ELSE 'Pro Plan'
          END AS plan_name,
-         CASE
-           WHEN s.status = 'free' THEN 0.00
-           ELSE COALESCE(s.plan_price, 399.00)
-         END AS plan_price
+         COALESCE(s.plan_price, 399.00) AS plan_price
        FROM subscriptions s
-       LEFT JOIN users u ON u.id = s.user_id
+       JOIN users u ON u.id = s.user_id
        ${where}
        ORDER BY s.updated_at DESC LIMIT 200`,
       params
     );
-    res.json({ subscriptions: result.rows });
+    res.json({ subscriptions: result.rows, total: result.rows.length });
   } catch (err) {
     if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
       return res.json({
-        subscriptions: []
+        subscriptions: [],
+        total: 0
       });
     }
     res.status(500).json({ error: err.message });

@@ -2149,15 +2149,15 @@
           </div>
 
           <!-- Total Subscriptions -->
-          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerTotalSubs()" title="Click to view subscriptions">
+          <div class="lower-stat-card" role="button" tabindex="0" onclick="navigateToLowerTotalSubs()" title="Click to view paid subscriptions">
             <div class="lower-icon" style="color:#10B981;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </div>
-            <div class="lower-value" id="lowerTotalSubs">2</div>
-            <div class="lower-label">Total Subscriptions</div>
+            <div class="lower-value" id="lowerTotalSubs">0</div>
+            <div class="lower-label">Paid Subscriptions (₹399)</div>
           </div>
 
           <!-- Total Tasks -->
@@ -2312,8 +2312,8 @@
       <section id="view-subs" class="view-container">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Subscriptions & Packages</h1>
-            <p class="page-subtitle">User plan tiers, renewal schedules and payment statuses in Task Alert</p>
+            <h1 class="page-title">Paid Subscriptions (₹399)</h1>
+            <p class="page-subtitle">Users who have paid ₹399 for TaskAlert Pro (Unpaid/Free users are removed)</p>
           </div>
           <button class="btn-submit" style="width:auto; padding:9px 18px; margin-top:0;" onclick="loadSubs('')">Refresh Subscriptions</button>
         </div>
@@ -2324,30 +2324,28 @@
               <span class="filter-search-icon">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               </span>
-              <input type="text" id="subsSearchInput" class="filter-search-input" placeholder="Search subscriber by name, email, or payment ID..." oninput="applySubsFilters()">
+              <input type="text" id="subsSearchInput" class="filter-search-input" placeholder="Search paid subscriber by name, email, or payment ID..." oninput="applySubsFilters()">
             </div>
             <select id="subsStatusFilter" class="filter-select" onchange="applySubsFilters()">
-              <option value="">All Statuses</option>
-              <option value="active">Active (Premium)</option>
-              <option value="free">Free Tier</option>
-              <option value="expired">Expired</option>
+              <option value="">All Paid Subscriptions</option>
+              <option value="active">Active (₹399 Paid)</option>
+              <option value="expired">Expired Pro</option>
             </select>
             <select id="subsPlanFilter" class="filter-select" onchange="applySubsFilters()">
               <option value="all">All Plans</option>
-              <option value="pro">Pro Plan</option>
-              <option value="free">Free Tier</option>
+              <option value="pro">Pro Plan (₹399)</option>
             </select>
             <button class="filter-btn-reset" onclick="resetSubsFilters()" title="Reset all filters">
               <span>✕ Clear</span>
             </button>
-            <span id="subsTableCount" class="filter-count-badge">0 Subscriptions</span>
+            <span id="subsTableCount" class="filter-count-badge">0 Paid Subscriptions</span>
           </div>
           <table class="data-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>Paid User</th>
                 <th>Plan Name</th>
-                <th>Price</th>
+                <th>Amount Paid</th>
                 <th>Status</th>
                 <th>Renewal / Expiry</th>
               </tr>
@@ -3186,9 +3184,16 @@ async function loadOverview() {
     ]);
 
     let usersList = usersRes?.users || [];
-    const subsList = subsRes?.subscriptions || [];
+    // Strict filter: only users who paid ₹399 (active pro, payment provider or plan price >= 399)
+    // Free / unpaid users are completely removed from subscriptions list
+    const subsList = (subsRes?.subscriptions || []).filter(s => {
+      if (!s) return false;
+      const isFreeTier = (s.status === 'free' || s.plan_name === 'Free Tier') && !s.payment_provider && (!s.plan_price || Number(s.plan_price) === 0);
+      if (isFreeTier) return false;
+      return (s.status === 'active' || Number(s.plan_price) >= 399 || s.payment_provider);
+    });
     const activeCount = subsList.filter(s => s.status === 'active').length;
-    const mrrSum = subsList.filter(s => s.status === 'active').reduce((acc, s) => acc + Number(s.plan_price || 0), 0);
+    const mrrSum = subsList.filter(s => s.status === 'active').reduce((acc, s) => acc + Number(s.plan_price || 399), 0);
 
     const liveTasks = await fetchAllTasks();
     const liveTaskCount = liveTasks.length > 0 ? liveTasks.length : (d?.totalTasks ?? 0);
@@ -3212,7 +3217,7 @@ async function loadOverview() {
 
     // Update Lower 4 KPI values
     document.getElementById('lowerActiveUsers').textContent = totalUsers;
-    document.getElementById('lowerTotalSubs').textContent = subsList.length > 0 ? subsList.length : activeSubs;
+    document.getElementById('lowerTotalSubs').textContent = activeSubs;
     document.getElementById('lowerTotalBookings').textContent = liveTaskCount;
     document.getElementById('lowerConversionRate').textContent = totalUsers > 0 ? `${Math.min(100, Math.round((activeSubs / totalUsers) * 100))}%` : '0%';
 
@@ -3280,8 +3285,13 @@ function filterOverviewActivity(query) {
     }
   }
 
-  // Filter Recent Payments
-  let filteredSubs = overviewSubsList;
+  // Filter Recent Payments (Strictly paid ₹399 subscriptions only)
+  let filteredSubs = overviewSubsList.filter(s => {
+    if (!s) return false;
+    const isFreeTier = (s.status === 'free' || s.plan_name === 'Free Tier') && !s.payment_provider && (!s.plan_price || Number(s.plan_price) === 0);
+    return !isFreeTier && (s.status === 'active' || Number(s.plan_price) >= 399 || s.payment_provider);
+  });
+
   if (q) {
     filteredSubs = filteredSubs.filter(s => {
       const uName = s.name || s.user_name || overviewUserMap[s.user_id]?.name || '';
@@ -3292,8 +3302,6 @@ function filterOverviewActivity(query) {
   }
   if (filterType === 'active') {
     filteredSubs = filteredSubs.filter(s => s.status === 'active');
-  } else if (filterType === 'free') {
-    filteredSubs = filteredSubs.filter(s => s.status === 'free');
   }
 
   const recentPaymentsEl = document.getElementById('recentPaymentsList');
@@ -3302,12 +3310,10 @@ function filterOverviewActivity(query) {
     if (displaySubs.length > 0) {
       recentPaymentsEl.innerHTML = displaySubs.map(s => {
         const userName = s.name || s.user_name || overviewUserMap[s.user_id]?.name || 'Task Alert User';
-        const isActive = (s.status === 'active');
-        const isFree = (s.status === 'free');
-        const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
-        const userEmail = s.email || s.user_email || overviewUserMap[s.user_id]?.email || `${planName} (${(s.status || 'free').toUpperCase()})`;
+        const planName = 'Pro Plan (₹399)';
+        const userEmail = s.email || s.user_email || overviewUserMap[s.user_id]?.email || `${planName} (${(s.status || 'active').toUpperCase()})`;
         const initials = userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'TA';
-        const priceVal = isFree ? 0 : Number(s.plan_price || 399);
+        const priceVal = Number(s.plan_price || 399);
         const targetUserId = s.user_id || '';
         return `
           <div class="recent-user-row" style="cursor:pointer;" onclick="${targetUserId ? `openUserProfileModal('${targetUserId}')` : ''}" title="Click to view profile">
@@ -3318,12 +3324,12 @@ function filterOverviewActivity(query) {
                 <div class="recent-user-email">${escapeHtml(userEmail)}</div>
               </div>
             </div>
-            <div class="recent-amount">₹${priceVal.toLocaleString('en-IN')}</div>
+            <div class="recent-amount" style="color:#059669; font-weight:700;">₹${priceVal.toLocaleString('en-IN')}</div>
           </div>
         `;
       }).join('');
     } else {
-      recentPaymentsEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No matching transactions found.</div>';
+      recentPaymentsEl.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">No paid subscriptions (₹399) recorded yet.</div>';
     }
   }
 
@@ -3672,7 +3678,7 @@ let cachedSubs = [];
 
 async function loadSubs(filterStatus) {
   const tbody = document.getElementById('subsTableBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Loading subscriptions...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">Loading paid subscriptions (₹399)...</td></tr>';
   
   try {
     if (!cachedUsers.length) {
@@ -3691,10 +3697,21 @@ async function loadSubs(filterStatus) {
       list = d.subscriptions || [];
     }
 
-    cachedSubs = list.map(s => ({
+    // STRICT FILTER: Only show users who PAID ₹399 (status active, payment_provider, or plan_price >= 399)
+    // Free / unpaid tier users are strictly removed from Subscriptions tab
+    const paidList = list.filter(s => {
+      if (!s) return false;
+      const isFreeTier = (s.status === 'free' || s.plan_name === 'Free Tier') && !s.payment_provider && (!s.plan_price || Number(s.plan_price) === 0);
+      if (isFreeTier) return false;
+      return (s.status === 'active' || Number(s.plan_price) >= 399 || s.payment_provider);
+    });
+
+    cachedSubs = paidList.map(s => ({
       ...s,
       user_name: s.name || s.user_name || userMap[s.user_id]?.name || 'Task Alert User',
-      user_email: s.email || s.user_email || userMap[s.user_id]?.email || (s.user_id ? `#${s.user_id.slice(0, 8)}` : '')
+      user_email: s.email || s.user_email || userMap[s.user_id]?.email || (s.user_id ? `#${s.user_id.slice(0, 8)}` : ''),
+      plan_name: s.plan_name && !s.plan_name.includes('Free') ? s.plan_name : 'Pro Plan (₹399)',
+      plan_price: Number(s.plan_price || 399)
     }));
 
     if (filterStatus) {
@@ -3721,6 +3738,8 @@ function applySubsFilters() {
       (s.user_email && s.user_email.toLowerCase().includes(query)) ||
       (s.plan_name && s.plan_name.toLowerCase().includes(query)) ||
       (s.razorpay_payment_id && s.razorpay_payment_id.toLowerCase().includes(query)) ||
+      (s.provider_subscription_id && s.provider_subscription_id.toLowerCase().includes(query)) ||
+      (s.provider_customer_id && s.provider_customer_id.toLowerCase().includes(query)) ||
       (s.user_id && String(s.user_id).toLowerCase().includes(query))
     );
   }
@@ -3731,15 +3750,13 @@ function applySubsFilters() {
 
   if (plan !== 'all') {
     if (plan === 'pro') {
-      list = list.filter(s => s.status === 'active' || (s.plan_name && s.plan_name.toLowerCase().includes('pro')));
-    } else if (plan === 'free') {
-      list = list.filter(s => s.status === 'free' || (s.plan_name && s.plan_name.toLowerCase().includes('free')));
+      list = list.filter(s => s.status === 'active' || Number(s.plan_price) >= 399);
     }
   }
 
   const countBadge = document.getElementById('subsTableCount');
   if (countBadge) {
-    countBadge.textContent = `Showing ${list.length} of ${cachedSubs.length} Subscriptions`;
+    countBadge.textContent = `Showing ${list.length} of ${cachedSubs.length} Paid Subscriptions (₹399)`;
   }
 
   renderSubsTable(list);
@@ -3758,20 +3775,27 @@ function resetSubsFilters() {
 function renderSubsTable(list) {
   const tbody = document.getElementById('subsTableBody');
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No subscriptions match the active search & filters.</td></tr>';
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:36px; color:var(--text-muted);">
+          <div style="font-size:32px; margin-bottom:8px;">💳</div>
+          <div style="font-weight:700; font-size:15px; color:var(--text-primary); margin-bottom:4px;">No Paid Subscriptions (₹399) Found</div>
+          <div style="font-size:12.5px; color:#64748B;">Only users who have paid ₹399 appear in this table. Free tier users are excluded from the subscriptions tab.</div>
+        </td>
+      </tr>
+    `;
     return;
   }
   tbody.innerHTML = list.map(s => {
     const userName = s.user_name || 'Task Alert User';
     const userEmail = s.user_email || '';
     const isActive = (s.status === 'active');
-    const isFree = (s.status === 'free');
-    const badgeClass = isActive ? 'active' : (s.status === 'expired' || s.status === 'cancelled' ? 'expired' : 'free');
-    const planName = s.plan_name || (isActive ? 'Pro Plan' : (isFree ? 'Free Tier' : 'Pro Plan'));
-    const priceDisplay = isFree ? '₹0' : `₹${Number(s.plan_price || 399).toLocaleString('en-IN')}`;
+    const badgeClass = isActive ? 'active' : 'expired';
+    const planName = s.plan_name || 'Pro Plan (₹399)';
+    const priceDisplay = `₹${Number(s.plan_price || 399).toLocaleString('en-IN')}`;
     const expiryDisplay = isActive 
-      ? (s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('en-IN') : '1 Month')
-      : (isFree ? 'Permanent' : 'Expired');
+      ? (s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '30 Days Active')
+      : 'Expired';
 
     return `
       <tr>
@@ -3782,8 +3806,8 @@ function renderSubsTable(list) {
           <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(userEmail)}</div>
         </td>
         <td style="font-weight:600;">${escapeHtml(planName)}</td>
-        <td>${priceDisplay}</td>
-        <td><span class="status-badge ${badgeClass}">${(s.status || 'FREE').toUpperCase()}</span></td>
+        <td style="font-weight:700; color:#059669;">${priceDisplay}</td>
+        <td><span class="status-badge ${badgeClass}">${(s.status || 'ACTIVE').toUpperCase()}</span></td>
         <td>${expiryDisplay}</td>
       </tr>
     `;
