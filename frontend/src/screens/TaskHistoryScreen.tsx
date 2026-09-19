@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+import BrandLogo from '../components/BrandLogo';
 import { colors, spacing, radius, shadows } from '../theme';
 import { useAppStore } from '../store';
 import { useTaskHistory } from '../hooks';
@@ -21,6 +21,8 @@ import PriorityChip from '../components/PriorityChip';
 import { TaskHistoryItem } from '../services/history/taskHistory.service';
 
 type FilterTab = 'all' | 'done' | 'pending' | 'missed';
+type TimeframeFilter = 'all' | 'today' | 'yesterday' | 'last7' | 'last30' | 'thisMonth';
+type PriorityFilter = 'all' | 'zaroori' | 'medium' | 'normal';
 
 export const TaskHistoryScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -28,19 +30,123 @@ export const TaskHistoryScreen: React.FC = () => {
   const { language } = useAppStore();
   const isHinglish = language === 'hi';
 
+  // Primary filters
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilter>('all');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
+
+  // Modals & display pagination
+  const [displayLimit, setDisplayLimit] = useState<number>(10);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskHistoryItem | null>(null);
 
   const { data, isLoading, isRefetching, refetch } = useTaskHistory(activeTab, searchQuery);
 
-  const tasks = data?.tasks || [];
+  const rawTasks = data?.tasks || [];
   const stats = data?.stats || {
     totalCreated: 0,
     totalCompleted: 0,
     totalMissed: 0,
     activeTasks: 0,
     completionRate: 0,
+  };
+
+  // Helper for checking date ranges
+  const isWithinTimeframe = (dateStr: string | undefined, timeframe: TimeframeFilter): boolean => {
+    if (timeframe === 'all' || !dateStr) return true;
+    try {
+      const taskDate = new Date(dateStr);
+      if (isNaN(taskDate.getTime())) return true;
+      const now = new Date();
+
+      const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate()).getTime();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const oneDayMs = 24 * 60 * 60 * 1000;
+
+      if (timeframe === 'today') {
+        return taskDay === today;
+      }
+      if (timeframe === 'yesterday') {
+        return taskDay === today - oneDayMs;
+      }
+      if (timeframe === 'last7') {
+        return taskDay >= today - 7 * oneDayMs;
+      }
+      if (timeframe === 'last30') {
+        return taskDay >= today - 30 * oneDayMs;
+      }
+      if (timeframe === 'thisMonth') {
+        return taskDate.getFullYear() === now.getFullYear() && taskDate.getMonth() === now.getMonth();
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
+  const matchesPriority = (itemPriority: string | undefined, filter: PriorityFilter): boolean => {
+    if (filter === 'all') return true;
+    const p = String(itemPriority || '').toLowerCase();
+    if (filter === 'zaroori') {
+      return p === 'zaroori' || p === 'urgent' || p === 'high' || p === 'important';
+    }
+    return p === filter;
+  };
+
+  // Client-side filtering combining tab, timeframe, priority, and search
+  const filteredTasks = useMemo(() => {
+    return rawTasks.filter((item) => {
+      // 1. Status Filter
+      if (activeTab !== 'all') {
+        const isDone = item.completed === true || item.confirmationStatus === 'COMPLETED';
+        const isMissed = item.confirmationStatus === 'MISSED';
+        if (activeTab === 'done' && !isDone) return false;
+        if (activeTab === 'missed' && !isMissed) return false;
+        if (activeTab === 'pending' && (isDone || isMissed)) return false;
+      }
+
+      // 2. Timeframe Filter
+      const dateToCheck = item.createdAt || item.date || item.targetDate;
+      if (!isWithinTimeframe(dateToCheck, timeframeFilter)) {
+        return false;
+      }
+
+      // 3. Priority Filter
+      if (!matchesPriority(item.priority, priorityFilter)) {
+        return false;
+      }
+
+      // 4. Search Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const titleMatch = (item.title || '').toLowerCase().includes(q);
+        const descMatch = (item.description || '').toLowerCase().includes(q);
+        const notesMatch = (item.notes || '').toLowerCase().includes(q);
+        if (!titleMatch && !descMatch && !notesMatch) return false;
+      }
+
+      return true;
+    });
+  }, [rawTasks, activeTab, timeframeFilter, priorityFilter, searchQuery]);
+
+  // Show ONLY 10 tasks on screen initially!
+  const displayedTasks = useMemo(() => {
+    return filteredTasks.slice(0, displayLimit);
+  }, [filteredTasks, displayLimit]);
+
+  const activeFilterCount =
+    (timeframeFilter !== 'all' ? 1 : 0) +
+    (priorityFilter !== 'all' ? 1 : 0) +
+    (activeTab !== 'all' ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
+
+  const resetAllFilters = () => {
+    setActiveTab('all');
+    setTimeframeFilter('all');
+    setPriorityFilter('all');
+    setSearchQuery('');
+    setDisplayLimit(10);
   };
 
   // Helper to format creation and schedule date/time
@@ -117,16 +223,16 @@ export const TaskHistoryScreen: React.FC = () => {
     const isMissed = item.confirmationStatus === 'MISSED';
 
     const statusBadgeText = isDone
-      ? isHinglish ? '✓ Pura Hua' : '✓ Completed'
+      ? (isHinglish ? '✓ Pura Hua' : '✓ Completed')
       : isMissed
-        ? isHinglish ? '✗ Chhoot Gaya' : '✗ Missed'
-        : isHinglish ? '⏳ Active' : '⏳ In Progress';
+        ? (isHinglish ? '✗ Chhoot Gaya' : '✗ Missed')
+        : (isHinglish ? '⏳ Active' : '⏳ In Progress');
 
     const accentColor = isDone
-      ? '#10B981'
+      ? '#2CC55E'
       : isMissed
-        ? '#EF4444'
-        : '#6366F1';
+        ? '#DC2626'
+        : '#EA580C';
 
     const statusBadgeStyle = isDone
       ? styles.badgeDone
@@ -201,82 +307,92 @@ export const TaskHistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      {/* Premium Hero Gradient Header */}
-      <LinearGradient
-        colors={['#1E1B4B', '#312E81', '#4338CA']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.heroHeader}
-      >
-        {/* Top bar with back and refresh buttons */}
-        <View style={styles.topBar}>
+      {/* Top Branding & Navigation Bar (Exact App Signature Scheme) */}
+      <View style={styles.topBrandBar}>
+        <View style={styles.topBrandLeft}>
           <TouchableOpacity
-            style={styles.heroNavBtn}
+            style={styles.backBtn}
             onPress={() => navigation.goBack()}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            activeOpacity={0.7}
             accessibilityLabel="Go back"
           >
-            <Text style={styles.heroNavBtnText}>‹</Text>
+            <Text style={styles.backBtnIcon}>←</Text>
           </TouchableOpacity>
-
-          <View style={styles.heroTitleWrap}>
-            <Text style={styles.heroTitle}>
-              {isHinglish ? '📜 Task History & Audit' : '📜 Task History & Audit'}
-            </Text>
-            <Text style={styles.heroSubtitle}>
-              {isHinglish ? 'Aapke sabhi banaye gaye tasks ka safe record' : 'Permanent database record of all created tasks'}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.heroNavBtn}
-            onPress={() => refetch()}
-            activeOpacity={0.75}
-            accessibilityLabel="Refresh history"
-          >
-            <Text style={styles.heroSyncIcon}>🔄</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Hero Vault Status Badge */}
-        <View style={styles.heroVaultBadge}>
-          <Text style={styles.heroVaultDot}>●</Text>
-          <Text style={styles.heroVaultText}>
-            {isHinglish
-              ? `Cloud & Database Synced · Kul ${stats.totalCreated} Kaam`
-              : `Cloud & Database Synced · ${stats.totalCreated} Total Tasks`}
+          <BrandLogo size={32} showText={false} />
+          <Text style={styles.brandBarTitle}>
+            <Text style={{ color: '#0F172A' }}>Task</Text>
+            <Text style={{ color: '#EAB308' }}>Alert</Text>
           </Text>
         </View>
-      </LinearGradient>
 
-      {/* Main Timeline List */}
+        <TouchableOpacity
+          style={styles.refreshHeaderBtn}
+          onPress={() => refetch()}
+          activeOpacity={0.7}
+          accessibilityLabel="Refresh history"
+        >
+          <Text style={styles.refreshHeaderIcon}>🔄</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Timeline List with Warm Sunrise Header */}
       <FlatList<TaskHistoryItem>
-        data={tasks}
+        data={displayedTasks}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: Math.max(insets.bottom, 24) + 40 },
+          { paddingBottom: Math.max(insets.bottom, 24) + 60 },
         ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            colors={['#6366F1']}
-            tintColor="#6366F1"
+            colors={['#EA580C']}
+            tintColor="#EA580C"
           />
         }
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            {/* KPI Stat Cards Grid - Interactive! */}
+            {/* Warm Sunrise Header Card */}
+            <View style={styles.heroWarmCard}>
+              <View style={styles.heroWarmHeaderRow}>
+                <View style={styles.heroWarmIconWrap}>
+                  <Text style={styles.heroWarmIcon}>📜</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroWarmTitle}>
+                    {isHinglish ? 'Task History & Records' : 'Task History & Records'}
+                  </Text>
+                  <Text style={styles.heroWarmSubtitle}>
+                    {isHinglish ? 'Aapke sabhi banaye gaye tasks ka safe record' : 'Permanent database archive of all created tasks'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Cloud Sync Status Badge */}
+              <View style={styles.cloudSyncBadge}>
+                <Text style={styles.cloudSyncDot}>●</Text>
+                <Text style={styles.cloudSyncText}>
+                  {isHinglish
+                    ? `Cloud & Database Synced · Kul ${stats.totalCreated} Kaam`
+                    : `Cloud & Database Synced · ${stats.totalCreated} Total Tasks`}
+                </Text>
+              </View>
+            </View>
+
+            {/* Interactive KPI Stat Cards Grid */}
             <View style={styles.statsGrid}>
               <TouchableOpacity
                 style={[styles.statCard, activeTab === 'all' && styles.statCardSelected]}
-                onPress={() => setActiveTab('all')}
+                onPress={() => {
+                  setActiveTab('all');
+                  setDisplayLimit(10);
+                }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.statIconBox, { backgroundColor: '#EEF2FF' }]}>
+                <View style={[styles.statIconBox, { backgroundColor: '#FEF3C7' }]}>
                   <Text style={styles.statIcon}>📝</Text>
                 </View>
                 <Text style={styles.statNumber}>{stats.totalCreated}</Text>
@@ -285,13 +401,16 @@ export const TaskHistoryScreen: React.FC = () => {
 
               <TouchableOpacity
                 style={[styles.statCard, activeTab === 'done' && styles.statCardSelected]}
-                onPress={() => setActiveTab('done')}
+                onPress={() => {
+                  setActiveTab('done');
+                  setDisplayLimit(10);
+                }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.statIconBox, { backgroundColor: '#ECFDF5' }]}>
-                  <Text style={styles.statIcon}>✓</Text>
+                <View style={[styles.statIconBox, { backgroundColor: '#DCFCE7' }]}>
+                  <Text style={[styles.statIcon, { color: '#15803D' }]}>✓</Text>
                 </View>
-                <Text style={[styles.statNumber, { color: '#10B981' }]}>
+                <Text style={[styles.statNumber, { color: '#15803D' }]}>
                   {stats.totalCompleted}
                 </Text>
                 <Text style={styles.statLabel}>{isHinglish ? 'Pura' : 'Done'}</Text>
@@ -299,13 +418,16 @@ export const TaskHistoryScreen: React.FC = () => {
 
               <TouchableOpacity
                 style={[styles.statCard, activeTab === 'pending' && styles.statCardSelected]}
-                onPress={() => setActiveTab('pending')}
+                onPress={() => {
+                  setActiveTab('pending');
+                  setDisplayLimit(10);
+                }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
+                <View style={[styles.statIconBox, { backgroundColor: '#E0F2FE' }]}>
                   <Text style={styles.statIcon}>⏳</Text>
                 </View>
-                <Text style={[styles.statNumber, { color: '#3B82F6' }]}>
+                <Text style={[styles.statNumber, { color: '#0284C7' }]}>
                   {stats.activeTasks}
                 </Text>
                 <Text style={styles.statLabel}>{isHinglish ? 'Active' : 'Active'}</Text>
@@ -313,39 +435,121 @@ export const TaskHistoryScreen: React.FC = () => {
 
               <TouchableOpacity
                 style={[styles.statCard, activeTab === 'missed' && styles.statCardSelected]}
-                onPress={() => setActiveTab('missed')}
+                onPress={() => {
+                  setActiveTab('missed');
+                  setDisplayLimit(10);
+                }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.statIconBox, { backgroundColor: '#FAF5FF' }]}>
-                  <Text style={styles.statIcon}>⚡</Text>
+                <View style={[styles.statIconBox, { backgroundColor: '#FEE2E2' }]}>
+                  <Text style={styles.statIcon}>✗</Text>
                 </View>
-                <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>
-                  {stats.completionRate}%
+                <Text style={[styles.statNumber, { color: '#DC2626' }]}>
+                  {stats.totalMissed}
                 </Text>
-                <Text style={styles.statLabel}>{isHinglish ? 'Rate' : 'Success'}</Text>
+                <Text style={styles.statLabel}>{isHinglish ? 'Missed' : 'Missed'}</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Live Search Bar */}
-            <View style={styles.searchContainer}>
-              <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder={isHinglish ? 'Kaam ke naam ya description se khojein...' : 'Search task history by title or notes...'}
-                placeholderTextColor="#94A3B8"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-                clearButtonMode="while-editing"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearBtn}>
-                  <Text style={styles.searchClearText}>✕</Text>
-                </TouchableOpacity>
-              )}
+            {/* Search Bar & Prominent Filter Button Row */}
+            <View style={styles.searchAndFilterRow}>
+              {/* Live Search Input */}
+              <View style={styles.searchContainer}>
+                <Text style={styles.searchIcon}>🔍</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={isHinglish ? 'Kaam ke naam ya note se khojein...' : 'Search past tasks by title or notes...'}
+                  placeholderTextColor="#94A3B8"
+                  value={searchQuery}
+                  onChangeText={(text) => {
+                    setSearchQuery(text);
+                    setDisplayLimit(10);
+                  }}
+                  returnKeyType="search"
+                  clearButtonMode="while-editing"
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearBtn}>
+                    <Text style={styles.searchClearText}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Dedicated Filter Button */}
+              <TouchableOpacity
+                style={[
+                  styles.filterButton,
+                  activeFilterCount > 0 && styles.filterButtonActive,
+                ]}
+                onPress={() => setIsFilterModalVisible(true)}
+                activeOpacity={0.82}
+              >
+                <Text style={styles.filterButtonIcon}>⚡</Text>
+                <Text style={[styles.filterButtonText, activeFilterCount > 0 && styles.filterButtonTextActive]}>
+                  {isHinglish ? 'Filter' : 'Filter'}
+                </Text>
+                {activeFilterCount > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
 
-            {/* Segmented Filter Pills */}
+            {/* Active Filters Pill Strip (if any filter is selected) */}
+            {activeFilterCount > 0 && (
+              <View style={styles.activeFilterChipsRow}>
+                <Text style={styles.activeFilterLabel}>
+                  {isHinglish ? 'Active Filters:' : 'Active Filters:'}
+                </Text>
+
+                {timeframeFilter !== 'all' && (
+                  <TouchableOpacity
+                    style={styles.filterChip}
+                    onPress={() => setTimeframeFilter('all')}
+                  >
+                    <Text style={styles.filterChipText}>
+                      📅 {timeframeFilter === 'today' ? (isHinglish ? 'Aaj' : 'Today')
+                        : timeframeFilter === 'yesterday' ? (isHinglish ? 'Kal' : 'Yesterday')
+                        : timeframeFilter === 'last7' ? (isHinglish ? 'Pichhle 7 Din' : 'Last 7 Days')
+                        : timeframeFilter === 'last30' ? (isHinglish ? 'Pichhle 30 Din' : 'Last 30 Days')
+                        : (isHinglish ? 'Is Mahine' : 'This Month')} ✕
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {priorityFilter !== 'all' && (
+                  <TouchableOpacity
+                    style={styles.filterChip}
+                    onPress={() => setPriorityFilter('all')}
+                  >
+                    <Text style={styles.filterChipText}>
+                      🎯 {priorityFilter === 'zaroori' ? (isHinglish ? '🔴 Zaroori' : '🔴 Urgent')
+                        : priorityFilter === 'medium' ? (isHinglish ? '🟡 Medium' : '🟡 Medium')
+                        : (isHinglish ? '🟢 Normal' : '🟢 Normal')} ✕
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {searchQuery.trim().length > 0 && (
+                  <TouchableOpacity
+                    style={styles.filterChip}
+                    onPress={() => setSearchQuery('')}
+                  >
+                    <Text style={styles.filterChipText}>🔍 "{searchQuery}" ✕</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={styles.clearAllChip}
+                  onPress={resetAllFilters}
+                >
+                  <Text style={styles.clearAllChipText}>{isHinglish ? 'Saaf Karein' : 'Reset All'}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Segmented Status Tab Pills */}
             <View style={styles.tabsRow}>
               {(
                 [
@@ -359,61 +563,113 @@ export const TaskHistoryScreen: React.FC = () => {
                 return (
                   <TouchableOpacity
                     key={tab.id}
-                    onPress={() => setActiveTab(tab.id)}
+                    onPress={() => {
+                      setActiveTab(tab.id);
+                      setDisplayLimit(10);
+                    }}
                     activeOpacity={0.85}
                     style={styles.tabTouch}
                   >
-                    {isActive ? (
-                      <LinearGradient
-                        colors={['#4F46E5', '#7C3AED']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.tabBtnActive}
-                      >
-                        <Text style={styles.tabBtnTextActive}>
-                          {tab.label}
+                    <View style={[styles.tabBtn, isActive ? styles.tabBtnActive : styles.tabBtnInactive]}>
+                      <Text style={[styles.tabBtnText, isActive ? styles.tabBtnTextActive : styles.tabBtnTextInactive]}>
+                        {tab.label}
+                      </Text>
+                      <View style={[styles.tabBadge, isActive ? styles.tabBadgeActive : styles.tabBadgeInactive]}>
+                        <Text style={[styles.tabBadgeText, isActive ? styles.tabBadgeTextActive : styles.tabBadgeTextInactive]}>
+                          {tab.count}
                         </Text>
-                        <View style={styles.tabBadgeActive}>
-                          <Text style={styles.tabBadgeTextActive}>{tab.count}</Text>
-                        </View>
-                      </LinearGradient>
-                    ) : (
-                      <View style={styles.tabBtnInactive}>
-                        <Text style={styles.tabBtnTextInactive}>
-                          {tab.label}
-                        </Text>
-                        <View style={styles.tabBadgeInactive}>
-                          <Text style={styles.tabBadgeTextInactive}>{tab.count}</Text>
-                        </View>
                       </View>
-                    )}
+                    </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Timeline Header Row */}
+            {/* 10-Task View Notice & Timeline Header Row */}
             <View style={styles.timelineHeaderRow}>
               <View style={styles.timelineHeadingGroup}>
                 <Text style={styles.timelineHeading}>
-                  {isHinglish ? '🕒 Creation Timeline' : '🕒 Creation Timeline'}
+                  {isHinglish ? '🕒 Pichhle Kaam (Past Tasks)' : '🕒 Past Tasks'}
                 </Text>
                 <Text style={styles.timelineSubheading}>
-                  {isHinglish ? 'Navinatam se purana kram' : 'Sorted newest to oldest'}
+                  {isHinglish
+                    ? `Navinatam se purana · Pehle 10 task dikhaye ja rahe hain`
+                    : `Sorted newest to oldest · Showing latest 10 tasks`}
                 </Text>
               </View>
               <View style={styles.countPill}>
                 <Text style={styles.countPillText}>
-                  {tasks.length} {isHinglish ? 'records' : 'tasks'}
+                  {displayedTasks.length} / {filteredTasks.length}
                 </Text>
               </View>
             </View>
           </View>
         }
+        ListFooterComponent={
+          filteredTasks.length > 10 ? (
+            <View style={styles.paginationCard}>
+              <View style={styles.paginationHeader}>
+                <Text style={styles.paginationInfo}>
+                  {isHinglish
+                    ? `Pehle 10 kaam dikhaye gaye hain (${displayedTasks.length}/${filteredTasks.length}). Baki pichhle tasks dekhne ke liye load karein ya filter se khojein.`
+                    : `Displaying 10 of ${filteredTasks.length} tasks. Load more past tasks or use filter to search specific dates.`}
+                </Text>
+              </View>
+
+              <View style={styles.paginationBtnRow}>
+                {displayedTasks.length < filteredTasks.length ? (
+                  <TouchableOpacity
+                    style={styles.loadMoreBtn}
+                    onPress={() => setDisplayLimit((prev) => prev + 10)}
+                    activeOpacity={0.82}
+                  >
+                    <Text style={styles.loadMoreBtnText}>
+                      {isHinglish ? '📜 Pichhle 10 Aur Kaam Dekhein (+10)' : '📜 Load Next 10 Past Tasks'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+
+                {displayedTasks.length < filteredTasks.length ? (
+                  <TouchableOpacity
+                    style={styles.showAllBtn}
+                    onPress={() => setDisplayLimit(filteredTasks.length)}
+                    activeOpacity={0.82}
+                  >
+                    <Text style={styles.showAllBtnText}>
+                      {isHinglish ? `Sabhi Dekhein (${filteredTasks.length})` : `Show All (${filteredTasks.length})`}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.collapseBtn}
+                    onPress={() => setDisplayLimit(10)}
+                    activeOpacity={0.82}
+                  >
+                    <Text style={styles.collapseBtnText}>
+                      {isHinglish ? '▲ Wapas 10 Kaam Par Sametein' : '▲ Collapse to 10 Tasks'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={styles.filterPromptBtn}
+                onPress={() => setIsFilterModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.filterPromptText}>
+                  {isHinglish
+                    ? '🔍 Pichhle kisi bhi din ka task filter se khojein →'
+                    : '🔍 Search any previous date with Filter →'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.emptyContainer}>
-              <ActivityIndicator color="#6366F1" size="large" />
+              <ActivityIndicator color="#EA580C" size="large" />
               <Text style={styles.emptySub}>
                 {isHinglish ? 'Database se itihaas load ho raha hai...' : 'Loading task history from database...'}
               </Text>
@@ -424,50 +680,221 @@ export const TaskHistoryScreen: React.FC = () => {
                 <Text style={styles.emptyIcon}>📜</Text>
               </View>
               <Text style={styles.emptyTitle}>
-                {searchQuery
-                  ? isHinglish ? 'Koi task nahi mila' : 'No matching tasks found'
-                  : isHinglish ? 'Abhi tak koi task record nahi hai' : 'No task history recorded yet'}
+                {searchQuery || timeframeFilter !== 'all' || priorityFilter !== 'all'
+                  ? (isHinglish ? 'Koi task nahi mila' : 'No matching tasks found')
+                  : (isHinglish ? 'Abhi tak koi task record nahi hai' : 'No task history recorded yet')}
               </Text>
               <Text style={styles.emptySub}>
-                {searchQuery
-                  ? isHinglish ? `"${searchQuery}" ke anuroop koi record nahi mila.` : `No tasks match "${searchQuery}". Try a different keyword.`
-                  : isHinglish
+                {searchQuery || timeframeFilter !== 'all' || priorityFilter !== 'all'
+                  ? (isHinglish ? 'Chune gaye filters ke anuroop koi record nahi mila. Filters badal kar dobara dekhein.' : 'No tasks match your selected filters. Try changing or clearing filters.')
+                  : (isHinglish
                     ? 'Aap jo bhi task banayenge, uska poora record yahan database me hamesha surakshit rahega.'
-                    : 'Every task you add is securely recorded and permanently archived here in your database.'}
+                    : 'Every task you create is securely recorded and permanently archived here in your database.')}
               </Text>
 
-              {searchQuery ? (
+              {activeFilterCount > 0 ? (
                 <TouchableOpacity
                   style={styles.emptyActionBtn}
-                  onPress={() => setSearchQuery('')}
+                  onPress={resetAllFilters}
                   activeOpacity={0.85}
                 >
                   <Text style={styles.emptyActionBtnText}>
-                    {isHinglish ? 'Search Saaf Karein' : 'Clear Search'}
+                    {isHinglish ? 'Sabhi Filter Saaf Karein' : 'Clear All Filters'}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={styles.createTaskGradientTouch}
+                  style={styles.createTaskTouch}
                   onPress={() => navigation.navigate('AddTask')}
                   activeOpacity={0.88}
                 >
-                  <LinearGradient
-                    colors={['#4F46E5', '#7C3AED']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.createTaskGradient}
-                  >
-                    <Text style={styles.createTaskGradientText}>
-                      {isHinglish ? '+ Naya Task Jodein' : '+ Create Your First Task'}
-                    </Text>
-                  </LinearGradient>
+                  <Text style={styles.createTaskTouchText}>
+                    {isHinglish ? '+ Naya Task Jodein' : '+ Create Your First Task'}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
           )
         }
       />
+
+      {/* Interactive Filter Modal for Searching Previous Past Tasks */}
+      <Modal
+        visible={isFilterModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <TouchableOpacity
+            style={styles.modalBackdropTouch}
+            activeOpacity={1}
+            onPress={() => setIsFilterModalVisible(false)}
+          />
+          <View style={[styles.filterModalCard, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+            {/* Modal Drag Handle */}
+            <View style={styles.modalIndicator} />
+
+            {/* Modal Header */}
+            <View style={styles.filterModalHeader}>
+              <View style={styles.filterModalHeaderLeft}>
+                <View style={styles.filterModalIconWrap}>
+                  <Text style={{ fontSize: 18 }}>⚡</Text>
+                </View>
+                <View>
+                  <Text style={styles.filterModalTitle}>
+                    {isHinglish ? 'Pichhle Tasks Filter Karein' : 'Filter Past Tasks'}
+                  </Text>
+                  <Text style={styles.filterModalSub}>
+                    {isHinglish ? 'Tareekh, status ya priority se purane kaam khojein' : 'Find previous tasks by date, priority, or status'}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.detailModalCloseBtn}
+                onPress={() => setIsFilterModalVisible(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text style={styles.detailModalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.filterModalScroll}>
+              {/* Section 1: Timeframe / Date Range */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>
+                  📅 {isHinglish ? 'Tareekh / Samay Chunein (Date Range)' : 'Select Date / Timeframe'}
+                </Text>
+                <View style={styles.filterGrid}>
+                  {[
+                    { id: 'all', label: isHinglish ? 'Sabhi Din (All Time)' : 'All Time' },
+                    { id: 'today', label: isHinglish ? 'Aaj (Today)' : 'Today' },
+                    { id: 'yesterday', label: isHinglish ? 'Beeta Kal (Yesterday)' : 'Yesterday' },
+                    { id: 'last7', label: isHinglish ? 'Pichhle 7 Din' : 'Last 7 Days' },
+                    { id: 'last30', label: isHinglish ? 'Pichhle 30 Din' : 'Last 30 Days' },
+                    { id: 'thisMonth', label: isHinglish ? 'Is Mahine' : 'This Month' },
+                  ].map((item) => {
+                    const isSelected = timeframeFilter === item.id;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.filterChoicePill, isSelected && styles.filterChoicePillActive]}
+                        onPress={() => setTimeframeFilter(item.id as TimeframeFilter)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.filterChoiceText, isSelected && styles.filterChoiceTextActive]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Section 2: Status */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>
+                  ✓ {isHinglish ? 'Kaam Ka Status' : 'Task Status'}
+                </Text>
+                <View style={styles.filterGrid}>
+                  {[
+                    { id: 'all', label: isHinglish ? 'Sabhi (All)' : 'All' },
+                    { id: 'done', label: isHinglish ? '✓ Pura Hua (Completed)' : '✓ Completed' },
+                    { id: 'pending', label: isHinglish ? '⏳ Active / Chal Raha Hai' : '⏳ In Progress' },
+                    { id: 'missed', label: isHinglish ? '✗ Chhoot Gaya (Missed)' : '✗ Missed' },
+                  ].map((item) => {
+                    const isSelected = activeTab === item.id;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.filterChoicePill, isSelected && styles.filterChoicePillActive]}
+                        onPress={() => setActiveTab(item.id as FilterTab)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.filterChoiceText, isSelected && styles.filterChoiceTextActive]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Section 3: Priority */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>
+                  🎯 {isHinglish ? 'Priority (Prathamikta)' : 'Priority Level'}
+                </Text>
+                <View style={styles.filterGrid}>
+                  {[
+                    { id: 'all', label: isHinglish ? 'Sabhi Priority' : 'All Priorities' },
+                    { id: 'zaroori', label: isHinglish ? '🔴 Zaroori (Urgent)' : '🔴 Urgent' },
+                    { id: 'medium', label: isHinglish ? '🟡 Madhyam (Medium)' : '🟡 Medium' },
+                    { id: 'normal', label: isHinglish ? '🟢 Samanya (Normal)' : '🟢 Normal' },
+                  ].map((item) => {
+                    const isSelected = priorityFilter === item.id;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.filterChoicePill, isSelected && styles.filterChoicePillActive]}
+                        onPress={() => setPriorityFilter(item.id as PriorityFilter)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.filterChoiceText, isSelected && styles.filterChoiceTextActive]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Matching Count Preview Card */}
+              <View style={styles.matchingPreviewCard}>
+                <Text style={styles.matchingPreviewIcon}>📊</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.matchingPreviewTitle}>
+                    {isHinglish
+                      ? `${filteredTasks.length} Purane Kaam Mile`
+                      : `${filteredTasks.length} Matching Tasks Found`}
+                  </Text>
+                  <Text style={styles.matchingPreviewSub}>
+                    {isHinglish
+                      ? 'Apply karne par yahi tasks screen par dikhenge.'
+                      : 'These tasks will be displayed upon applying.'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Modal Action Buttons */}
+              <View style={styles.modalFilterActionRow}>
+                <TouchableOpacity
+                  style={styles.modalResetBtn}
+                  onPress={resetAllFilters}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalResetBtnText}>{isHinglish ? 'Reset Karein' : 'Reset'}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalApplyBtn}
+                  onPress={() => {
+                    setDisplayLimit(10);
+                    setIsFilterModalVisible(false);
+                  }}
+                  activeOpacity={0.88}
+                >
+                  <Text style={styles.modalApplyBtnText}>
+                    {isHinglish
+                      ? `✓ Filter Lagayein (${filteredTasks.length})`
+                      : `✓ Apply Filter (${filteredTasks.length})`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Dedicated Read-Only Task History Details Modal - STRICTLY NO ACTION BUTTONS */}
       <Modal
@@ -598,105 +1025,59 @@ export const TaskHistoryScreen: React.FC = () => {
                       <View style={styles.detailGrid}>
                         {/* 1. Created At Date & Time */}
                         <View style={styles.detailGridItem}>
-                          <View style={styles.detailGridIconCircle}>
-                            <Text style={styles.detailGridIcon}>📅</Text>
-                          </View>
-                          <View style={styles.detailGridItemContent}>
-                            <Text style={styles.detailGridItemLabel}>
-                              {isHinglish ? 'Banane Ki Date & Time (Created At)' : 'Creation Date & Time'}
-                            </Text>
-                            <Text style={styles.detailGridItemValue}>
-                              {createdTimeFormatted}
-                            </Text>
-                          </View>
+                          <Text style={styles.detailMetaLabel}>
+                            {isHinglish ? '📅 Banane Ki Tareekh & Samay' : '📅 Creation Timestamp'}
+                          </Text>
+                          <Text style={styles.detailMetaValue}>
+                            {createdTimeFormatted}
+                          </Text>
                         </View>
 
-                        {/* 2. Scheduled Time/Date */}
+                        {/* 2. Scheduled Target Date */}
                         <View style={styles.detailGridItem}>
-                          <View style={styles.detailGridIconCircle}>
-                            <Text style={styles.detailGridIcon}>⏰</Text>
-                          </View>
-                          <View style={styles.detailGridItemContent}>
-                            <Text style={styles.detailGridItemLabel}>
-                              {isHinglish ? 'Schedule Deadline (Due Date & Time)' : 'Scheduled Due Date & Time'}
-                            </Text>
-                            <Text style={styles.detailGridItemValue}>
-                              {scheduleFormatted}
-                            </Text>
-                          </View>
+                          <Text style={styles.detailMetaLabel}>
+                            {isHinglish ? '⏰ Tai Deadline / Alert' : '⏰ Scheduled Alert'}
+                          </Text>
+                          <Text style={styles.detailMetaValue}>
+                            {scheduleFormatted}
+                          </Text>
                         </View>
 
                         {/* 3. Priority */}
                         <View style={styles.detailGridItem}>
-                          <View style={styles.detailGridIconCircle}>
-                            <Text style={styles.detailGridIcon}>⚡</Text>
-                          </View>
-                          <View style={styles.detailGridItemContent}>
-                            <Text style={styles.detailGridItemLabel}>
-                              {isHinglish ? 'Priority Level' : 'Priority Level'}
-                            </Text>
-                            <View style={{ marginTop: 4, alignSelf: 'flex-start' }}>
-                              <PriorityChip priority={selectedTask.priority} size="sm" />
-                            </View>
+                          <Text style={styles.detailMetaLabel}>
+                            {isHinglish ? '🎯 Prathamikta (Priority)' : '🎯 Priority Level'}
+                          </Text>
+                          <View style={{ marginTop: 4 }}>
+                            <PriorityChip priority={selectedTask.priority} size="md" />
                           </View>
                         </View>
 
-                        {/* 4. Completion Status */}
+                        {/* 4. Current Status */}
                         <View style={styles.detailGridItem}>
-                          <View style={styles.detailGridIconCircle}>
-                            <Text style={styles.detailGridIcon}>🎯</Text>
-                          </View>
-                          <View style={styles.detailGridItemContent}>
-                            <Text style={styles.detailGridItemLabel}>
-                              {isHinglish ? 'Task Ka Status' : 'Audit Status'}
-                            </Text>
-                            <Text style={[styles.detailGridItemValue, { color: isDone ? '#059669' : isMissed ? '#DC2626' : '#2563EB' }]}>
-                              {isDone
-                                ? (isHinglish ? 'Pura Hua (Completed)' : 'Completed')
-                                : isMissed
-                                  ? (isHinglish ? 'Chhoot Gaya (Missed)' : 'Missed')
-                                  : (isHinglish ? 'Active (Pending)' : 'In Progress')}
-                            </Text>
-                          </View>
+                          <Text style={styles.detailMetaLabel}>
+                            {isHinglish ? '📊 Sthiti (Current Status)' : '📊 Status'}
+                          </Text>
+                          <Text style={[styles.detailMetaValue, { fontWeight: '800' }]}>
+                            {statusLabel}
+                          </Text>
                         </View>
 
-                        {/* 5. Repeat Monthly */}
-                        {selectedTask.repeatMonthly ? (
-                          <View style={styles.detailGridItem}>
-                            <View style={styles.detailGridIconCircle}>
-                              <Text style={styles.detailGridIcon}>🔁</Text>
-                            </View>
-                            <View style={styles.detailGridItemContent}>
-                              <Text style={styles.detailGridItemLabel}>
-                                {isHinglish ? 'Monthly Repeat (Har Mahine)' : 'Monthly Recurrence'}
-                              </Text>
-                              <Text style={styles.detailGridItemValue}>
-                                {isHinglish ? 'Haan (Har mahine repeat hoga)' : 'Yes (Repeats Monthly)'}
-                              </Text>
-                            </View>
-                          </View>
-                        ) : null}
-
-                        {/* 6. Database Storage Info */}
-                        <View style={styles.detailGridItem}>
-                          <View style={styles.detailGridIconCircle}>
-                            <Text style={styles.detailGridIcon}>🛡️</Text>
-                          </View>
-                          <View style={styles.detailGridItemContent}>
-                            <Text style={styles.detailGridItemLabel}>
-                              {isHinglish ? 'Database Record Status' : 'Database Storage'}
-                            </Text>
-                            <Text style={styles.detailGridItemValue}>
-                              {isHinglish ? 'Database me safe aur secure recorded hai' : 'Safely preserved in database'}
-                            </Text>
-                          </View>
+                        {/* 5. Database Sync Verification */}
+                        <View style={[styles.detailGridItem, { width: '100%' }]}>
+                          <Text style={styles.detailMetaLabel}>
+                            {isHinglish ? '🔒 Database Sync ID' : '🔒 Sync Record ID'}
+                          </Text>
+                          <Text style={styles.detailRecordIdText}>
+                            {String(selectedTask.id)}
+                          </Text>
                         </View>
                       </View>
                     </View>
 
-                    {/* Read-Only Banner: Confirms no mutation buttons */}
+                    {/* Protection Notice Banner */}
                     <View style={styles.readOnlyNoticeBox}>
-                      <Text style={styles.readOnlyNoticeIcon}>🔒</Text>
+                      <Text style={styles.readOnlyNoticeIcon}>🛡️</Text>
                       <Text style={styles.readOnlyNoticeText}>
                         {isHinglish
                           ? 'History Safety: Yeh kewal dekhne ke liye (Read-Only) hai. Delete ya badlaav ke buttons hata diye gaye hain taaki aapka record safe rahe.'
@@ -730,88 +1111,117 @@ export default TaskHistoryScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#EDF2F4', // User's app signature background
   },
-  heroHeader: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    ...shadows.card,
-  },
-  topBar: {
+  topBrandBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
-  heroNavBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+  topBrandLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backBtn: {
+    padding: 6,
+    marginRight: 2,
+  },
+  backBtnIcon: {
+    fontSize: 22,
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  brandBarTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  refreshHeaderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroNavBtnText: {
-    fontSize: 26,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    lineHeight: 28,
-    marginTop: -2,
-  },
-  heroSyncIcon: {
+  refreshHeaderIcon: {
     fontSize: 16,
-  },
-  heroTitleWrap: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  heroTitle: {
-    fontSize: 16.5,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  heroSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  heroVaultBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    gap: 6,
-  },
-  heroVaultDot: {
-    fontSize: 8,
-    color: '#34D399',
-  },
-  heroVaultText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   listContent: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
   },
   headerContainer: {
-    gap: 12,
+    gap: 10,
     marginBottom: spacing.sm,
+  },
+  heroWarmCard: {
+    backgroundColor: '#FFF9F0', // User's signature warm sunrise header
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1.2,
+    borderColor: '#FDE68A',
+    gap: spacing.sm,
+    ...shadows.soft,
+  },
+  heroWarmHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heroWarmIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroWarmIcon: {
+    fontSize: 22,
+  },
+  heroWarmTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  heroWarmSubtitle: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  cloudSyncBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 6,
+  },
+  cloudSyncDot: {
+    fontSize: 8,
+    color: '#15803D',
+  },
+  cloudSyncText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -820,33 +1230,33 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 10,
     paddingHorizontal: 4,
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: '#E2E8F0',
     ...shadows.soft,
   },
   statCardSelected: {
-    borderColor: '#6366F1',
-    backgroundColor: '#F5F3FF',
+    borderColor: '#EA580C',
+    backgroundColor: '#FFF7ED',
     transform: [{ scale: 1.02 }],
   },
   statIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
   statIcon: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   statNumber: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
     color: '#0F172A',
   },
@@ -854,18 +1264,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#64748B',
-    marginTop: 2,
+    marginTop: 1,
     textAlign: 'center',
   },
+  searchAndFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
-    height: 46,
+    height: 44,
     ...shadows.soft,
   },
   searchIcon: {
@@ -874,7 +1290,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 13.5,
+    fontSize: 13,
     color: '#0F172A',
     paddingVertical: 0,
   },
@@ -886,6 +1302,82 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontWeight: '800',
   },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 12,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1.2,
+    borderColor: '#FDE68A',
+    gap: 5,
+    ...shadows.soft,
+  },
+  filterButtonActive: {
+    backgroundColor: '#EA580C',
+    borderColor: '#EA580C',
+  },
+  filterButtonIcon: {
+    fontSize: 14,
+  },
+  filterButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  filterBadge: {
+    backgroundColor: '#FFFFFF',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '900',
+    color: '#EA580C',
+  },
+  activeFilterChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  activeFilterLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  filterChip: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  filterChipText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#EA580C',
+  },
+  clearAllChip: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  clearAllChipText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#475569',
+  },
   tabsRow: {
     flexDirection: 'row',
     gap: 6,
@@ -893,110 +1385,105 @@ const styles = StyleSheet.create({
   tabTouch: {
     flex: 1,
   },
-  tabBtnActive: {
+  tabBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
+    paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 12,
     gap: 4,
+  },
+  tabBtnActive: {
+    backgroundColor: '#EA580C', // User's vibrant accent button
     ...shadows.soft,
   },
   tabBtnInactive: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 4,
-    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 4,
   },
-  tabBtnTextActive: {
+  tabBtnText: {
     fontSize: 11,
     fontWeight: '800',
+  },
+  tabBtnTextActive: {
     color: '#FFFFFF',
   },
   tabBtnTextInactive: {
-    fontSize: 11,
-    fontWeight: '700',
     color: '#64748B',
   },
-  tabBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  tabBadge: {
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 10,
+  },
+  tabBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   tabBadgeInactive: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 10,
   },
-  tabBadgeTextActive: {
+  tabBadgeText: {
     fontSize: 9.5,
     fontWeight: '800',
+  },
+  tabBadgeTextActive: {
     color: '#FFFFFF',
   },
   tabBadgeTextInactive: {
-    fontSize: 9.5,
-    fontWeight: '700',
     color: '#64748B',
   },
   timelineHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 6,
+    paddingTop: 4,
     paddingHorizontal: 2,
   },
   timelineHeadingGroup: {
     gap: 1,
   },
   timelineHeading: {
-    fontSize: 14.5,
-    fontWeight: '900',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#0F172A',
   },
   timelineSubheading: {
     fontSize: 10.5,
-    color: '#94A3B8',
-    fontWeight: '600',
+    color: '#64748B',
+    fontWeight: '500',
   },
   countPill: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#FFFBEB',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: '#FDE68A',
   },
   countPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#4F46E5',
+    color: '#B45309',
   },
   taskCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 11,
+    borderRadius: 14,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     overflow: 'hidden',
     ...shadows.card,
   },
   cardAccentBar: {
-    width: 5,
+    width: 4,
   },
   cardInner: {
     flex: 1,
-    padding: 14,
-    gap: 7,
+    padding: 13,
+    gap: 6,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -1010,49 +1497,49 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardChevron: {
-    fontSize: 20,
-    color: '#CBD5E1',
+    fontSize: 18,
+    color: '#94A3B8',
     fontWeight: '700',
-    marginTop: -4,
+    marginTop: -2,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: radius.pill,
   },
   badgeDone: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#86EFAC',
   },
   badgeMissed: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FEE2E2',
     borderWidth: 1,
     borderColor: '#FECACA',
   },
   badgeActive: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#FED7AA',
   },
   statusBadgeText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '800',
   },
   badgeTextDone: {
-    color: '#059669',
+    color: '#15803D',
   },
   badgeTextMissed: {
     color: '#DC2626',
   },
   badgeTextActive: {
-    color: '#2563EB',
+    color: '#EA580C',
   },
   taskTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14.5,
+    fontWeight: '700',
     color: '#0F172A',
-    lineHeight: 21,
+    lineHeight: 20,
   },
   taskTitleDone: {
     textDecorationLine: 'line-through',
@@ -1060,114 +1547,178 @@ const styles = StyleSheet.create({
   },
   descBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 5,
-    borderLeftWidth: 2.5,
-    borderLeftColor: '#CBD5E1',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   taskDescription: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#475569',
-    lineHeight: 17,
+    lineHeight: 16,
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingTop: 4,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 8,
-    marginTop: 2,
+    borderTopColor: '#F8FAFC',
+    gap: 8,
     flexWrap: 'wrap',
-    gap: 6,
   },
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
     gap: 4,
   },
   timeTagLabel: {
     fontSize: 10,
+    fontWeight: '600',
     color: '#94A3B8',
-    fontWeight: '700',
   },
   timeTagValue: {
     fontSize: 10.5,
-    color: '#334155',
+    fontWeight: '700',
+    color: '#475569',
+  },
+  paginationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 10,
+    ...shadows.soft,
+  },
+  paginationHeader: {
+    alignItems: 'center',
+  },
+  paginationInfo: {
+    fontSize: 11.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  paginationBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  loadMoreBtn: {
+    flex: 1,
+    backgroundColor: '#EA580C',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadMoreBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
     fontWeight: '800',
+    textAlign: 'center',
+  },
+  showAllBtn: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showAllBtnText: {
+    color: '#EA580C',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  collapseBtn: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  collapseBtnText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterPromptBtn: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  filterPromptText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#EA580C',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
-    paddingHorizontal: 24,
-    gap: 12,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    gap: 8,
   },
   emptyIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#EEF2FF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#C7D2FE',
     marginBottom: 4,
   },
   emptyIcon: {
-    fontSize: 34,
+    fontSize: 28,
   },
   emptyTitle: {
-    fontSize: 16.5,
-    fontWeight: '900',
+    fontSize: 15,
+    fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
   },
   emptySub: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 19,
-    maxWidth: 300,
+    lineHeight: 18,
+    maxWidth: 280,
   },
   emptyActionBtn: {
-    marginTop: 6,
-    paddingVertical: 9,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    marginTop: 8,
+    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: '#FED7AA',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   emptyActionBtnText: {
-    fontSize: 13,
+    color: '#EA580C',
+    fontSize: 12.5,
     fontWeight: '800',
-    color: '#4F46E5',
   },
-  createTaskGradientTouch: {
-    marginTop: 8,
-    borderRadius: 14,
-    overflow: 'hidden',
-    ...shadows.card,
+  createTaskTouch: {
+    marginTop: 10,
+    backgroundColor: '#EA580C',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    ...shadows.soft,
   },
-  createTaskGradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  createTaskGradientText: {
-    fontSize: 14,
-    fontWeight: '900',
+  createTaskTouchText: {
     color: '#FFFFFF',
-    letterSpacing: 0.3,
+    fontSize: 13.5,
+    fontWeight: '800',
   },
   modalBackdrop: {
     flex: 1,
@@ -1177,215 +1728,337 @@ const styles = StyleSheet.create({
   modalBackdropTouch: {
     flex: 1,
   },
-  detailModalCard: {
+  filterModalCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '88%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
     paddingTop: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     ...shadows.card,
   },
   modalIndicator: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: 36,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: '#CBD5E1',
     alignSelf: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  filterModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF2F6',
+  },
+  filterModalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  filterModalIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterModalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  filterModalSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  filterModalScroll: {
+    paddingVertical: 12,
+    gap: 14,
+  },
+  filterSection: {
+    gap: 8,
+  },
+  filterSectionTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  filterGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  filterChoicePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+  },
+  filterChoicePillActive: {
+    backgroundColor: '#EA580C',
+    borderColor: '#EA580C',
+  },
+  filterChoiceText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  filterChoiceTextActive: {
+    color: '#FFFFFF',
+  },
+  matchingPreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 10,
+  },
+  matchingPreviewIcon: {
+    fontSize: 22,
+  },
+  matchingPreviewTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  matchingPreviewSub: {
+    fontSize: 11,
+    color: '#B45309',
+    marginTop: 1,
+  },
+  modalFilterActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
+  modalResetBtn: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalResetBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  modalApplyBtn: {
+    flex: 2,
+    backgroundColor: '#EA580C',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.soft,
+  },
+  modalApplyBtnText: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  detailModalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    ...shadows.card,
   },
   detailModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 14,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#EEF2F6',
   },
   detailModalHeaderLeft: {
     flex: 1,
-    paddingRight: 10,
   },
   detailModalBadgeRow: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
     marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
   detailModalBadgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
-    color: '#6366F1',
-    letterSpacing: 0.3,
+    color: '#B45309',
   },
   detailModalTitle: {
-    fontSize: 19,
-    fontWeight: '900',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#0F172A',
   },
   detailModalCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   detailModalCloseBtnText: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#475569',
     fontWeight: '800',
-    color: '#64748B',
   },
   detailModalScroll: {
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingVertical: 12,
   },
   detailModalInner: {
-    gap: 16,
+    gap: 12,
   },
   statusHeroBanner: {
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 4,
-    borderWidth: 1,
+    padding: 12,
+    borderRadius: 12,
+    gap: 3,
   },
   heroBannerDone: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
   },
   heroBannerMissed: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
     borderColor: '#FECACA',
   },
   heroBannerActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
   },
   statusHeroTitle: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 14,
+    fontWeight: '800',
   },
   heroBannerTextDone: {
-    color: '#059669',
+    color: '#15803D',
   },
   heroBannerTextMissed: {
     color: '#DC2626',
   },
   heroBannerTextActive: {
-    color: '#2563EB',
+    color: '#EA580C',
   },
   statusHeroSubtitle: {
-    fontSize: 12.5,
+    fontSize: 11.5,
     color: '#475569',
-    fontWeight: '500',
   },
   detailSection: {
-    gap: 6,
+    gap: 5,
   },
   detailSectionLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: '#64748B',
     letterSpacing: 0.5,
   },
   detailTitleBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 14,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   detailTitleText: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#0F172A',
-    lineHeight: 23,
+    lineHeight: 21,
   },
   detailNotesBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 14,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderLeftWidth: 4,
-    borderLeftColor: '#6366F1',
   },
   detailNotesText: {
-    fontSize: 13.5,
+    fontSize: 13,
     color: '#334155',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   detailGrid: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    ...shadows.soft,
+    gap: 10,
   },
   detailGridItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    gap: 12,
+    gap: 2,
   },
-  detailGridIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
+  detailMetaLabel: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#64748B',
   },
-  detailGridIcon: {
-    fontSize: 17,
-  },
-  detailGridItemContent: {
-    flex: 1,
-  },
-  detailGridItemLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
+  detailMetaValue: {
+    fontSize: 12.5,
     fontWeight: '700',
-  },
-  detailGridItemValue: {
-    fontSize: 13,
     color: '#0F172A',
-    fontWeight: '800',
-    marginTop: 2,
+  },
+  detailRecordIdText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontFamily: 'monospace',
   },
   readOnlyNoticeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
+    backgroundColor: '#FFFBEB',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 8,
   },
   readOnlyNoticeIcon: {
     fontSize: 16,
   },
   readOnlyNoticeText: {
     flex: 1,
-    fontSize: 11.5,
-    color: '#64748B',
-    lineHeight: 16,
-    fontWeight: '600',
+    fontSize: 11,
+    color: '#92400E',
+    lineHeight: 15,
+    fontWeight: '500',
   },
   detailCloseActionBtn: {
     backgroundColor: '#0F172A',
-    borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
-    ...shadows.card,
+    marginTop: 4,
   },
   detailCloseActionBtnText: {
-    fontSize: 15,
-    fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
+    fontSize: 13.5,
+    fontWeight: '800',
   },
 });
