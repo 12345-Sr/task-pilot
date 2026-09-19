@@ -5,11 +5,32 @@ const { sendPush } = require('../scheduler');
 
 const router = express.Router();
 
-// Safe auto-migration for description, notes and lifetime_tasks_created columns
+// Safe auto-migration for description, notes, lifetime_tasks_created and task_history table
 db.query(`
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS notes TEXT;
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS lifetime_tasks_created INT NOT NULL DEFAULT 0;
+
+  CREATE TABLE IF NOT EXISTS task_history (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    task_id         UUID,
+    title           VARCHAR(300) NOT NULL,
+    description     TEXT,
+    notes           TEXT,
+    task_date       DATE NOT NULL,
+    task_time       TIME NOT NULL,
+    priority        VARCHAR(20) NOT NULL DEFAULT 'medium',
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending',
+    action          VARCHAR(30) NOT NULL DEFAULT 'CREATED',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at    TIMESTAMPTZ,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_task_history_user ON task_history(user_id);
+  CREATE INDEX IF NOT EXISTS idx_task_history_task ON task_history(task_id);
+  CREATE INDEX IF NOT EXISTS idx_task_history_created ON task_history(created_at DESC);
 `).catch((err) => console.log('[DB] tasks migration check:', err.message));
 
 const FREE_DAILY_LIMIT = 3;
@@ -227,6 +248,16 @@ router.post('/', requireUser, async (req, res, next) => {
       [req.userId]
     ).catch(() => {});
 
+    // Save directly to task_history table in database
+    const createdTask = result.rows[0];
+    if (createdTask && createdTask.id) {
+      db.query(
+        `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'CREATED', $9, now())`,
+        [req.userId, createdTask.id, title, taskDesc, taskDesc, task_date, task_time, isImportant ? 'important' : 'medium', createdTask.created_at || new Date()]
+      ).catch((e) => console.log('[DB] task_history record insert error:', e.message));
+    }
+
     let recurringCount = 0;
     if (req.body.repeat_monthly) {
       const subR = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [req.userId]);
@@ -235,18 +266,29 @@ router.post('/', requireUser, async (req, res, next) => {
         const baseDateStr = normalizeDate(task_date);
         for (let i = 1; i <= 29; i++) {
           const dateStr = getNextDateStr(baseDateStr, i);
+          let recRow = null;
           try {
-            await db.query(
+            const recRes = await db.query(
               `INSERT INTO tasks (user_id, title, task_date, task_time, priority, description, notes)
-               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+               VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
               [req.userId, title, dateStr, task_time, isImportant ? 'important' : 'medium', taskDesc, taskDesc]
             );
+            recRow = recRes.rows[0];
           } catch (e) {
-            await db.query(
+            const recRes = await db.query(
               `INSERT INTO tasks (user_id, title, task_date, task_time, priority)
-               VALUES ($1,$2,$3,$4,$5)`,
+               VALUES ($1,$2,$3,$4,$5) RETURNING *`,
               [req.userId, title, dateStr, task_time, isImportant ? 'important' : 'medium']
             );
+            recRow = recRes.rows[0];
+          }
+
+          if (recRow && recRow.id) {
+            db.query(
+              `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'CREATED', $9, now())`,
+              [req.userId, recRow.id, title, taskDesc, taskDesc, dateStr, task_time, isImportant ? 'important' : 'medium', recRow.created_at || new Date()]
+            ).catch(() => {});
           }
           recurringCount++;
         }
@@ -312,7 +354,15 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
           [req.userId, sourceTask.title, dateStr, sourceTask.task_time, sourceTask.priority]
         );
       }
-      createdTasks.push(r.rows[0]);
+      const recTask = r.rows[0];
+      if (recTask && recTask.id) {
+        db.query(
+          `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'CREATED', $9, now())`,
+          [req.userId, recTask.id, sourceTask.title, sourceTask.description || null, sourceTask.notes || null, dateStr, sourceTask.task_time, sourceTask.priority, recTask.created_at || new Date()]
+        ).catch(() => {});
+      }
+      createdTasks.push(recTask);
     }
 
     res.status(201).json({
@@ -327,52 +377,146 @@ router.post('/:id/repeat-monthly', requireUser, async (req, res) => {
   }
 });
 
-// GET /api/tasks/history — full task creation history for user with stats
+// POST /api/tasks/history — explicitly store/record a task in DB history
+router.post('/history', requireUser, async (req, res) => {
+  try {
+    let { taskId, task_id, title, description, notes, task_date, task_time, priority, status, created_at, action } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: 'title is required' });
+    }
+    const tDate = normalizeDate(task_date);
+    const tTime = task_time || '10:00:00';
+    const taskDesc = description !== undefined ? description : (notes !== undefined ? notes : null);
+    const pStr = String(priority || '').toUpperCase();
+    const isImportant = priority === 'important' || pStr === 'URGENT' || pStr === 'HIGH' || pStr === 'ZAROORI' || pStr === 'IMPORTANT';
+    const targetTaskId = taskId || task_id || null;
+
+    let targetStatus = status || 'pending';
+    if (targetStatus === 'COMPLETED') targetStatus = 'done';
+    if (targetStatus === 'MISSED') targetStatus = 'missed';
+
+    // If task_id is already in task_history for this user, update it; otherwise insert
+    let existing;
+    if (targetTaskId) {
+      const exRes = await db.query(
+        'SELECT id FROM task_history WHERE user_id = $1 AND task_id = $2 LIMIT 1',
+        [req.userId, targetTaskId]
+      );
+      existing = exRes.rows[0];
+    }
+
+    let resultRow;
+    if (existing) {
+      const upd = await db.query(
+        `UPDATE task_history
+         SET title = $1, description = $2, notes = $3, task_date = $4, task_time = $5,
+             priority = $6, status = $7, action = COALESCE($8, action),
+             completed_at = CASE WHEN $7 = 'done' THEN COALESCE(completed_at, now()) ELSE completed_at END,
+             updated_at = now()
+         WHERE id = $9 AND user_id = $10
+         RETURNING *`,
+        [title, taskDesc, taskDesc, tDate, tTime, isImportant ? 'important' : 'medium', targetStatus, action || null, existing.id, req.userId]
+      );
+      resultRow = upd.rows[0];
+    } else {
+      const ins = await db.query(
+        `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, completed_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11, now()), CASE WHEN $9 = 'done' THEN now() ELSE NULL END, now())
+         RETURNING *`,
+        [
+          req.userId,
+          targetTaskId,
+          title,
+          taskDesc,
+          taskDesc,
+          tDate,
+          tTime,
+          isImportant ? 'important' : 'medium',
+          targetStatus,
+          action || 'CREATED',
+          created_at ? new Date(created_at) : new Date(),
+        ]
+      );
+      resultRow = ins.rows[0];
+    }
+
+    res.status(201).json({ success: true, historyItem: resultRow });
+  } catch (err) {
+    console.error('Error recording task history in DB:', err);
+    res.status(500).json({ error: 'Failed to record task history in DB', details: err.message });
+  }
+});
+
+// GET /api/tasks/history — full task creation history for user directly from task_history DB table
 router.get('/history', requireUser, async (req, res) => {
   try {
     const { status, search, limit = 100, offset = 0 } = req.query;
 
-    let query = `
-      SELECT t.*,
-             COALESCE((SELECT COUNT(*)::int FROM notification_log nl WHERE nl.task_id = t.id), 0) AS alert_count,
-             EXISTS(SELECT 1 FROM notification_log nl WHERE nl.task_id = t.id) AS first_alert_sent
+    // Auto-sync any tasks in tasks table that might not be in task_history yet
+    await db.query(`
+      INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+      SELECT t.user_id, t.id, t.title, t.description, t.notes, t.task_date, t.task_time, t.priority,
+             COALESCE(t.status, 'pending'), 'CREATED', t.created_at, now()
       FROM tasks t
       WHERE t.user_id = $1
+        AND NOT EXISTS (SELECT 1 FROM task_history th WHERE th.task_id = t.id AND th.user_id = t.user_id)
+      ON CONFLICT DO NOTHING
+    `, [req.userId]).catch(() => {});
+
+    let query = `
+      SELECT th.id,
+             COALESCE(th.task_id, th.id) AS task_id,
+             th.user_id,
+             th.title,
+             th.description,
+             th.notes,
+             th.task_date,
+             th.task_time,
+             th.priority,
+             th.status,
+             th.action,
+             th.created_at,
+             th.completed_at,
+             th.updated_at,
+             COALESCE((SELECT COUNT(*)::int FROM notification_log nl WHERE nl.task_id = th.task_id), 0) AS alert_count,
+             EXISTS(SELECT 1 FROM notification_log nl WHERE nl.task_id = th.task_id) AS first_alert_sent
+      FROM task_history th
+      WHERE th.user_id = $1
     `;
     const params = [req.userId];
     let pIdx = 2;
 
     if (status && status !== 'all') {
       if (status === 'done' || status === 'completed') {
-        query += ` AND t.status = 'done'`;
+        query += ` AND th.status = 'done'`;
       } else if (status === 'missed') {
-        query += ` AND t.status = 'missed'`;
+        query += ` AND th.status = 'missed'`;
       } else if (status === 'pending' || status === 'active') {
-        query += ` AND (t.status IS NULL OR t.status = 'pending')`;
+        query += ` AND (th.status IS NULL OR th.status = 'pending')`;
       }
     }
 
     if (search && search.trim()) {
-      query += ` AND (t.title ILIKE $${pIdx} OR COALESCE(t.description, '') ILIKE $${pIdx} OR COALESCE(t.notes, '') ILIKE $${pIdx})`;
+      query += ` AND (th.title ILIKE $${pIdx} OR COALESCE(th.description, '') ILIKE $${pIdx} OR COALESCE(th.notes, '') ILIKE $${pIdx})`;
       params.push(`%${search.trim()}%`);
       pIdx++;
     }
 
-    query += ` ORDER BY t.created_at DESC NULLS LAST, t.task_date DESC, t.task_time DESC`;
+    query += ` ORDER BY th.created_at DESC NULLS LAST, th.task_date DESC, th.task_time DESC`;
     query += ` LIMIT $${pIdx++} OFFSET $${pIdx++}`;
     params.push(Number(limit) || 100, Number(offset) || 0);
 
     const result = await db.query(query, params);
 
-    // Compute overall history stats for user
+    // Compute overall history stats directly from task_history table
     const statsR = await db.query(`
       SELECT
         COUNT(*)::int AS total_created,
         COUNT(*) FILTER (WHERE status = 'done')::int AS total_completed,
         COUNT(*) FILTER (WHERE status = 'missed')::int AS total_missed,
-        COUNT(*) FILTER (WHERE (status IS NULL OR status = 'pending') AND (deleted_at IS NULL))::int AS active_tasks,
-        COUNT(*) FILTER (WHERE priority = 'important')::int AS important_tasks
-      FROM tasks
+        COUNT(*) FILTER (WHERE (status IS NULL OR status = 'pending') AND status != 'deleted')::int AS active_tasks,
+        COUNT(*) FILTER (WHERE priority = 'important' OR UPPER(priority) = 'URGENT')::int AS important_tasks
+      FROM task_history
       WHERE user_id = $1
     `, [req.userId]);
 
@@ -458,6 +602,59 @@ const handleTaskUpdate = async (req, res) => {
     values
   );
   if (!result.rows.length) return res.status(404).json({ error: 'Task not found' });
+
+  // Also reflect updates in task_history table in database
+  try {
+    const histUpdates = [];
+    const histVals = [];
+    let hI = 1;
+    if (status !== undefined) {
+      histUpdates.push(`status = $${hI++}`);
+      histVals.push(status);
+      if (status === 'done') {
+        histUpdates.push(`completed_at = now()`);
+        histUpdates.push(`action = 'COMPLETED'`);
+      } else if (status === 'missed') {
+        histUpdates.push(`action = 'MISSED'`);
+      }
+    }
+    if (title !== undefined) {
+      histUpdates.push(`title = $${hI++}`);
+      histVals.push(title);
+    }
+    if (description !== undefined || notes !== undefined) {
+      const dVal = description !== undefined ? description : notes;
+      histUpdates.push(`description = $${hI++}`);
+      histVals.push(dVal);
+      histUpdates.push(`notes = $${hI++}`);
+      histVals.push(dVal);
+    }
+    if (task_date !== undefined) {
+      histUpdates.push(`task_date = $${hI++}`);
+      histVals.push(task_date);
+    }
+    if (task_time !== undefined) {
+      histUpdates.push(`task_time = $${hI++}`);
+      histVals.push(task_time);
+    }
+    if (priority !== undefined) {
+      const pStr = String(priority || '').toUpperCase();
+      const isImportant = priority === 'important' || pStr === 'URGENT' || pStr === 'ZAROORI' || pStr === 'HIGH' || pStr === 'IMPORTANT';
+      histUpdates.push(`priority = $${hI++}`);
+      histVals.push(isImportant ? 'important' : 'medium');
+    }
+    if (histUpdates.length > 0) {
+      histUpdates.push(`updated_at = now()`);
+      histVals.push(req.params.id, req.userId);
+      await db.query(
+        `UPDATE task_history SET ${histUpdates.join(', ')} WHERE task_id = $${hI++} AND user_id = $${hI++}`,
+        histVals
+      );
+    }
+  } catch (histErr) {
+    // Non-blocking
+  }
+
   res.json({ task: result.rows[0] });
 };
 
@@ -494,6 +691,13 @@ router.delete('/:id', requireUser, async (req, res) => {
       `UPDATE subscriptions SET lifetime_tasks_created = GREATEST(COALESCE(lifetime_tasks_created, 0), 1), updated_at = now() WHERE user_id = $1`,
       [req.userId]
     ).catch(() => {});
+
+    // Retain task history in database with deleted status
+    db.query(
+      `UPDATE task_history SET action = 'DELETED', status = 'deleted', updated_at = now() WHERE task_id = $1 AND user_id = $2`,
+      [id, req.userId]
+    ).catch(() => {});
+
     if (!result.rows.length) {
       const hardResult = await db.query(
         'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',

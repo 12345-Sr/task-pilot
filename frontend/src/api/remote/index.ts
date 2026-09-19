@@ -43,7 +43,7 @@ export function parseTaskDate(val: any): string {
 
 export function mapDbTask(t: any): Task {
   if (!t) return {} as Task;
-  const idStr = String(t.id || '');
+  const idStr = String(t.task_id || t.id || '');
   const isDone = t.status === 'done' || t.completed === true;
   const isMissed = t.status === 'missed';
   const confirmation = isDone ? 'COMPLETED' : isMissed ? 'MISSED' : 'PENDING';

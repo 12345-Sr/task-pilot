@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task } from '../../types';
+import { apiClient } from '../../api/client';
 
 export interface TaskHistoryItem extends Task {
   createdAtTimestamp?: number;
@@ -26,7 +27,7 @@ class TaskHistoryService {
   }
 
   /**
-   * Save or prepend a newly created task directly to local history storage
+   * Save or prepend a newly created task directly to local storage AND database
    */
   async recordCreatedTask(task: Task, userId?: string): Promise<TaskHistoryItem[]> {
     try {
@@ -49,6 +50,24 @@ class TaskHistoryService {
 
       this.inMemoryCache[key] = updated;
       await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+      // Asynchronously store task creation in PostgreSQL database task_history table
+      const descVal = task.description || (task as any).notes || '';
+      apiClient.post('/tasks/history', {
+        taskId: task.id,
+        title: task.title,
+        description: descVal,
+        notes: descVal,
+        task_date: task.date || task.targetDate,
+        task_time: task.time || task.reminderTime,
+        priority: task.priority,
+        status: task.completed ? 'done' : (task.confirmationStatus === 'MISSED' ? 'missed' : 'pending'),
+        action: 'CREATED',
+        created_at: createdAtStr,
+      }).catch((apiErr) => {
+        console.log('[TASK HISTORY] DB history save log:', apiErr?.message || apiErr);
+      });
+
       return updated;
     } catch (err) {
       console.warn('[TASK HISTORY] Failed to record created task:', err);
@@ -83,6 +102,25 @@ class TaskHistoryService {
 
       this.inMemoryCache[key] = updated;
       await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+      // Persist status or details change to DB task_history table
+      const isDone = updates.completed === true || updates.confirmationStatus === 'COMPLETED';
+      const isMissed = updates.confirmationStatus === 'MISSED';
+      const statusStr = isDone ? 'done' : isMissed ? 'missed' : updates.completed === false ? 'pending' : undefined;
+      const dVal = updates.description || (updates as any)?.notes;
+
+      apiClient.post('/tasks/history', {
+        taskId,
+        title: updates.title,
+        description: dVal,
+        notes: dVal,
+        task_date: updates.date || updates.targetDate,
+        task_time: updates.time || updates.reminderTime,
+        priority: updates.priority,
+        status: statusStr,
+        action: isDone ? 'COMPLETED' : isMissed ? 'MISSED' : 'UPDATED',
+      }).catch(() => {});
+
       return updated;
     } catch (err) {
       console.warn('[TASK HISTORY] Failed to update task in history:', err);

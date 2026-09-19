@@ -62,6 +62,29 @@ CREATE TABLE tasks (
 
 CREATE INDEX idx_tasks_user_date ON tasks(user_id, task_date);
 
+-- ---------- TASK HISTORY (Permanent audit log & archive of all tasks created) ----------
+CREATE TABLE IF NOT EXISTS task_history (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  task_id         UUID,                                   -- Original task id
+  title           VARCHAR(300) NOT NULL,
+  description     TEXT,
+  notes           TEXT,
+  task_date       DATE NOT NULL,
+  task_time       TIME NOT NULL,
+  priority        VARCHAR(20) NOT NULL DEFAULT 'medium',  -- urgent | medium | low | important
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending | done | missed | deleted
+  action          VARCHAR(30) NOT NULL DEFAULT 'CREATED', -- CREATED | UPDATED | COMPLETED | MISSED | DELETED
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at    TIMESTAMPTZ,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_history_user ON task_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_task_history_task ON task_history(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_history_created ON task_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_task_history_date ON task_history(task_date DESC);
+
 -- ---------- NOTIFICATION LOG (for alert scheduler / debugging / admin analytics) ----------
 CREATE TABLE notification_log (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

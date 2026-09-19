@@ -26,6 +26,7 @@ import PaywallModal from '../components/PaywallModal';
 import TimeSliderPicker, { getNextValidFutureTime, isTimeInPast } from '../components/TimeSliderPicker';
 import DatePickerCard from '../components/DatePickerCard';
 import NotificationService from '../services/notifications/notification.service';
+import { taskHistoryService } from '../services/history/taskHistory.service';
 
 export const AddTaskScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -139,6 +140,11 @@ export const AddTaskScreen: React.FC = () => {
         onSuccess: async (createdTask: any) => {
           // Record task creation for lifetime counter
           useAppStore.getState().recordTaskCreation(selectedDate);
+
+          const userId = useAppStore.getState().user?.id;
+          if (createdTask) {
+            taskHistoryService.recordCreatedTask(createdTask, userId).catch(() => {});
+          }
 
           if (createdTask?.id && taskDesc) {
             useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);

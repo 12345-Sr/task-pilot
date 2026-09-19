@@ -57,6 +57,35 @@ async function initDatabase(retries = 5, delayMs = 3000) {
           updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
         );
 
+        CREATE TABLE IF NOT EXISTS task_history (
+          id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          task_id         UUID,
+          title           VARCHAR(300) NOT NULL,
+          description     TEXT,
+          notes           TEXT,
+          task_date       DATE NOT NULL,
+          task_time       TIME NOT NULL,
+          priority        VARCHAR(20) NOT NULL DEFAULT 'medium',
+          status          VARCHAR(20) NOT NULL DEFAULT 'pending',
+          action          VARCHAR(30) NOT NULL DEFAULT 'CREATED',
+          created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+          completed_at    TIMESTAMPTZ,
+          updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_task_history_user ON task_history(user_id);
+        CREATE INDEX IF NOT EXISTS idx_task_history_task ON task_history(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_history_created ON task_history(created_at DESC);
+
+        -- Backfill existing tasks into task_history if missing
+        INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at)
+        SELECT t.user_id, t.id, t.title, t.description, t.notes, t.task_date, t.task_time, t.priority,
+               COALESCE(t.status, 'pending'), 'CREATED', t.created_at
+        FROM tasks t
+        WHERE NOT EXISTS (SELECT 1 FROM task_history th WHERE th.task_id = t.id)
+        ON CONFLICT DO NOTHING;
+
         CREATE TABLE IF NOT EXISTS alert_logs (
           id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           task_id     UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
