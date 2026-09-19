@@ -185,7 +185,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
     const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
 
-    const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'taskpilot.rzp@icici';
+    const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'TaskAlert.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`;
 
@@ -526,9 +526,9 @@ router.get('/payment-callback', async (req, res) => {
   </div>
   <script>
     function returnFailed() {
-      try { window.location.href = 'intent://payment-failed#Intent;scheme=taskpilot;package=com.taskpilot.app;end'; } catch(e) {}
+      try { window.location.href = 'intent://payment-failed#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end'; } catch(e) {}
       setTimeout(function() {
-        try { window.location.href = 'taskpilot://payment-failed'; } catch(e) {}
+        try { window.location.href = 'TaskAlert://payment-failed'; } catch(e) {}
       }, 300);
       setTimeout(function() {
         try { window.close(); } catch(e) {}
@@ -586,9 +586,9 @@ router.get('/payment-callback', async (req, res) => {
   </div>
   <script>
     function returnSuccess() {
-      try { window.location.href = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end'; } catch(e) {}
+      try { window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end'; } catch(e) {}
       setTimeout(function() {
-        try { window.location.href = 'taskpilot://payment-success'; } catch(e) {}
+        try { window.location.href = 'TaskAlert://payment-success'; } catch(e) {}
       }, 300);
       setTimeout(function() {
         try { window.close(); } catch(e) {}
@@ -676,9 +676,9 @@ router.get('/payment-callback', async (req, res) => {
       if (btn) btn.innerText = 'Opening App... ⏳';
 
       // Strategy 1: Android Intent URI format with package name (standard for modern Android Chrome to open app directly)
-      var intentUrl = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end';
+      var intentUrl = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end';
       // Strategy 2: Custom URI scheme
-      var customScheme = 'taskpilot://payment-success';
+      var customScheme = 'TaskAlert://payment-success';
 
       try {
         window.location.href = intentUrl;
@@ -702,7 +702,7 @@ router.get('/payment-callback', async (req, res) => {
     // Auto-attempt return after 1.2s
     setTimeout(function() {
       try {
-        window.location.href = 'intent://payment-success#Intent;scheme=taskpilot;package=com.taskpilot.app;end';
+        window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end';
       } catch(e) {}
     }, 1200);
   </script>
