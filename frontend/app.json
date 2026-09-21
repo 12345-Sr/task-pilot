@@ -2,14 +2,14 @@
   "expo": {
     "name": "TaskAlert",
     "slug": "task-pilot",
-    "scheme": "taskpilot",
+    "scheme": "TaskAlert",
     "version": "1.0.4",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#EDF2F4",
     "icon": "./assets/icon.png",
     "android": {
-      "package": "com.taskpilot.app",
+      "package": "com.TaskAlert.app",
       "versionCode": 12,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.taskpilot.app",
+      "bundleIdentifier": "com.TaskAlert.app",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
