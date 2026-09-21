@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, Line } from 'react-native-svg';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { colors } from '../theme/colors';
 
 interface BrandLogoProps {
@@ -10,6 +9,8 @@ interface BrandLogoProps {
   variant?: 'light' | 'dark';
   showSun?: boolean;
 }
+
+const RNImage = Image as any;
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   size = 40,
@@ -24,31 +25,12 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Official TaskAlert Origami Paper Plane Icon */}
-      <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-        {/* Top-rear yellow fold/wing */}
-        <Path d="M 22 18 L 44 19 L 29 38 Z" fill="#F59E0B" />
-
-        {/* Main top emerald green wing */}
-        <Path d="M 12 40 L 92 18 L 30 48 Z" fill="#16A34A" />
-
-        {/* Lower shaded forest green wing */}
-        <Path d="M 30 48 L 92 18 L 45 84 L 23 70 Z" fill="#15803D" />
-
-        {/* Underbelly deep shadow fold */}
-        <Path d="M 23 70 L 30 48 L 38 78 Z" fill="#14532D" />
-
-        {/* Center golden crease accent along the spine */}
-        <Line
-          x1="28"
-          y1="49"
-          x2="92"
-          y2="18"
-          stroke="#FACC15"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        />
-      </Svg>
+      {/* Official TaskAlert Bell Icon */}
+      <RNImage
+        source={require('../../assets/icon.png')}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+      />
 
       {showText && (
         <View style={styles.textContainer}>
