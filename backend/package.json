@@ -1,5 +1,5 @@
 {
-  "name": "task-pilot-backend",
+  "name": "task-alert-backend",
   "version": "1.0.0",
   "description": "Backend API for TaskAlert — task reminders, subscriptions, admin panel",
   "main": "server.js",
