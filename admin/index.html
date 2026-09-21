@@ -2036,8 +2036,8 @@
 
       <div class="form-group">
         <label class="form-label">Admin Email</label>
-        <input type="email" id="adminEmail" class="input-field" value="admin@TaskAlert.com"
-          placeholder="admin@TaskAlert.com" autocomplete="username">
+        <input type="email" id="adminEmail" class="input-field" value="admin@taskalert.com"
+          placeholder="admin@taskalert.com" autocomplete="username">
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
@@ -2200,7 +2200,7 @@
           <div class="user-avatar" id="sidebarAvatar">SA</div>
           <div class="user-info">
             <div class="user-name" id="sidebarUserName">Super Admin</div>
-            <div class="user-email" id="sidebarUserEmail">admin@TaskAlert.com</div>
+            <div class="user-email" id="sidebarUserEmail">admin@taskalert.com</div>
           </div>
         </div>
       </div>
@@ -2900,19 +2900,19 @@
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
                 <div class="form-group">
                   <label class="form-label">App Version</label>
-                  <input type="text" id="settingAppVersion" class="input-field" value="1.0.0 (Build 100)" readonly
+                  <input type="text" id="settingAppVersion" class="input-field" value="1.0.4 (Build 12)" readonly
                     style="background:#F8FAFC; color:var(--text-secondary);">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Package ID</label>
-                  <input type="text" id="settingPackageId" class="input-field" value="com.kalkakaam.app" readonly
+                  <input type="text" id="settingPackageId" class="input-field" value="com.TaskAlert.app" readonly
                     style="background:#F8FAFC; color:var(--text-secondary);">
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Support Email</label>
-                <input type="email" id="settingSupportEmail" class="input-field" value="support@TaskAlert.com">
+                <input type="email" id="settingSupportEmail" class="input-field" value="support@taskalert.com">
               </div>
             </div>
 
@@ -3061,7 +3061,7 @@
             <div class="user-avatar" id="profileCardAvatar" style="width:64px; height:64px; font-size:22px;">SA</div>
             <div>
               <div id="profileCardName" style="font-size:18px; font-weight:700;">Super Admin</div>
-              <div id="profileCardEmail" style="color:var(--text-secondary); margin-bottom:8px;">admin@TaskAlert.com
+              <div id="profileCardEmail" style="color:var(--text-secondary); margin-bottom:8px;">admin@taskalert.com
               </div>
               <span class="status-badge active">Super Administrator</span>
             </div>
@@ -3117,6 +3117,19 @@
     let TOKEN = null;
     let cachedUsers = [];
 
+    // Apply defaults from window.__ADMIN_ENV__ if loaded
+    if (window.__ADMIN_ENV__) {
+      if (window.__ADMIN_ENV__.ADMIN_DEFAULT_EMAIL && document.getElementById('adminEmail')) {
+        document.getElementById('adminEmail').value = window.__ADMIN_ENV__.ADMIN_DEFAULT_EMAIL;
+      }
+      if (window.__ADMIN_ENV__.ADMIN_DEFAULT_PASSWORD && document.getElementById('adminPassword')) {
+        document.getElementById('adminPassword').value = window.__ADMIN_ENV__.ADMIN_DEFAULT_PASSWORD;
+      }
+      if (window.__ADMIN_ENV__.APP_VERSION && document.getElementById('settingAppVersion')) {
+        document.getElementById('settingAppVersion').value = `${window.__ADMIN_ENV__.APP_VERSION} (Build 12)`;
+      }
+    }
+
     // Priority 4: Dynamically fetch & parse admin/.env if available
     (async function loadDotEnv() {
       try {
@@ -3144,6 +3157,9 @@
           }
           if (env.ADMIN_DEFAULT_PASSWORD && document.getElementById('adminPassword')) {
             document.getElementById('adminPassword').value = env.ADMIN_DEFAULT_PASSWORD;
+          }
+          if (env.APP_VERSION && document.getElementById('settingAppVersion')) {
+            document.getElementById('settingAppVersion').value = `${env.APP_VERSION} (Build 12)`;
           }
         }
       } catch (e) { }
@@ -3268,7 +3284,7 @@
 
     // Apply admin profile across all UI elements
     function applyAdminProfile(name, email) {
-      const finalEmail = email || 'admin@TaskAlert.com';
+      const finalEmail = email || 'admin@taskalert.com';
       const finalName = name || 'Super Admin';
       const initials = finalName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'SA';
 
@@ -3322,7 +3338,7 @@
           return;
         }
         TOKEN = data.token;
-        const finalEmail = data.admin?.email || email || 'admin@TaskAlert.com';
+        const finalEmail = data.admin?.email || email || 'admin@taskalert.com';
         const finalName = data.admin?.role === 'admin' ? 'Super Admin' : (data.name || 'Super Admin');
 
         // Save session in localStorage
@@ -4332,11 +4348,11 @@
     // Session auto-restore on load
     window.addEventListener('DOMContentLoaded', () => {
       let savedToken = null;
-      let savedEmail = 'admin@TaskAlert.com';
+      let savedEmail = 'admin@taskalert.com';
       let savedName = 'Super Admin';
       try {
         savedToken = localStorage.getItem('TaskAlert_admin_token');
-        savedEmail = localStorage.getItem('TaskAlert_admin_email') || 'admin@TaskAlert.com';
+        savedEmail = localStorage.getItem('TaskAlert_admin_email') || 'admin@taskalert.com';
         savedName = localStorage.getItem('TaskAlert_admin_name') || 'Super Admin';
       } catch (e) { }
 

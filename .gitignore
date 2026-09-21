@@ -48,3 +48,5 @@ frontend/android/app/src/main/assets/
 frontend/ios-bundle/
 *.zip
 *.aab
+mapping.txt
+google-play-release/
