@@ -1,4 +1,4 @@
-package com.taskpilot.app
+package com.taskalert.app
 
 import android.os.Build
 import android.os.Bundle

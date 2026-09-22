@@ -9,7 +9,7 @@
     "backgroundColor": "#EDF2F4",
     "icon": "./assets/icon.png",
     "android": {
-      "package": "com.TaskAlert.app",
+      "package": "com.taskalert.app",
       "versionCode": 12,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.TaskAlert.app",
+      "bundleIdentifier": "com.taskalert.app",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

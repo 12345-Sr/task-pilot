@@ -526,7 +526,7 @@ router.get('/payment-callback', async (req, res) => {
   </div>
   <script>
     function returnFailed() {
-      try { window.location.href = 'intent://payment-failed#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end'; } catch(e) {}
+      try { window.location.href = 'intent://payment-failed#Intent;scheme=TaskAlert;package=com.taskalert.app;end'; } catch(e) {}
       setTimeout(function() {
         try { window.location.href = 'TaskAlert://payment-failed'; } catch(e) {}
       }, 300);
@@ -586,7 +586,7 @@ router.get('/payment-callback', async (req, res) => {
   </div>
   <script>
     function returnSuccess() {
-      try { window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end'; } catch(e) {}
+      try { window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end'; } catch(e) {}
       setTimeout(function() {
         try { window.location.href = 'TaskAlert://payment-success'; } catch(e) {}
       }, 300);
@@ -676,7 +676,7 @@ router.get('/payment-callback', async (req, res) => {
       if (btn) btn.innerText = 'Opening App... ⏳';
 
       // Strategy 1: Android Intent URI format with package name (standard for modern Android Chrome to open app directly)
-      var intentUrl = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end';
+      var intentUrl = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
       // Strategy 2: Custom URI scheme
       var customScheme = 'TaskAlert://payment-success';
 
@@ -702,7 +702,7 @@ router.get('/payment-callback', async (req, res) => {
     // Auto-attempt return after 1.2s
     setTimeout(function() {
       try {
-        window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.TaskAlert.app;end';
+        window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
       } catch(e) {}
     }, 1200);
   </script>
