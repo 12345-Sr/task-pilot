@@ -150,15 +150,17 @@ export const ForgotPasswordScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingBottom: Math.max(insets.bottom, 24) + 30 },
+            { paddingBottom: Math.max(insets.bottom, 24) + 60 },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           {/* Top navigation row with back button and single TaskAlert logo */}
           <View style={styles.topNavRow}>
@@ -278,14 +280,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                 >
                   <LinearGradient
                     colors={['#8B5CF6', '#3B82F6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
                   >
                     {forgotMutation.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.primaryButtonText}>{t(language, 'send_code_btn')}</Text>
+                      <Text style={styles.primaryButtonText}>{t(language, 'send_code_btn')} →</Text>
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
@@ -330,15 +332,15 @@ export const ForgotPasswordScreen: React.FC = () => {
                 >
                   <LinearGradient
                     colors={['#8B5CF6', '#3B82F6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
                   >
                     {verifyMutation.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
                       <Text style={styles.primaryButtonText}>
-                        {language === 'hi' ? 'Code Verify Karein' : 'Verify Code'}
+                        {language === 'hi' ? 'Code Verify Karein →' : 'Verify Code →'}
                       </Text>
                     )}
                   </LinearGradient>
@@ -423,14 +425,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                 >
                   <LinearGradient
                     colors={['#8B5CF6', '#3B82F6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
                   >
                     {resetMutation.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.primaryButtonText}>{t(language, 'submit_reset_btn')}</Text>
+                      <Text style={styles.primaryButtonText}>{t(language, 'submit_reset_btn')} →</Text>
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
@@ -456,11 +458,11 @@ export const ForgotPasswordScreen: React.FC = () => {
                 >
                   <LinearGradient
                     colors={['#8B5CF6', '#3B82F6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
                   >
-                    <Text style={styles.primaryButtonText}>{t(language, 'login_button')}</Text>
+                    <Text style={styles.primaryButtonText}>{language === 'hi' ? 'Login Karein →' : 'Go to Login →'}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -490,14 +492,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDF2F4',
   },
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    flexGrow: 1,
   },
   topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   backButton: {
     paddingVertical: 7,
@@ -529,28 +532,28 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   mainTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: -0.4,
   },
   subTitle: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#64748B',
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 19,
+    marginBottom: 10,
   },
   stepBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -582,33 +585,32 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 22,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
-    shadowRadius: 20,
+    shadowRadius: 16,
     elevation: 4,
   },
   stepHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   cardHeading: {
-    fontSize: 17,
+    fontSize: 16.5,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   changeEmailText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 12.5,
+    fontWeight: '700',
     color: colors.primary,
-    marginBottom: 16,
   },
   form: {
     gap: 4,
@@ -642,7 +644,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   fieldGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   fieldLabel: {
     fontSize: 13,
@@ -688,8 +690,8 @@ const styles = StyleSheet.create({
   infoNoteBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    padding: 10,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -699,28 +701,32 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   primaryButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: colors.primaryPurple,
+    width: '100%',
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: '#6366F1',
+    shadowColor: '#6366F1',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
-    marginTop: 4,
+    marginTop: 8,
+    overflow: 'hidden',
   },
   primaryButtonGradient: {
-    height: 52,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 15,
   },
   buttonDisabled: {
     opacity: 0.65,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15.5,
+    fontWeight: '800',
     letterSpacing: 0.3,
   },
   resendRow: {
