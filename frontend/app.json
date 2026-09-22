@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TaskAlert",
-    "slug": "task-pilot",
+    "slug": "task-alert",
     "scheme": "TaskAlert",
     "version": "1.0.4",
     "orientation": "portrait",
