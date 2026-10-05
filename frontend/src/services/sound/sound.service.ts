@@ -24,7 +24,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'क्लासिक घंटी',
     emoji: '🔔',
     description: 'Loud traditional twin-bell alarm clock',
-    source: require('../../../assets/sounds/classic_bell.wav'),
+    source: require('../../../assets/sounds/classic_bell.m4a'),
   },
   {
     id: 'morning_alarm',
@@ -32,7 +32,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'मॉर्निंग अलार्म',
     emoji: '⏰',
     description: 'Energetic morning wake-up chime',
-    source: require('../../../assets/sounds/morning_alarm.wav'),
+    source: require('../../../assets/sounds/morning_alarm.m4a'),
   },
   {
     id: 'soft_chime',
@@ -40,7 +40,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'सॉफ्ट चाइम',
     emoji: '✨',
     description: 'Delicate metallic triangle chime',
-    source: require('../../../assets/sounds/soft_chime.wav'),
+    source: require('../../../assets/sounds/soft_chime.m4a'),
   },
   {
     id: 'gentle_tone',
@@ -48,7 +48,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'जेंटल टोन',
     emoji: '🌊',
     description: 'Calm harmonic melodic chime',
-    source: require('../../../assets/sounds/gentle_tone.wav'),
+    source: require('../../../assets/sounds/gentle_tone.m4a'),
   },
   {
     id: 'urgent_alert',
@@ -56,7 +56,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'अर्जेंट अलर्ट',
     emoji: '🚨',
     description: 'High-priority pulsating emergency alert',
-    source: require('../../../assets/sounds/urgent_alert.wav'),
+    source: require('../../../assets/sounds/urgent_alert.m4a'),
   },
   {
     id: 'digital_bell',
@@ -64,7 +64,7 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
     nameHi: 'डिजिटल बेल',
     emoji: '🎵',
     description: 'Modern electronic digital beeps',
-    source: require('../../../assets/sounds/digital_bell.wav'),
+    source: require('../../../assets/sounds/digital_bell.m4a'),
   },
 ];
 
