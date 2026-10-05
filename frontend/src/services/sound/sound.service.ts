@@ -1,5 +1,3 @@
-import { Audio } from 'expo-av';
-
 export type AlarmSoundId =
   | 'classic_bell'
   | 'morning_alarm'
@@ -68,27 +66,28 @@ export const ALARM_SOUNDS: AlarmSoundMeta[] = [
   },
 ];
 
+// Lazy safely loaded expo-audio module
+let createAudioPlayerFn: any = null;
+let setAudioModeAsyncFn: any = null;
+
+function getAudioFunctions() {
+  if (createAudioPlayerFn) return { createAudioPlayer: createAudioPlayerFn, setAudioModeAsync: setAudioModeAsyncFn };
+  try {
+    const expoAudio = require('expo-audio');
+    createAudioPlayerFn = expoAudio.createAudioPlayer;
+    setAudioModeAsyncFn = expoAudio.setAudioModeAsync;
+  } catch (err) {
+    console.warn('[SoundService] expo-audio not available on this platform:', err);
+  }
+  return { createAudioPlayer: createAudioPlayerFn, setAudioModeAsync: setAudioModeAsyncFn };
+}
+
 class SoundServiceClass {
-  private previewSound: Audio.Sound | null = null;
+  private previewPlayer: any = null;
+  private alarmPlayer: any = null;
   private currentPlayingId: AlarmSoundId | null = null;
-  private alarmLoopSound: Audio.Sound | null = null;
   private previewListeners: Set<(id: AlarmSoundId | null) => void> = new Set();
-
-  constructor() {
-    this.configureAudioMode();
-  }
-
-  private async configureAudioMode() {
-    try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-      });
-    } catch (e) {
-      console.warn('[SoundService] Audio mode configure notice:', e);
-    }
-  }
+  private hasConfiguredAudioMode = false;
 
   public subscribePreviewChange(listener: (id: AlarmSoundId | null) => void): () => void {
     this.previewListeners.add(listener);
@@ -116,10 +115,25 @@ class SoundServiceClass {
     return ALARM_SOUNDS.find((s) => s.id === id) || ALARM_SOUNDS[0];
   }
 
+  private async ensureAudioMode() {
+    if (this.hasConfiguredAudioMode) return;
+    try {
+      const { setAudioModeAsync } = getAudioFunctions();
+      if (typeof setAudioModeAsync === 'function') {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: false,
+        });
+      }
+      this.hasConfiguredAudioMode = true;
+    } catch (e) {
+      console.warn('[SoundService] setAudioModeAsync notice:', e);
+    }
+  }
+
   /**
    * Toggles playback preview of a sound.
-   * If already playing this sound, stops it.
-   * If playing another, stops it and plays the new one.
    */
   public async togglePreview(id: AlarmSoundId): Promise<boolean> {
     if (this.currentPlayingId === id) {
@@ -136,22 +150,37 @@ class SoundServiceClass {
   public async playPreview(id: AlarmSoundId): Promise<void> {
     try {
       await this.stopPreview();
+      await this.ensureAudioMode();
+
+      const { createAudioPlayer } = getAudioFunctions();
+      if (!createAudioPlayer) {
+        console.warn('[SoundService] Cannot play preview: createAudioPlayer not available');
+        return;
+      }
 
       const meta = this.getSoundMeta(id);
-      await this.configureAudioMode();
+      const player = createAudioPlayer(meta.source);
+      if (!player) return;
 
-      const { sound } = await Audio.Sound.createAsync(
-        meta.source,
-        { shouldPlay: true, volume: 1.0, isLooping: false },
-        (status) => {
-          if (status.isLoaded && status.didJustFinish) {
+      player.loop = false;
+      player.volume = 1.0;
+
+      // Listen for playback completion
+      if (typeof player.addListener === 'function') {
+        const sub = player.addListener('playbackStatusUpdate', (status: any) => {
+          if (status?.didJustFinish) {
             this.stopPreview().catch(() => {});
+            try { sub?.remove?.(); } catch {}
           }
-        }
-      );
+        });
+      }
 
-      this.previewSound = sound;
+      this.previewPlayer = player;
       this.notifyPreviewChange(id);
+
+      if (typeof player.play === 'function') {
+        player.play();
+      }
     } catch (err) {
       console.warn('[SoundService] Failed to play preview for', id, err);
       this.notifyPreviewChange(null);
@@ -163,11 +192,17 @@ class SoundServiceClass {
    */
   public async stopPreview(): Promise<void> {
     try {
-      if (this.previewSound) {
-        const sound = this.previewSound;
-        this.previewSound = null;
-        await sound.stopAsync().catch(() => {});
-        await sound.unloadAsync().catch(() => {});
+      if (this.previewPlayer) {
+        const player = this.previewPlayer;
+        this.previewPlayer = null;
+        if (typeof player.pause === 'function') {
+          player.pause();
+        }
+        if (typeof player.release === 'function') {
+          player.release();
+        } else if (typeof player.remove === 'function') {
+          player.remove();
+        }
       }
     } catch (err) {
       console.warn('[SoundService] Error stopping preview:', err);
@@ -183,17 +218,26 @@ class SoundServiceClass {
     try {
       await this.stopAlarmLoop();
       await this.stopPreview();
+      await this.ensureAudioMode();
+
+      const { createAudioPlayer } = getAudioFunctions();
+      if (!createAudioPlayer) {
+        console.warn('[SoundService] Cannot start alarm loop: createAudioPlayer not available');
+        return;
+      }
 
       const meta = this.getSoundMeta(id);
-      await this.configureAudioMode();
+      const player = createAudioPlayer(meta.source);
+      if (!player) return;
 
-      const { sound } = await Audio.Sound.createAsync(meta.source, {
-        shouldPlay: true,
-        volume: 1.0,
-        isLooping: true,
-      });
+      player.loop = true;
+      player.volume = 1.0;
 
-      this.alarmLoopSound = sound;
+      this.alarmPlayer = player;
+
+      if (typeof player.play === 'function') {
+        player.play();
+      }
     } catch (err) {
       console.warn('[SoundService] Failed to start alarm loop for', id, err);
     }
@@ -204,11 +248,17 @@ class SoundServiceClass {
    */
   public async stopAlarmLoop(): Promise<void> {
     try {
-      if (this.alarmLoopSound) {
-        const sound = this.alarmLoopSound;
-        this.alarmLoopSound = null;
-        await sound.stopAsync().catch(() => {});
-        await sound.unloadAsync().catch(() => {});
+      if (this.alarmPlayer) {
+        const player = this.alarmPlayer;
+        this.alarmPlayer = null;
+        if (typeof player.pause === 'function') {
+          player.pause();
+        }
+        if (typeof player.release === 'function') {
+          player.release();
+        } else if (typeof player.remove === 'function') {
+          player.remove();
+        }
       }
     } catch (err) {
       console.warn('[SoundService] Error stopping alarm loop:', err);

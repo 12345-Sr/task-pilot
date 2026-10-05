@@ -31,7 +31,8 @@
     },
     "plugins": [
       "expo-status-bar",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-audio"
     ]
   }
 }
