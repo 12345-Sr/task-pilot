@@ -26,8 +26,8 @@ export interface GradientButtonProps {
   accessibilityLabel?: string;
 }
 
-export const BUTTON_GRADIENT = ['#8B5CF6', '#3B82F6'] as const;
-export const BUTTON_GRADIENT_ALT = ['#7C3AED', '#2563EB'] as const;
+export const BUTTON_GRADIENT = ['#0D5C3A', '#15803D'] as const;
+export const BUTTON_GRADIENT_ALT = ['#083B25', '#0D5C3A'] as const;
 
 export const GradientButton: React.FC<GradientButtonProps> = ({
   onPress,
@@ -76,9 +76,9 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
 const styles = StyleSheet.create({
   touchable: {
     borderRadius: 14,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.32,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     overflow: 'hidden',

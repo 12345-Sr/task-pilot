@@ -43,7 +43,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           accessibilityLabel={buttonLabel}
         >
           <LinearGradient
-            colors={['#8B5CF6', '#3B82F6']}
+            colors={['#0D5C3A', '#15803D']}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.btn}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   btnTouch: {
     borderRadius: radius.pill,
     overflow: 'hidden',
-    shadowColor: colors.primaryPurple,
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,

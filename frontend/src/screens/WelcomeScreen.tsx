@@ -284,16 +284,27 @@ const FEATURE_DATA: Record<
   },
 };
 
+import { LanguageModal } from '../components/LanguageModal';
+
 export default function WelcomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
-  const { language } = useAppStore();
+  const { language, setGuestMode } = useAppStore();
+  const [langModalVisible, setLangModalVisible] = React.useState(false);
 
   const currentLangMeta =
     LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
   const featureContent = FEATURE_DATA[language] || FEATURE_DATA.hi;
 
+  const handleQuickStart = () => {
+    navigation.navigate('Signup');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LanguageModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -307,9 +318,19 @@ export default function WelcomeScreen({ navigation }: any) {
         {/* Top Header & Brand Unit */}
         <View style={styles.topSection}>
           <View style={styles.topBar}>
+            {navigation?.canGoBack?.() ? (
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Back"
+              >
+                <Text style={styles.backBtnIcon}>‹</Text>
+              </TouchableOpacity>
+            ) : <View />}
+
             <TouchableOpacity
               style={styles.langPickerButton}
-              onPress={() => navigation.navigate('Language')}
+              onPress={() => setLangModalVisible(true)}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Change Language"
@@ -410,18 +431,18 @@ export default function WelcomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.primaryBtnTouch}
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('Login')}
+            onPress={handleQuickStart}
             accessibilityRole="button"
-            accessibilityLabel={t(language, 'welcome_start')}
+            accessibilityLabel={language === 'hi' ? 'Turant Shuru Karein' : 'Start Immediately'}
           >
             <LinearGradient
-              colors={['#8B5CF6', '#3B82F6']}
+              colors={['#0D5C3A', '#15803D']}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.primaryBtn}
             >
               <Text style={styles.primaryBtnText}>
-                {t(language, 'welcome_start')}
+                {language === 'hi' ? '🚀 Turant Shuru Karein (Get Started)' : '🚀 Get Started Immediately'}
               </Text>
               <View style={styles.arrowCircle}>
                 <Text style={styles.arrowText}>→</Text>
@@ -432,14 +453,14 @@ export default function WelcomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.secondaryBtn}
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('Signup')}
+            onPress={() => navigation.navigate('Login')}
             accessibilityRole="button"
-            accessibilityLabel={t(language, 'signup_button')}
+            accessibilityLabel={t(language, 'login_button')}
           >
             <Text style={styles.secondaryBtnText}>
-              {t(language, 'dont_have_account')}{' '}
+              {language === 'hi' ? 'Pehle se account hai? ' : 'Already have an account? '}
               <Text style={styles.secondaryBtnHighlight}>
-                {t(language, 'signup_button')}
+                {language === 'hi' ? 'Login Karein' : 'Log In'}
               </Text>
             </Text>
           </TouchableOpacity>
@@ -465,9 +486,20 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     marginBottom: 8,
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  backBtnIcon: {
+    fontSize: 28,
+    color: '#0F172A',
+    fontWeight: '400',
+    lineHeight: 28,
   },
   langPickerButton: {
     flexDirection: 'row',
@@ -704,9 +736,9 @@ const styles = StyleSheet.create({
   },
   primaryBtnTouch: {
     borderRadius: 14,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     overflow: 'hidden',

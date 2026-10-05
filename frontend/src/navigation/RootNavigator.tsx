@@ -9,6 +9,7 @@ import { useAppStore } from '../store';
 import { t } from '../i18n';
 
 // Screens
+import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LanguageScreen from '../screens/LanguageScreen';
 import SignupScreen from '../screens/SignupScreen';
@@ -24,6 +25,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import TaskHistoryScreen from '../screens/TaskHistoryScreen';
 
 export type RootStackParamList = {
+  Splash: undefined;
   Welcome: undefined;
   Language: undefined;
   Signup: undefined;
@@ -33,16 +35,19 @@ export type RootStackParamList = {
   AddTask: undefined;
   TaskDetail: { taskId: string };
   TaskHistory: undefined;
+  Evening: undefined;
+  Progress: undefined;
   Premium: undefined;
   Settings: undefined;
 };
 
 export type MainTabParamList = {
   TodayTab: undefined;
+  HistoryTab: undefined;
   AddTaskTab: undefined;
   EveningTab: undefined;
   ProgressTab: undefined;
-  SettingsTab?: undefined;
+  SettingsTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -51,8 +56,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 function MainTabs() {
   const { language } = useAppStore();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 12);
-  const tabBarHeight = 58 + bottomPadding;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 10);
+  const tabBarHeight = 60 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -70,41 +75,103 @@ function MainTabs() {
           },
         ],
         tabBarIcon: ({ focused }) => {
-          let icon = '•';
-          if (route.name === 'TodayTab') icon = '🏠';
-          if (route.name === 'AddTaskTab') icon = '➕';
-          if (route.name === 'EveningTab') icon = '🌙';
-          if (route.name === 'ProgressTab') icon = '📊';
+          if (route.name === 'TodayTab') {
+            return (
+              <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
+                🏠
+              </Text>
+            );
+          }
+          if (route.name === 'HistoryTab') {
+            return (
+              <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
+                🕒
+              </Text>
+            );
+          }
+          if (route.name === 'AddTaskTab') {
+            return (
+              <View style={styles.centerAddBtn}>
+                <Text style={styles.centerAddText}>+</Text>
+              </View>
+            );
+          }
+          if (route.name === 'EveningTab') {
+            return (
+              <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
+                🌙
+              </Text>
+            );
+          }
+          if (route.name === 'ProgressTab') {
+            return (
+              <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
+                🔥
+              </Text>
+            );
+          }
+          if (route.name === 'SettingsTab') {
+            return (
+              <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
+                ⚙️
+              </Text>
+            );
+          }
+          return null;
+        },
+        tabBarLabel: ({ focused }) => {
+          if (route.name === 'AddTaskTab') return null;
+          let label = 'Home';
+          if (route.name === 'TodayTab') label = t(language, 'tab_today_short') || 'Home';
+          if (route.name === 'HistoryTab') label = language === 'hi' ? 'Itihaas' : 'History';
+          if (route.name === 'EveningTab') label = t(language, 'tab_evening') || 'Evening';
+          if (route.name === 'ProgressTab') label = t(language, 'tab_progress') || 'Streak';
+          if (route.name === 'SettingsTab') label = t(language, 'tab_settings') || 'Settings';
           return (
-            <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-              {icon}
+            <Text
+              style={[
+                styles.tabLabel,
+                { color: focused ? colors.primary : '#94A3B8' },
+              ]}
+              numberOfLines={1}
+            >
+              {label}
             </Text>
           );
         },
-        tabBarLabelStyle: styles.tabLabel,
         tabBarAllowFontScaling: false,
-        tabBarItemStyle: { paddingHorizontal: 2 },
+        tabBarItemStyle: { paddingHorizontal: 1 },
       })}
     >
       <Tab.Screen
         name="TodayTab"
         component={TodayScreen}
-        options={{ title: language === 'hi' ? 'Aaj Ke Kaam' : t(language, 'tab_today') }}
+        options={{ title: 'Home' }}
+      />
+      <Tab.Screen
+        name="HistoryTab"
+        component={TaskHistoryScreen}
+        options={{ title: 'History' }}
       />
       <Tab.Screen
         name="AddTaskTab"
         component={AddTaskScreen}
-        options={{ title: language === 'hi' ? '+ Naya Kaam' : t(language, 'add_task_title') }}
+        options={{ title: '' }}
       />
       <Tab.Screen
         name="EveningTab"
         component={EveningScreen}
-        options={{ title: language === 'hi' ? 'Shaam Check' : t(language, 'tab_evening') }}
+        options={{ title: 'Evening' }}
       />
       <Tab.Screen
         name="ProgressTab"
         component={ProgressScreen}
-        options={{ title: language === 'hi' ? 'Progress' : t(language, 'tab_progress') }}
+        options={{ title: 'Streak' }}
+      />
+      <Tab.Screen
+        name="SettingsTab"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Tab.Navigator>
   );
@@ -118,7 +185,7 @@ export const RootNavigator: React.FC = () => {
       theme={{
         dark: false,
         colors: {
-          background: '#EDF2F4',
+          background: '#F8FAF8',
           card: '#FFFFFF',
           text: '#0F172A',
           border: '#E2E8F0',
@@ -128,12 +195,13 @@ export const RootNavigator: React.FC = () => {
       }}
     >
       <Stack.Navigator
-        initialRouteName="Language"
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
-          animation: 'slide_from_right',
+          animation: 'fade',
         }}
       >
+        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Language" component={LanguageScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -143,6 +211,8 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name="AddTask" component={AddTaskScreen} />
         <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
         <Stack.Screen name="TaskHistory" component={TaskHistoryScreen} />
+        <Stack.Screen name="Evening" component={EveningScreen} />
+        <Stack.Screen name="Progress" component={ProgressScreen} />
         <Stack.Screen
           name="Premium"
           component={PremiumScreen}
@@ -156,24 +226,44 @@ export const RootNavigator: React.FC = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
+    backgroundColor: '#FFFFFF',
+    borderTopColor: '#EAEAEA',
     borderTopWidth: 1,
-    paddingTop: 8,
-    shadowColor: colors.shadowColor,
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    paddingTop: 6,
+    shadowColor: '#000000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: -3 },
     elevation: 8,
   },
   tabIcon: {
-    fontSize: 18,
+    fontSize: 20,
     marginBottom: 2,
-    opacity: 0.8,
+    opacity: 0.85,
   },
   tabIconFocused: {
-    transform: [{ scale: 1.15 }],
+    transform: [{ scale: 1.12 }],
     opacity: 1,
+  },
+  centerAddBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#0D5C3A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    shadowColor: '#0D5C3A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  centerAddText: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '600',
+    lineHeight: 28,
   },
   tabLabel: {
     fontSize: 10.5,

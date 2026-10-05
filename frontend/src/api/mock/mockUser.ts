@@ -4,15 +4,15 @@ import { UserRepository, SubscriptionRepository } from '../repository.interface'
 const delay = (ms = 100) => new Promise((r) => setTimeout(r, ms));
 
 let currentUser: User = {
-  id: 'user_rohan_001',
-  name: 'Rohan Sharma',
-  email: 'rohan@example.com',
+  id: '',
+  name: '',
+  email: '',
   language: 'hi',
   createdAt: new Date().toISOString(),
 };
 
 let currentSubscription: Subscription = {
-  id: 'sub_trial_001',
+  id: '',
   plan: 'FREE',
   status: 'trial',
   price: 399,

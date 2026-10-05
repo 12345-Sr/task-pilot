@@ -22,22 +22,12 @@ import BrandLogo from '../components/BrandLogo';
 import { useLogin } from '../hooks';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { signInWithGoogle } from '../services/auth/googleAuth.service';
-
-const LANGUAGES = [
-  { code: 'en', native: 'English', label: 'English' },
-  { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
-  { code: 'mr', native: 'मराठी', label: 'Marathi' },
-  { code: 'bn', native: 'বাংলা', label: 'Bengali' },
-  { code: 'ta', native: 'தமிழ்', label: 'Tamil' },
-  { code: 'te', native: 'తెలుగు', label: 'Telugu' },
-  { code: 'gu', native: 'ગુજરાતી', label: 'Gujarati' },
-  { code: 'pa', native: 'ਪੰਜਾਬੀ', label: 'Punjabi' },
-];
+import { LanguageModal, SUPPORTED_LANGUAGES } from '../components/LanguageModal';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, setLanguage } = useAppStore();
+  const { language, setLanguage, setGuestMode } = useAppStore();
   const loginMutation = useLogin();
 
   const [email, setEmail] = useState('');
@@ -48,7 +38,7 @@ export const LoginScreen: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [googleErrorMsg, setGoogleErrorMsg] = useState('');
 
-  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   const handleLogin = () => {
     setErrorMsg('');
@@ -178,22 +168,29 @@ export const LoginScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Compact Header */}
+          {/* Back button if available */}
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Back"
+            >
+              <Text style={styles.backButtonText}>‹</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Header matching Mockup Screen 2 */}
           <View style={styles.header}>
             <Text style={styles.mainTitle}>
-              {language === 'hi' ? 'Aapka Reminder Saathi' : 'Your Reminder Companion'}
+              Welcome Back
             </Text>
             <Text style={styles.subTitle}>
-              {language === 'hi' ? 'Kal ka kaam, aaj set karein.' : 'Set tomorrow\'s tasks today.'}
+              Log in to your TaskAlert account and stay on track.
             </Text>
           </View>
 
           {/* Floating White Card */}
           <View style={styles.card}>
-            <Text style={styles.cardHeading}>
-              {language === 'hi' ? 'Login Karein' : 'Sign In'}
-            </Text>
-
             {errorMsg ? (
               <View style={styles.errorBox}>
                 <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
@@ -202,9 +199,8 @@ export const LoginScreen: React.FC = () => {
 
             {/* Email Field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>{t(language, 'email_label')}</Text>
+              <Text style={styles.fieldLabel}>Email Address</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputLeadingIcon}>✉️</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
@@ -222,7 +218,7 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.fieldGroup}>
               <View style={styles.passwordHeader}>
                 <Text style={styles.fieldLabel} numberOfLines={1}>
-                  {t(language, 'password_label')}
+                  Password
                 </Text>
                 <TouchableOpacity
                   style={styles.forgotBtn}
@@ -236,10 +232,9 @@ export const LoginScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputLeadingIcon}>🔒</Text>
                 <TextInput
                   style={[styles.input, { paddingRight: 44 }]}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   placeholderTextColor="#94A3B8"
                   value={password}
                   onChangeText={setPassword}
@@ -254,17 +249,7 @@ export const LoginScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* 3-Day Free Trial Trust Row */}
-            <View style={styles.trustBadgeRow}>
-              <Text style={styles.trustBadgeIcon}>🪙</Text>
-              <Text style={styles.trustBadgeText}>
-                {language === 'hi'
-                  ? '3 din ka free trial · No credit card required'
-                  : '3-day free trial · No credit card required'}
-              </Text>
-            </View>
-
-            {/* Vibrant Purple-Blue Gradient Primary CTA Button */}
+            {/* TaskAlert Deep Green Primary Button */}
             <TouchableOpacity
               style={[styles.primaryButtonTouch, loginMutation.isPending && styles.buttonDisabled]}
               onPress={handleLogin}
@@ -272,7 +257,7 @@ export const LoginScreen: React.FC = () => {
               activeOpacity={0.88}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#3B82F6']}
+                colors={['#0D5C3A', '#15803D']}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 style={styles.primaryButton}
@@ -281,7 +266,7 @@ export const LoginScreen: React.FC = () => {
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.primaryButtonText}>
-                    {language === 'hi' ? 'Login Karein →' : 'Login →'}
+                    Login
                   </Text>
                 )}
               </LinearGradient>
@@ -290,7 +275,7 @@ export const LoginScreen: React.FC = () => {
             {/* Divider */}
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{language === 'hi' ? 'ya' : 'or'}</Text>
+              <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -298,8 +283,19 @@ export const LoginScreen: React.FC = () => {
             <GoogleSignInButton
               onPress={handleGoogleLogin}
               loading={isGoogleLoading}
-              text={language === 'hi' ? 'Google se Sign In karein' : 'Continue with Google'}
+              text="Continue with Google"
             />
+
+            {/* Create Account Secondary Button */}
+            <TouchableOpacity
+              style={styles.createAccountBtn}
+              onPress={() => navigation.navigate('Signup')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.createAccountBtnText}>
+                {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
+              </Text>
+            </TouchableOpacity>
 
             {googleErrorMsg ? (
               <View style={styles.googleErrorBox}>
@@ -311,57 +307,24 @@ export const LoginScreen: React.FC = () => {
           {/* Bottom Switcher */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>
-              {language === 'hi' ? 'Naya account banayein? ' : "Don't have an account? "}
+              Don't have an account?{' '}
             </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-              <Text style={styles.footerLink}>
-                {language === 'hi' ? 'Sign up' : 'Sign up'}
+              <Text style={[styles.footerLink, { color: '#0D5C3A' }]}>
+                {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
               </Text>
             </TouchableOpacity>
           </View>
+
+
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Language Selection Modal */}
-      <Modal visible={showLangModal} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowLangModal(false)}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {language === 'hi' ? 'Bhasha Chunein' : 'Select Language'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowLangModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            {LANGUAGES.map((item) => {
-              const selected = language === item.code;
-              return (
-                <TouchableOpacity
-                  key={item.code}
-                  style={[styles.langModalItem, selected && styles.langModalItemSelected]}
-                  onPress={() => {
-                    setLanguage(item.code as any);
-                    setShowLangModal(false);
-                  }}
-                >
-                  <View style={styles.langModalItemLeft}>
-                    <Text style={styles.langItemNative}>{item.native}</Text>
-                    <Text style={styles.langItemLabel}>{item.label}</Text>
-                  </View>
-                  <View style={[styles.radioCircle, selected && styles.radioCircleActive]}>
-                    {selected && <View style={styles.radioInner} />}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      {/* Shared Language Selection Modal */}
+      <LanguageModal
+        visible={showLangModal}
+        onClose={() => setShowLangModal(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -393,6 +356,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#0F172A',
     letterSpacing: -0.3,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    marginBottom: 6,
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#0F172A',
+    fontWeight: '400',
+    lineHeight: 28,
   },
   header: {
     marginBottom: 10,
@@ -543,9 +518,9 @@ const styles = StyleSheet.create({
   primaryButtonTouch: {
     height: 48,
     borderRadius: 13,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     overflow: 'hidden',
@@ -693,6 +668,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
+  },
+  createAccountBtn: {
+    height: 48,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: '#0D5C3A',
+    backgroundColor: '#EBFBF3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  createAccountBtnText: {
+    color: '#0D5C3A',
+    fontSize: 14.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  guestStartBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#0D5C3A',
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  guestStartText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0D5C3A',
   },
 });
 

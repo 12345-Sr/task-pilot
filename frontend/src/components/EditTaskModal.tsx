@@ -332,7 +332,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               disabled={updateMutation.isPending}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#3B82F6']}
+                colors={['#0D5C3A', '#15803D']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveBtnGradient}
@@ -534,9 +534,9 @@ const styles = StyleSheet.create({
     flex: 2,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: colors.primaryPurple,
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },

@@ -267,7 +267,7 @@ export const SupportTicketModal: React.FC<SupportTicketModalProps> = ({ visible,
                     activeOpacity={0.85}
                   >
                     <LinearGradient
-                      colors={['#8B5CF6', '#3B82F6']}
+                      colors={['#0D5C3A', '#15803D']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={styles.submitBtnGradient}
@@ -557,9 +557,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 18,
-    shadowColor: colors.primaryPurple,
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },

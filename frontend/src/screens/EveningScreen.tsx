@@ -20,7 +20,7 @@ import PriorityChip from '../components/PriorityChip';
 export const EveningScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language } = useAppStore();
+  const { language, incrementStreakToday, streak, user, isGuest } = useAppStore();
   const { data: tasks, isLoading, refetch } = useTodayTasks();
   const { data: progress } = useWeeklyProgress();
   const completeMutation = useCompleteTask();
@@ -36,10 +36,40 @@ export const EveningScreen: React.FC = () => {
     return task.completed || task.confirmationStatus === 'COMPLETED';
   }).length;
 
+  const missedCount = (tasks || []).filter((task) => {
+    const local = taskStatusMap[task.id];
+    if (local) return local === 'MISSED';
+    return task.confirmationStatus === 'MISSED';
+  }).length;
+
+  // A task is "pending" if it has no local mark and no persisted status
+  const pendingCount = (tasks || []).filter((task) => {
+    const local = taskStatusMap[task.id];
+    if (local) return false; // already marked locally
+    if (task.completed || task.confirmationStatus === 'COMPLETED') return false;
+    if (task.confirmationStatus === 'MISSED') return false;
+    return true;
+  }).length;
+
+  const hasAnyMissed = missedCount > 0;
+  const allTasksHandled = totalTasks > 0 && pendingCount === 0;
+  // Button enabled only when ALL tasks are handled AND none are missed
+  const isAllTasksCompleted = allTasksHandled && !hasAnyMissed;
   const percentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   const handleMark = (taskId: string, status: 'COMPLETED' | 'MISSED') => {
+    const existing = taskStatusMap[taskId];
+    // Once marked as MISSED, cannot be changed back to COMPLETED
+    if (existing === 'MISSED' && status === 'COMPLETED') {
+      return;
+    }
+
     setTaskStatusMap((prev) => ({ ...prev, [taskId]: status }));
+    if (status === 'MISSED') {
+      useAppStore.getState().resetStreakToday();
+    } else if (status === 'COMPLETED') {
+      useAppStore.getState().incrementStreakToday();
+    }
     completeMutation.mutate({
       id: taskId,
       completed: status === 'COMPLETED',
@@ -48,6 +78,7 @@ export const EveningScreen: React.FC = () => {
   };
 
   const handleFinishReview = () => {
+    incrementStreakToday();
     setReviewed(true);
   };
 
@@ -63,38 +94,61 @@ export const EveningScreen: React.FC = () => {
           { paddingBottom: Math.max(insets.bottom, 24) + 120 },
         ]}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>🌙 {language === 'hi' ? 'SHAAM KA CHECK' : t(language, 'evening_title')}</Text>
-          <Text style={styles.subtitle}>{language === 'hi' ? 'Aaj kaisa raha?' : t(language, 'evening_subtitle')}</Text>
+        {/* Night Forest Green Header matching Mockup Screen 7 */}
+        <View style={styles.nightHeaderCard}>
+          <Text style={styles.nightMoonIcon}>🌙</Text>
+          <Text style={styles.nightHeaderTitle}>
+            {user?.name || (user?.email ? user.email.split('@')[0] : t(language, 'evening_title'))}
+          </Text>
+          <Text style={styles.nightHeaderSub}>
+            {t(language, 'evening_subtitle')}
+          </Text>
         </View>
 
-        {/* Big Progress Ratio Card */}
-        <View style={styles.ratioCard}>
-          <View style={styles.ratioCircle}>
-            <Text style={styles.ratioText}>
-              {completedCount}/{totalTasks}
-            </Text>
-            <Text style={styles.ratioLabel}>{t(language, 'stat_done')}</Text>
-          </View>
+        {/* Tasks Overview Card with Completed & Not Completed boxes */}
+        <View style={styles.overviewCard}>
+          <Text style={styles.overviewTitle}>{t(language, 'tab_today_window')}</Text>
+          <View style={styles.overviewBoxesRow}>
+            <View style={styles.completedBox}>
+              <View style={styles.completedIconCircle}>
+                <Text style={styles.completedIconText}>✓</Text>
+              </View>
+              <Text style={styles.completedBoxNum}>{completedCount}</Text>
+              <Text style={styles.completedBoxLabel}>{t(language, 'stat_done')}</Text>
+            </View>
 
-          <View style={styles.ratioDetails}>
-            <Text style={styles.ratioPercentage}>{percentage}% {t(language, 'ratio_completed')}</Text>
-            <Text style={styles.ratioMotto}>
-              {percentage === 100
-                ? t(language, 'ratio_motto_100')
-                : percentage >= 50
-                ? t(language, 'ratio_motto_50')
-                : t(language, 'ratio_motto_0')}
-            </Text>
+            <View style={styles.missedBox}>
+              <View style={styles.missedIconCircle}>
+                <Text style={styles.missedIconText}>✕</Text>
+              </View>
+              <Text style={styles.missedBoxNum}>{Math.max(0, totalTasks - completedCount)}</Text>
+              <Text style={styles.missedBoxLabel}>{t(language, 'stat_missed')}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Streak Flame Banner */}
-        <StreakCard
-          streakCount={progress?.streak ?? 0}
-          isConsistentToday={completedCount > 0}
-        />
+        {/* Daily Progress Bar */}
+        <View style={styles.progressCardEvening}>
+          <Text style={styles.progressTitleEvening}>{t(language, 'progHead') || t(language, 'progress_title')}</Text>
+          <View style={styles.progressBarTrackEvening}>
+            <View style={[styles.progressBarFillEvening, { width: `${percentage}%` }]} />
+          </View>
+          <View style={styles.progressLabelsEvening}>
+            <Text style={styles.progressCountEvening}>{completedCount} / {totalTasks} {t(language, 'ratio_completed')}</Text>
+            <Text style={styles.progressPercentEvening}>{percentage}%</Text>
+          </View>
+        </View>
+
+        {/* Current Streak */}
+        <View style={styles.streakCardEvening}>
+          <View style={styles.streakFlameEvening}>
+            <Text style={{ fontSize: 22 }}>🔥</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.streakCountEvening}>{streak || 1} {t(language, 'days_unit')}</Text>
+            <Text style={styles.streakSubEvening}>{t(language, 'streak_label')}</Text>
+          </View>
+        </View>
 
         {/* Checklist Section with ✓ (Hua) and ✗ (Nahi Hua) buttons */}
         <View style={styles.sectionHeader}>
@@ -135,11 +189,17 @@ export const EveningScreen: React.FC = () => {
                   {/* One-tap Confirmation Buttons: ✓ Hua vs ✗ Nahi Hua */}
                   <View style={styles.actionRow}>
                     <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={[styles.actionBtn, styles.btnDone, isDone && styles.btnDoneActive]}
+                      activeOpacity={isMissed ? 1 : 0.8}
+                      disabled={isMissed}
+                      style={[
+                        styles.actionBtn,
+                        styles.btnDone,
+                        isDone && styles.btnDoneActive,
+                        isMissed && { opacity: 0.35, borderColor: '#CBD5E1', backgroundColor: '#F1F5F9' },
+                      ]}
                       onPress={() => handleMark(item.id, 'COMPLETED')}
                     >
-                      <Text style={[styles.actionBtnText, isDone && styles.actionBtnTextActive]}>
+                      <Text style={[styles.actionBtnText, isDone && styles.actionBtnTextActive, isMissed && { color: '#94A3B8' }]}>
                         {t(language, 'mark_hua')}
                       </Text>
                     </TouchableOpacity>
@@ -170,27 +230,71 @@ export const EveningScreen: React.FC = () => {
           </View>
         )}
 
+        {/* Empty state when no tasks today */}
+        {!isLoading && (!tasks || tasks.length === 0) && (
+          <View style={styles.emptyCard}>
+            <Text style={{ fontSize: 36, marginBottom: 8 }}>☀️</Text>
+            <Text style={styles.emptyTitle}>
+              {language === 'hi' ? 'Aaj koi task pending nahi hai' : 'No tasks pending today'}
+            </Text>
+            <Text style={styles.emptySub}>
+              {language === 'hi'
+                ? 'Aane wale din ke liye abhi naya kaam set karein aur streak banayein.'
+                : 'Plan ahead for tomorrow to build your streak.'}
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyPlanBtn}
+              onPress={handlePlanTomorrow}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.emptyPlanBtnText}>
+                {language === 'hi' ? '+ Kal Ke Kaam Plan Karein' : '+ Plan Tomorrow'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Review Action Buttons */}
         {!reviewed ? (
-          <TouchableOpacity
-            style={styles.reviewButton}
-            activeOpacity={0.85}
-            onPress={handleFinishReview}
-          >
-            <LinearGradient
-              colors={['#8B5CF6', '#3B82F6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.reviewGradient}
+          (tasks && tasks.length > 0) && (
+            <TouchableOpacity
+              style={[
+                styles.reviewButton,
+                !isAllTasksCompleted && styles.reviewButtonDisabled,
+              ]}
+              activeOpacity={isAllTasksCompleted ? 0.85 : 1}
+              disabled={!isAllTasksCompleted}
+              onPress={handleFinishReview}
             >
-              <Text style={styles.reviewButtonText}>{t(language, 'finish_confirmation')}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={isAllTasksCompleted ? ['#0D5C3A', '#15803D'] : ['#94A3B8', '#94A3B8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.reviewGradient}
+              >
+                <Text style={styles.reviewButtonText}>
+                  {!allTasksHandled
+                    ? (language === 'hi' ? '⏳ Sabhi Tasks Mark Karein' : '⏳ Mark All Tasks First')
+                    : hasAnyMissed
+                    ? (language === 'hi' ? '❌ Missed Tasks — Button Disabled' : '❌ Missed Tasks — Disabled')
+                    : (language === 'hi' ? '✅ Aaj Ka Review Poora Hua' : t(language, 'finish_confirmation'))}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )
         ) : (
           <View style={styles.celebrationCard}>
             <Text style={styles.celebrationEmoji}>🎉 🙌 ✨</Text>
             <Text style={styles.celebrationTitle}>{t(language, 'review_done_title')}</Text>
             <Text style={styles.celebrationText}>{t(language, 'review_done_sub')}</Text>
+
+            {/* Streak achievement pill */}
+            <View style={styles.celebrationStreakBadge}>
+              <Text style={{ fontSize: 20 }}>🔥</Text>
+              <Text style={styles.celebrationStreakText}>
+                {language === 'hi' ? `Zabardast! Aapka Streak: ${streak || 1} Din!` : `Awesome! Your Streak: ${streak || 1} Days!`}
+              </Text>
+            </View>
 
             <TouchableOpacity
               style={styles.planTomorrowButton}
@@ -198,13 +302,13 @@ export const EveningScreen: React.FC = () => {
               onPress={handlePlanTomorrow}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#3B82F6']}
+                colors={['#0D5C3A', '#15803D']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.planTomorrowGradient}
               >
                 <Text style={styles.planTomorrowText}>
-                  {language === 'hi' ? 'Kal ke kaam dekhein →' : t(language, 'set_tomorrow_tasks_btn')}
+                  {language === 'hi' ? '+ Kal Ke Kaam Plan Karein' : '+ Plan Tomorrow'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -225,68 +329,197 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  header: {
+  nightHeaderCard: {
+    backgroundColor: '#083B25',
+    borderRadius: 18,
+    padding: 20,
     alignItems: 'center',
-    marginVertical: spacing.sm,
+    gap: 4,
+    shadowColor: '#083B25',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+  nightMoonIcon: {
+    fontSize: 32,
+    marginBottom: 4,
   },
-  subtitle: {
-    ...typography.bodySecondary,
-    color: colors.textSecondary,
-    marginTop: 4,
+  nightHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
     textAlign: 'center',
   },
-  ratioCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+  nightHeaderSub: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#A7F3D0',
+    textAlign: 'center',
+  },
+  overviewCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    gap: 12,
+  },
+  overviewTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  overviewBoxesRow: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  completedBox: {
+    flex: 1,
+    backgroundColor: '#EBFBF3',
+    borderRadius: 14,
+    padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    borderColor: '#BBF7D0',
+    gap: 4,
   },
-  ratioCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.softGreen,
-    borderWidth: 3,
-    borderColor: colors.successGreen,
+  completedIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#0D5C3A',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ratioText: {
-    fontSize: 20,
+  completedIconText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  completedBoxNum: {
+    fontSize: 22,
     fontWeight: '800',
-    color: colors.successGreen,
+    color: '#0D5C3A',
   },
-  ratioLabel: {
-    fontSize: 10,
+  completedBoxLabel: {
+    fontSize: 11.5,
     fontWeight: '700',
-    color: colors.successGreen,
-    textTransform: 'uppercase',
+    color: '#166534',
   },
-  ratioDetails: {
-    marginLeft: spacing.lg,
+  missedBox: {
     flex: 1,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    gap: 4,
   },
-  ratioPercentage: {
-    ...typography.h3,
-    color: colors.textPrimary,
+  missedIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  ratioMotto: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 4,
-    lineHeight: 18,
+  missedIconText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  missedBoxNum: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#DC2626',
+  },
+  missedBoxLabel: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#991B1B',
+  },
+  progressCardEvening: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    gap: 10,
+  },
+  progressTitleEvening: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  progressBarTrackEvening: {
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#EBFBF3',
+    overflow: 'hidden',
+  },
+  progressBarFillEvening: {
+    height: '100%',
+    borderRadius: 5,
+    backgroundColor: '#0D5C3A',
+  },
+  progressLabelsEvening: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressCountEvening: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  progressPercentEvening: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0D5C3A',
+  },
+  streakCardEvening: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  streakFlameEvening: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFBEB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  streakCountEvening: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  streakSubEvening: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#B45309',
+    marginTop: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -380,6 +613,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  reviewButtonDisabled: {
+    opacity: 0.65,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
   reviewGradient: {
     paddingVertical: spacing.md,
     alignItems: 'center',
@@ -436,6 +674,58 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.white,
     fontWeight: '800',
+  },
+  celebrationStreakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 8,
+    marginVertical: 4,
+  },
+  celebrationStreakText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontSize: 12.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+    maxWidth: 280,
+  },
+  emptyPlanBtn: {
+    backgroundColor: '#059669',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: radius.pill,
+  },
+  emptyPlanBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13.5,
   },
 });
 

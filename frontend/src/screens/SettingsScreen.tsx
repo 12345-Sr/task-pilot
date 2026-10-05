@@ -22,30 +22,12 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { NotificationService } from '../services/notifications/notification.service';
 import { userRepository } from '../api';
 import { SupportedLanguage } from '../types';
+import { LanguageModal } from '../components/LanguageModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
 import { PaywallModal } from '../components/PaywallModal';
 import { PremiumStatusModal } from '../components/PremiumStatusModal';
-
-interface SettingsLanguageOption {
-  code: SupportedLanguage;
-  label: string;
-  native: string;
-  flag: string;
-  region: string;
-}
-
-const SETTINGS_LANGUAGES: SettingsLanguageOption[] = [
-  { code: 'en', label: 'English', native: 'English', flag: '🌐', region: 'Global' },
-  { code: 'hi', label: 'Hinglish', native: 'Hinglish', flag: '🇮🇳', region: 'India • Hinglish' },
-  { code: 'mr', label: 'Marathi', native: 'मराठी', flag: '🚩', region: 'महाराष्ट्र' },
-  { code: 'bn', label: 'Bengali', native: 'বাংলা', flag: '🌸', region: 'পশ্চিমবঙ্গ' },
-  { code: 'ta', label: 'Tamil', native: 'தமிழ்', flag: '🪔', region: 'தமிழ்நாடு' },
-  { code: 'te', label: 'Telugu', native: 'తెలుగు', flag: '🌿', region: 'ఆంధ్ర & తెలంగాణ' },
-  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી', flag: '🦚', region: 'ગુજરાત' },
-  { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ', flag: '🌾', region: 'ਪੰਜਾਬ' },
-];
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -59,6 +41,7 @@ export const SettingsScreen: React.FC = () => {
     setPremiumStatusVisible,
     subscriptionInfo,
     isAuthenticated,
+    isGuest,
   } = useAppStore();
   const isHindi = language === 'hi';
   const { data: user } = useUserProfile();
@@ -98,7 +81,7 @@ export const SettingsScreen: React.FC = () => {
     logout();
     navigation.reset({
       index: 0,
-      routes: [{ name: 'Welcome' }],
+      routes: [{ name: 'Language' }],
     });
   };
 
@@ -117,30 +100,39 @@ export const SettingsScreen: React.FC = () => {
           { paddingBottom: Math.max(insets.bottom, 24) + 120 },
         ]}
       >
-        {/* Screen Title */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{t(language, 'tab_settings')}</Text>
+        {/* Screen Header matching Mockup Screen 9 */}
+        <View style={styles.settingsTopHeader}>
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backBtnSettings}
+              accessibilityLabel="Back"
+            >
+              <Text style={styles.backBtnIconSettings}>‹</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.settingsTitleText}>Settings</Text>
         </View>
 
         {/* User Profile Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              {user?.name ? user.name.slice(0, 2).toUpperCase() : (user?.email ? user.email.slice(0, 2).toUpperCase() : 'TA')}
             </Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-              {user?.name || 'User'}
+              {user?.name || (user?.email ? user.email.split('@')[0] : t(language, 'friend'))}
             </Text>
-            {!!user?.email && (
+            {Boolean(user?.email) && (
               <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
-                {user.email}
+                {user?.email}
               </Text>
             )}
             <View style={[styles.planPill, isPremium ? styles.planPillPro : styles.planPillFree]}>
               <Text style={[styles.planPillText, isPremium ? styles.planPillProText : styles.planPillFreeText]}>
-                {isPremium ? '👑 ' + t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
+                {isPremium ? t(language, 'premium_plan_tag') : t(language, 'free_plan_tag')}
               </Text>
             </View>
           </View>
@@ -316,7 +308,7 @@ export const SettingsScreen: React.FC = () => {
             <Switch
               value={morningNotification}
               onValueChange={setMorningNotification}
-              trackColor={{ false: colors.border, true: colors.primaryOrange }}
+              trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
               thumbColor={colors.surface}
             />
           </View>
@@ -333,8 +325,8 @@ export const SettingsScreen: React.FC = () => {
             <Switch
               value={eveningNotification}
               onValueChange={setEveningNotification}
-              trackColor={{ false: colors.border, true: colors.primaryOrange }}
-              thumbColor={colors.primaryOrange ? colors.surface : colors.surface}
+              trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
+              thumbColor={colors.surface}
             />
           </View>
 
@@ -352,7 +344,7 @@ export const SettingsScreen: React.FC = () => {
             <Switch
               value={soundEnabled}
               onValueChange={setSoundEnabled}
-              trackColor={{ false: colors.border, true: colors.primaryOrange }}
+              trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
               thumbColor={colors.surface}
             />
           </View>
@@ -444,7 +436,7 @@ export const SettingsScreen: React.FC = () => {
           activeOpacity={0.8}
           onPress={() => setLogoutDialogVisible(true)}
         >
-          <Text style={styles.logoutText}>{t(language, 'logout')}</Text>
+          <Text style={styles.logoutText}>🚪 Logout</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -461,76 +453,11 @@ export const SettingsScreen: React.FC = () => {
       />
 
       {/* In-Page Language Selection Modal */}
-      <Modal
+      {/* Shared Language Selection Modal */}
+      <LanguageModal
         visible={languageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>{t(language, 'language_title')}</Text>
-                <Text style={styles.modalSubtitle}>{t(language, 'language_subtitle')}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setLanguageModalVisible(false)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.modalLangList}
-              contentContainerStyle={{ paddingBottom: 16 }}
-              showsVerticalScrollIndicator={false}
-            >
-              {SETTINGS_LANGUAGES.map((item) => {
-                const isSelected = language === item.code;
-                return (
-                  <TouchableOpacity
-                    key={item.code}
-                    style={[
-                      styles.langOptionItem,
-                      isSelected && styles.langOptionItemSelected,
-                    ]}
-                    activeOpacity={0.75}
-                    onPress={() => handleSelectLanguage(item.code)}
-                  >
-                    <View style={styles.langOptionLeft}>
-                      <Text style={styles.langFlag}>{item.flag}</Text>
-                      <View>
-                        <Text
-                          style={[
-                            styles.langNativeText,
-                            isSelected && styles.langNativeTextSelected,
-                          ]}
-                        >
-                          {item.native}
-                        </Text>
-                        <Text style={styles.langSubText}>
-                          {item.label} • {item.region}
-                        </Text>
-                      </View>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.langCheckBadge}>
-                        <Text style={styles.langCheckText}>✓</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setLanguageModalVisible(false)}
+      />
 
       {/* Terms & Conditions Modal */}
       <TermsAndConditionsModal
@@ -573,6 +500,25 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     backgroundColor: colors.background,
   },
+  settingsTopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginVertical: 10,
+  },
+  backBtnSettings: {
+    padding: 4,
+  },
+  backBtnIconSettings: {
+    fontSize: 26,
+    color: '#0F172A',
+    fontWeight: '400',
+  },
+  settingsTitleText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
   header: {
     marginVertical: spacing.xs,
   },
@@ -581,13 +527,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   userCard: {
-    backgroundColor: '#FFFDF7',
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     gap: spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -599,15 +545,17 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#EA580C',
+    backgroundColor: '#EBFBF3',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#0D5C3A',
     flexShrink: 0,
   },
   avatarText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#0D5C3A',
   },
   userInfo: {
     flex: 1,

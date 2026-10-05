@@ -23,6 +23,7 @@ import EditTaskModal from '../components/EditTaskModal';
 import BrandLogo from '../components/BrandLogo';
 import CalendarIcon from '../components/CalendarIcon';
 import { PremiumStatusModal } from '../components/PremiumStatusModal';
+import { LanguageModal } from '../components/LanguageModal';
 import { NotificationService } from '../services/notifications/notification.service';
 import { Task } from '../types';
 
@@ -37,10 +38,18 @@ export const TodayScreen: React.FC = () => {
     setPremiumStatusVisible,
     getFreeUsage,
     setFreeLifetimeCreated,
+    streak,
+    bestStreak,
+    incrementStreakToday,
   } = useAppStore();
+
+  // Increment streak once per day when app is opened
+  useEffect(() => {
+    incrementStreakToday();
+  }, [incrementStreakToday]);
   const { data: user } = useUserProfile();
   useSubscription();
-  const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
+  const { data: tasks, isLoading, refetch, isRefetching } = useTodayTasks();
   const completeMutation = useCompleteTask();
 
   // Sync store quota if tasks count is higher (monotonic, never decreases on delete)
@@ -52,6 +61,7 @@ export const TodayScreen: React.FC = () => {
 
   const [selectedDay, setSelectedDay] = useState<'today' | 'scheduled'>('today');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const handleToggleTask = (task: Task) => {
     completeMutation.mutate({
@@ -115,245 +125,173 @@ export const TodayScreen: React.FC = () => {
   }).length;
 
   const todayDateStr = formatLocalizedDate(now, language);
-  const userName = user?.name ? user.name.split(' ')[0] : t(language, 'friend');
+  const userName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : '');
   const todayTabLabel = t(language, 'tab_today_window').replace(/^[☀️📅\s]+/, '').trim();
   const scheduledTabLabel = t(language, 'tab_scheduled_window').replace(/^[☀️📅\s]+/, '').trim();
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top Branding Bar */}
-        <View style={styles.topBrandBar}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <BrandLogo size={32} showText={false} />
-            <Text style={styles.brandBarTitle}>
-              <Text style={{ color: '#0F172A' }}>Task</Text>
-              <Text style={{ color: '#EAB308' }}>Alert</Text>
-            </Text>
+        {/* Top Header matching Mockup Screen 3 */}
+        <View style={styles.dashboardHeader}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.sunIcon}>☀️</Text>
+            <View>
+              <Text style={styles.greetingLabel}>{t(language, 'greeting_morning')},</Text>
+              <Text style={styles.userNameText}>{userName}</Text>
+              <Text style={styles.dateLabel}>
+                {todayDateStr}
+              </Text>
+            </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={styles.headerRight}>
+            {!isPremium && (
+              <TouchableOpacity
+                style={styles.freeHeaderPill}
+                onPress={() => setPaywallVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.freeHeaderPillText}>
+                  {`Free ${getFreeUsage().used}/3`}
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              style={styles.settingsHeaderBtn}
-              onPress={() => navigation.navigate('TaskHistory')}
+              style={styles.bellBtn}
+              onPress={() => setLangModalVisible(true)}
               activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Task History"
+              accessibilityLabel="Notifications and Language"
             >
-              <Text style={styles.settingsHeaderIcon}>📜</Text>
+              <Text style={{ fontSize: 20 }}>🔔</Text>
+              <View style={styles.bellBadgeDot} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.settingsHeaderBtn}
               onPress={() => navigation.navigate('Settings')}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
+              activeOpacity={0.8}
             >
-              <Text style={styles.settingsHeaderIcon}>⚙️</Text>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>
+                  {userName.slice(0, 2).toUpperCase()}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* User Greeting Card (Warm Sunrise Header) */}
-        <View style={styles.greetingCard}>
-          <View style={styles.greetingTextWrap}>
-            <Text style={styles.greetingTitle}>
-              {t(language, 'greeting_morning')}, {userName}! 👋
-            </Text>
-            <Text style={styles.greetingSub}>
-              {language === 'hi'
-                ? 'Kal ke din aapke liye kya zaroori hai, aaj hi tai karein.'
-                : 'Plan your essential tasks today, conquer tomorrow.'}
-            </Text>
+        {/* Today's Progress + Streak Card (Tappable to open Streak Progress Screen) */}
+        <TouchableOpacity
+          style={styles.progressCard}
+          activeOpacity={0.88}
+          onPress={() => navigation.navigate('Progress')}
+          accessibilityLabel="View Streak Progress"
+        >
+          {/* Progress bar section */}
+          <View style={styles.progressHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.progressTitle}>{t(language, 'progHead') || t(language, 'progress_title')}</Text>
+              <Text style={{ fontSize: 13 }}>📈</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={styles.progressPercentText}>
+                {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+              </Text>
+              <Text style={{ fontSize: 13, color: '#10B981', fontWeight: '800' }}>›</Text>
+            </View>
           </View>
+          <View style={styles.progressBarTrack}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressCountText}>
+            {completedCount} / {totalCount} {t(language, 'ratio_completed')} • {language === 'hi' ? 'Tap to view full streak' : 'Tap to view streak & stats'}
+          </Text>
 
-          {/* Mini Subscription Status Pill / Pro Status Pill */}
-          {isPremium ? (
+          {/* Streak divider */}
+          <View style={styles.streakDivider} />
+
+          {/* Streak row */}
+          <View style={styles.streakRow}>
+            <View style={styles.streakItem}>
+              <Text style={styles.streakFlame}>🔥</Text>
+              <View>
+                <Text style={styles.streakCount}>{streak}</Text>
+                <Text style={styles.streakLabel}>{t(language, 'days_unit')} {t(language, 'streak_label')}</Text>
+              </View>
+            </View>
+
+            <View style={styles.streakDividerVert} />
+
+            <View style={styles.streakItem}>
+              <Text style={styles.streakFlame}>🏆</Text>
+              <View>
+                <Text style={styles.streakCount}>{bestStreak}</Text>
+                <Text style={styles.streakLabel}>{t(language, 'stat_best_streak')}</Text>
+              </View>
+            </View>
+
+            <View style={styles.streakDividerVert} />
+
+            <View style={styles.streakItem}>
+              <View style={styles.streakDonut}>
+                <Text style={styles.streakDonutText}>
+                  {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.streakCount}>{completedCount}/{totalCount}</Text>
+                <Text style={styles.streakLabel}>{t(language, 'stat_done')}</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* 2-Tab Switcher (Today vs Upcoming) - only shown when upcoming tasks exist */}
+        {scheduledTasks.length > 0 && (
+          <View style={styles.daySelector}>
             <TouchableOpacity
-              style={styles.proBannerMini}
-              activeOpacity={0.85}
-              onPress={() => setPremiumStatusVisible(true)}
+              style={[styles.dayTab, selectedDay === 'today' && styles.dayTabActive]}
+              onPress={() => setSelectedDay('today')}
+              activeOpacity={0.7}
             >
-              <View style={styles.trialBannerLeft}>
-                <Text style={styles.proBadge}>👑 Pro Active</Text>
-                <Text style={styles.proText} numberOfLines={1} ellipsizeMode="tail">
-                  {language === 'hi'
-                    ? 'Unlimited tasks • Status dekhein'
-                    : 'Unlimited tasks • View status'}
-                </Text>
-              </View>
-              <View style={styles.proDetailsBtnMini}>
-                <Text style={styles.proDetailsBtnTextMini}>
-                  {language === 'hi' ? 'Details →' : 'Details →'}
-                </Text>
-              </View>
+              <Text
+                style={[styles.dayTabText, selectedDay === 'today' && styles.dayTabTextActive]}
+                numberOfLines={1}
+              >
+                ☀️ {todayTabLabel} ({todayTasks.length})
+              </Text>
             </TouchableOpacity>
-          ) : (() => {
-            const { used: freeUsed } = getFreeUsage();
-            return (
-              <View style={styles.freeQuotaCard}>
-                <View style={styles.freeQuotaHeader}>
-                  <View style={styles.freeQuotaTitleRow}>
-                    <Text style={styles.freeQuotaIcon}>🎁</Text>
-                    <Text style={styles.freeQuotaTitle}>
-                      {language === 'hi'
-                        ? `Free Plan: ${freeUsed}/3 Kaam Banaye Gaye`
-                        : `Free Plan: ${freeUsed}/3 Tasks Created`}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.freeUpgradePill}
-                    onPress={() => setPaywallVisible(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.freeUpgradePillText}>
-                      {freeUsed >= 3 ? '⭐ Go Pro' : '⚡ Upgrade'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                {/* 3 Step Indicator Pills: 1, 2, 3 */}
-                <View style={styles.freeStepsRow}>
-                  {/* Step 1 */}
-                  <View style={[styles.freeStepPill, freeUsed >= 1 && styles.freeStepPillDone]}>
-                    <Text style={[styles.freeStepNumber, freeUsed >= 1 && styles.freeStepNumberDone]}>
-                      {freeUsed >= 1 ? '✓' : '1'}
-                    </Text>
-                    <Text style={[styles.freeStepText, freeUsed >= 1 && styles.freeStepTextDone]}>
-                      {freeUsed >= 1
-                        ? (language === 'hi' ? 'Task 1' : 'Task 1')
-                        : (language === 'hi' ? 'Task 1' : 'Task 1')}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.freeStepConnector, freeUsed >= 2 && styles.freeStepConnectorDone]} />
-
-                  {/* Step 2 */}
-                  <View
-                    style={[
-                      styles.freeStepPill,
-                      freeUsed >= 2 && styles.freeStepPillDone,
-                      freeUsed === 1 && styles.freeStepPillActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.freeStepNumber,
-                        freeUsed >= 2 && styles.freeStepNumberDone,
-                        freeUsed === 1 && styles.freeStepNumberActive,
-                      ]}
-                    >
-                      {freeUsed >= 2 ? '✓' : '2'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.freeStepText,
-                        freeUsed >= 2 && styles.freeStepTextDone,
-                        freeUsed === 1 && styles.freeStepTextActive,
-                      ]}
-                    >
-                      {language === 'hi' ? 'Task 2' : 'Task 2'}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.freeStepConnector, freeUsed >= 3 && styles.freeStepConnectorDone]} />
-
-                  {/* Step 3 */}
-                  <View
-                    style={[
-                      styles.freeStepPill,
-                      freeUsed >= 3 && styles.freeStepPillDone,
-                      freeUsed === 2 && styles.freeStepPillFinal,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.freeStepNumber,
-                        freeUsed >= 3 && styles.freeStepNumberDone,
-                        freeUsed === 2 && styles.freeStepNumberFinal,
-                      ]}
-                    >
-                      {freeUsed >= 3 ? '✓' : freeUsed === 2 ? '🔥' : '3'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.freeStepText,
-                        freeUsed >= 3 && styles.freeStepTextDone,
-                        freeUsed === 2 && styles.freeStepTextFinal,
-                      ]}
-                    >
-                      {freeUsed === 2
-                        ? (language === 'hi' ? 'Aakhri!' : 'Final!')
-                        : (language === 'hi' ? 'Task 3' : 'Task 3')}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Subtitle / Hint */}
-                <Text style={styles.freeQuotaSub}>
-                  {freeUsed === 0
-                    ? (language === 'hi'
-                      ? '3 free tasks uplabdh hain. Naya task jodein!'
-                      : '3 free tasks available. Add your first task!')
-                    : freeUsed === 1
-                      ? (language === 'hi'
-                        ? '1 kaam ban chuka hai. 2 aur free tasks bache hain!'
-                        : '1 task created. 2 free tasks remaining!')
-                      : freeUsed === 2
-                        ? (language === 'hi'
-                          ? '2 kaam ban chuke hain. Sirf 1 aakhri free task bacha hai!'
-                          : '2 tasks created. Only 1 final free task left!')
-                        : (language === 'hi'
-                          ? 'Saare 3 free tasks ban gaye. Unlimited ke liye Pro upgrade karein.'
-                          : 'All 3 free tasks used. Upgrade to Pro for unlimited tasks.')}
-                </Text>
-              </View>
-            );
-          })()}
-        </View>
-
-        {/* 2-Tab Switcher (Today vs Scheduled Window) */}
-        <View style={styles.daySelector}>
-          <TouchableOpacity
-            style={[styles.dayTab, selectedDay === 'today' && styles.dayTabActive]}
-            onPress={() => setSelectedDay('today')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[styles.dayTabText, selectedDay === 'today' && styles.dayTabTextActive]}
-              numberOfLines={1}
+            <TouchableOpacity
+              style={[styles.dayTab, selectedDay === 'scheduled' && styles.dayTabActive]}
+              onPress={() => setSelectedDay('scheduled')}
+              activeOpacity={0.7}
             >
-              ☀️ {todayTabLabel} ({todayTasks.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.dayTab, selectedDay === 'scheduled' && styles.dayTabActive]}
-            onPress={() => setSelectedDay('scheduled')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[styles.dayTabText, selectedDay === 'scheduled' && styles.dayTabTextActive]}
-              numberOfLines={1}
-            >
-              📅 {scheduledTabLabel} ({scheduledTasks.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <Text
+                style={[styles.dayTabText, selectedDay === 'scheduled' && styles.dayTabTextActive]}
+                numberOfLines={1}
+              >
+                📅 {scheduledTabLabel} ({scheduledTasks.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Main Content Area */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <LoadingSkeleton count={3} />
           </View>
-        ) : error ? (
-          <ErrorState message={t(language, 'load_error')} onRetry={() => refetch()} />
         ) : (
           <FlatList<Task>
             data={displayedTasks}
             keyExtractor={(item: Task) => item.id}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: Math.max(insets.bottom, 24) + 120 },
+              { paddingBottom: Math.max(insets.bottom, 24) + 140 },
             ]}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -366,64 +304,14 @@ export const TodayScreen: React.FC = () => {
             }
             ListHeaderComponent={
               <View style={styles.listHeaderContainer}>
-                {/* Date & Quick 3-Metric Strip (Panel 1 Mockup) */}
-                <View style={styles.dateChipRow}>
-                  <CalendarIcon date={new Date()} size={24} />
-                  <Text style={styles.dateChipText}>
-                    {selectedDay === 'today' ? `Aaj, ${todayDateStr}` : scheduledTabLabel}
-                  </Text>
-                </View>
-
-                <View style={styles.metricCardRow}>
-                  <View style={styles.metricBox}>
-                    <Text style={styles.metricVal}>{totalCount}</Text>
-                    <Text style={styles.metricLabel}>{t(language, 'stat_total')}</Text>
-                  </View>
-
-                  <View style={[styles.metricBox, styles.metricBoxTeal]}>
-                    <Text style={[styles.metricVal, { color: colors.tealDark }]}>{zarooriCount}</Text>
-                    <Text style={[styles.metricLabel, { color: colors.tealDark }]}>Zaroori</Text>
-                  </View>
-
-                  <View style={styles.metricBox}>
-                    <Text style={[styles.metricVal, { color: colors.primary }]}>{pendingCount}</Text>
-                    <Text style={styles.metricLabel}>{t(language, 'stat_pending')}</Text>
-                  </View>
-                </View>
-
-                {/* Subah Ki Briefing Banner */}
-                <View style={styles.briefingBanner}>
-                  <View style={styles.briefingIconWrap}>
-                    <Text style={styles.briefingIcon}>🌅</Text>
-                  </View>
-                  <View style={styles.briefingTextWrap}>
-                    <Text style={styles.briefingHeading}>
-                      {selectedDay === 'today'
-                        ? t(language, 'subah_briefing_title')
-                        : t(language, 'tab_scheduled_window')}
-                    </Text>
-                    <Text style={styles.briefingSub}>
-                      {selectedDay === 'today'
-                        ? pendingCount > 0
-                          ? t(language, 'briefing_today_pending')
-                          : t(language, 'briefing_today_done')
-                        : scheduledTasks.length > 0
-                          ? t(language, 'briefing_tomorrow_tasks')
-                          : t(language, 'no_scheduled_tasks_sub')}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Section Title */}
+                {/* Section Title matching Mockup Screen 3 */}
                 <View style={styles.taskListHeader}>
                   <Text style={styles.sectionHeading}>
-                    {selectedDay === 'today' ? 'Aaj Ke Kaam' : t(language, 'tab_scheduled_window')}
+                    {selectedDay === 'today' ? t(language, 'aaj_ke_kaam') : t(language, 'tab_scheduled_window')}
                   </Text>
-                  <View style={styles.countBadge}>
-                    <Text style={styles.countBadgeText}>
-                      {displayedTasks.length} {t(language, 'tasks_count')}
-                    </Text>
-                  </View>
+                  <TouchableOpacity onPress={() => navigation.navigate('TaskHistory')}>
+                    <Text style={styles.viewAllText}>{t(language, 'view_tasks')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             }
@@ -468,6 +356,13 @@ export const TodayScreen: React.FC = () => {
             )}
           />
         )}
+
+
+        {/* Language Selection Modal */}
+        <LanguageModal
+          visible={langModalVisible}
+          onClose={() => setLangModalVisible(false)}
+        />
 
         {/* Upgrade Paywall Modal */}
         <PaywallModal
@@ -767,6 +662,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.white,
   },
+  freeHeaderPill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  freeHeaderPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#B45309',
+  },
   daySelector: {
     flexDirection: 'row',
     backgroundColor: '#E2E8F0',
@@ -941,6 +849,213 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
+  dashboardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sunIcon: {
+    fontSize: 26,
+  },
+  greetingLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  userNameText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  dateLabel: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  bellBadgeDot: {
+    position: 'absolute',
+    top: 9,
+    right: 9,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0D5C3A',
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EBFBF3',
+    borderWidth: 1.5,
+    borderColor: '#0D5C3A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0D5C3A',
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    shadowColor: '#0D5C3A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    gap: 8,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressTitle: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  progressBarTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EBFBF3',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: '#0D5C3A',
+  },
+  progressCountText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  progressPercentText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0D5C3A',
+  },
+  streakDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 4,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  streakItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  streakFlame: {
+    fontSize: 22,
+  },
+  streakCount: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0F172A',
+    lineHeight: 20,
+  },
+  streakLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  streakDividerVert: {
+    width: 1,
+    height: 36,
+    backgroundColor: '#F1F5F9',
+  },
+  streakDonut: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: '#0D5C3A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EBFBF3',
+  },
+  streakDonutText: {
+    fontSize: 7,
+    fontWeight: '900',
+    color: '#0D5C3A',
+  },
+  viewAllText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0D5C3A',
+  },
+  streakBannerBox: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  streakFlameCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFBEB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  streakBannerTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  streakBannerSub: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#B45309',
+    marginTop: 1,
+  },
+
 });
 
 export default TodayScreen;

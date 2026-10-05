@@ -91,21 +91,23 @@ export class NotificationService {
 
       // 3. Fallback channel for Expo Notifications
       try {
-        await Notifications.setNotificationChannelAsync('task-alerts', {
-          name: 'Task Alerts & Reminders',
-          description: 'Timely reminders and deadline alerts for your tasks',
-          importance: Notifications.AndroidImportance.MAX,
-          sound: 'default',
-          lightColor: '#16A34A',
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-          bypassDnd: true,
-          enableLights: true,
-          enableVibrate: true,
-          showBadge: true,
-        });
-        this.hasCustomChannel = true;
+        if (typeof Notifications.setNotificationChannelAsync === 'function') {
+          await Notifications.setNotificationChannelAsync('task-alerts', {
+            name: 'Task Alerts & Reminders',
+            description: 'Timely reminders and deadline alerts for your tasks',
+            importance: Notifications.AndroidImportance.MAX,
+            sound: 'default',
+            lightColor: '#16A34A',
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
+            enableLights: true,
+            enableVibrate: true,
+            showBadge: true,
+          });
+          this.hasCustomChannel = true;
+        }
       } catch (err) {
-        console.warn('[NOTIF] Expo fallback channel notice:', err);
+        // In Expo Go on Android, native channel provider is not available; default channel is used safely
       }
     }
 

@@ -217,112 +217,105 @@ export const TaskHistoryScreen: React.FC = () => {
     return `${dStr} ${tStr}`.trim();
   };
 
-  // Render individual task card in timeline
+  // Render individual task card in timeline - Unique, Clean, Easy to Understand
   const renderItem = ({ item }: { item: TaskHistoryItem }) => {
     const isDone = item.completed === true || item.confirmationStatus === 'COMPLETED';
     const isMissed = item.confirmationStatus === 'MISSED';
 
     const statusBadgeText = isDone
-      ? (isHinglish ? '✓ Pura Hua' : '✓ Completed')
+      ? (isHinglish ? 'Pura Hua' : 'Completed')
       : isMissed
-        ? (isHinglish ? '✗ Chhoot Gaya' : '✗ Missed')
-        : (isHinglish ? '⏳ Active' : '⏳ In Progress');
-
-    const accentColor = isDone
-      ? '#2CC55E'
-      : isMissed
-        ? '#DC2626'
-        : '#EA580C';
-
-    const statusBadgeStyle = isDone
-      ? styles.badgeDone
-      : isMissed
-        ? styles.badgeMissed
-        : styles.badgeActive;
-
-    const statusTextStyle = isDone
-      ? styles.badgeTextDone
-      : isMissed
-        ? styles.badgeTextMissed
-        : styles.badgeTextActive;
+        ? (isHinglish ? 'Chhoot Gaya' : 'Missed')
+        : (isHinglish ? 'Active' : 'In Progress');
 
     const createdFormatted = formatTimestamp(item.createdAt);
     const scheduleFormatted = formatScheduleDate(item.date || item.targetDate, item.time || item.deadlineTime);
 
     return (
       <TouchableOpacity
-        style={styles.taskCard}
+        style={[
+          styles.taskCard,
+          isDone && styles.taskCardDone,
+        ]}
         activeOpacity={0.88}
         onPress={() => setSelectedTask(item)}
       >
-        {/* Color accent left indicator bar */}
-        <View style={[styles.cardAccentBar, { backgroundColor: accentColor }]} />
+        {/* Left Status Circle Icon */}
+        <View
+          style={[
+            styles.statusCircle,
+            isDone ? styles.statusCircleDone : isMissed ? styles.statusCircleMissed : styles.statusCircleActive,
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusCircleText,
+              isDone ? styles.statusCircleTextDone : isMissed ? styles.statusCircleTextMissed : styles.statusCircleTextActive,
+            ]}
+          >
+            {isDone ? '✓' : isMissed ? '✕' : '⏳'}
+          </Text>
+        </View>
 
-        <View style={styles.cardInner}>
-          {/* Header Row: Priority Chip & Status Badge */}
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardHeaderLeft}>
-              <PriorityChip priority={item.priority} size="sm" />
-              <View style={[styles.statusBadge, statusBadgeStyle]}>
-                <Text style={[styles.statusBadgeText, statusTextStyle]}>{statusBadgeText}</Text>
-              </View>
-            </View>
-            <Text style={styles.cardChevron}>›</Text>
+        {/* Task Details */}
+        <View style={styles.cardDetails}>
+          <View style={styles.cardTopRow}>
+            <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <PriorityChip priority={item.priority} size="sm" />
           </View>
 
-          {/* Title */}
-          <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
-            {item.title}
-          </Text>
-
-          {/* Description */}
           {item.description ? (
-            <View style={styles.descBox}>
-              <Text style={styles.taskDescription} numberOfLines={2}>
-                📝 {item.description}
-              </Text>
-            </View>
+            <Text style={styles.taskDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
           ) : null}
 
-          {/* Footer Metadata */}
-          <View style={styles.cardFooter}>
-            {createdFormatted ? (
-              <View style={styles.timeTag}>
-                <Text style={styles.timeTagLabel}>{isHinglish ? 'Banaya:' : 'Created:'}</Text>
-                <Text style={styles.timeTagValue}>{createdFormatted}</Text>
-              </View>
-            ) : null}
+          <View style={styles.cardMetaRow}>
+            <View
+              style={[
+                styles.statusTag,
+                isDone ? styles.statusTagDone : isMissed ? styles.statusTagMissed : styles.statusTagActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusTagText,
+                  isDone ? styles.statusTagTextDone : isMissed ? styles.statusTagTextMissed : styles.statusTagTextActive,
+                ]}
+              >
+                {statusBadgeText}
+              </Text>
+            </View>
 
             {scheduleFormatted ? (
-              <View style={styles.timeTag}>
-                <Text style={styles.timeTagLabel}>{isHinglish ? 'Schedule:' : 'Due:'}</Text>
-                <Text style={styles.timeTagValue}>⏰ {scheduleFormatted}</Text>
-              </View>
+              <Text style={styles.scheduleMetaText}>⏰ {scheduleFormatted}</Text>
+            ) : createdFormatted ? (
+              <Text style={styles.scheduleMetaText}>📅 {createdFormatted}</Text>
             ) : null}
           </View>
         </View>
+
+        <Text style={styles.cardChevron}>›</Text>
       </TouchableOpacity>
     );
   };
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      {/* Top Branding & Navigation Bar (Exact App Signature Scheme) */}
+      {/* Top Header matching Mockup Screen 8 */}
       <View style={styles.topBrandBar}>
         <View style={styles.topBrandLeft}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('TodayTab')}
             activeOpacity={0.7}
             accessibilityLabel="Go back"
           >
-            <Text style={styles.backBtnIcon}>←</Text>
+            <Text style={styles.backBtnIcon}>‹</Text>
           </TouchableOpacity>
-          <BrandLogo size={32} showText={false} />
-          <Text style={styles.brandBarTitle}>
-            <Text style={{ color: '#0F172A' }}>Task</Text>
-            <Text style={{ color: '#EAB308' }}>Alert</Text>
-          </Text>
+          <Text style={styles.historyScreenHeading}>Task History</Text>
         </View>
 
         <TouchableOpacity
@@ -349,116 +342,19 @@ export const TaskHistoryScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            colors={['#EA580C']}
-            tintColor="#EA580C"
+            colors={['#0D5C3A']}
+            tintColor="#0D5C3A"
           />
         }
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            {/* Warm Sunrise Header Card */}
-            <View style={styles.heroWarmCard}>
-              <View style={styles.heroWarmHeaderRow}>
-                <View style={styles.heroWarmIconWrap}>
-                  <Text style={styles.heroWarmIcon}>📜</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.heroWarmTitle}>
-                    {isHinglish ? 'Task History & Records' : 'Task History & Records'}
-                  </Text>
-                  <Text style={styles.heroWarmSubtitle}>
-                    {isHinglish ? 'Aapke sabhi banaye gaye tasks ka safe record' : 'Permanent database archive of all created tasks'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Cloud Sync Status Badge */}
-              <View style={styles.cloudSyncBadge}>
-                <Text style={styles.cloudSyncDot}>●</Text>
-                <Text style={styles.cloudSyncText}>
-                  {isHinglish
-                    ? `Cloud & Database Synced · Kul ${stats.totalCreated} Kaam`
-                    : `Cloud & Database Synced · ${stats.totalCreated} Total Tasks`}
-                </Text>
-              </View>
-            </View>
-
-            {/* Interactive KPI Stat Cards Grid */}
-            <View style={styles.statsGrid}>
-              <TouchableOpacity
-                style={[styles.statCard, activeTab === 'all' && styles.statCardSelected]}
-                onPress={() => {
-                  setActiveTab('all');
-                  setDisplayLimit(10);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.statIconBox, { backgroundColor: '#FEF3C7' }]}>
-                  <Text style={styles.statIcon}>📝</Text>
-                </View>
-                <Text style={styles.statNumber}>{stats.totalCreated}</Text>
-                <Text style={styles.statLabel}>{isHinglish ? 'Total' : 'Total'}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.statCard, activeTab === 'done' && styles.statCardSelected]}
-                onPress={() => {
-                  setActiveTab('done');
-                  setDisplayLimit(10);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.statIconBox, { backgroundColor: '#DCFCE7' }]}>
-                  <Text style={[styles.statIcon, { color: '#15803D' }]}>✓</Text>
-                </View>
-                <Text style={[styles.statNumber, { color: '#15803D' }]}>
-                  {stats.totalCompleted}
-                </Text>
-                <Text style={styles.statLabel}>{isHinglish ? 'Pura' : 'Done'}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.statCard, activeTab === 'pending' && styles.statCardSelected]}
-                onPress={() => {
-                  setActiveTab('pending');
-                  setDisplayLimit(10);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.statIconBox, { backgroundColor: '#E0F2FE' }]}>
-                  <Text style={styles.statIcon}>⏳</Text>
-                </View>
-                <Text style={[styles.statNumber, { color: '#0284C7' }]}>
-                  {stats.activeTasks}
-                </Text>
-                <Text style={styles.statLabel}>{isHinglish ? 'Active' : 'Active'}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.statCard, activeTab === 'missed' && styles.statCardSelected]}
-                onPress={() => {
-                  setActiveTab('missed');
-                  setDisplayLimit(10);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.statIconBox, { backgroundColor: '#FEE2E2' }]}>
-                  <Text style={styles.statIcon}>✗</Text>
-                </View>
-                <Text style={[styles.statNumber, { color: '#DC2626' }]}>
-                  {stats.totalMissed}
-                </Text>
-                <Text style={styles.statLabel}>{isHinglish ? 'Missed' : 'Missed'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Search Bar & Prominent Filter Button Row */}
+            {/* Search Bar & Dedicated Filter Button Row */}
             <View style={styles.searchAndFilterRow}>
-              {/* Live Search Input */}
               <View style={styles.searchContainer}>
                 <Text style={styles.searchIcon}>🔍</Text>
                 <TextInput
                   style={styles.searchInput}
-                  placeholder={isHinglish ? 'Kaam ke naam ya note se khojein...' : 'Search past tasks by title or notes...'}
+                  placeholder={isHinglish ? 'Kaam ke naam ya note se khojein...' : 'Search past tasks...'}
                   placeholderTextColor="#94A3B8"
                   value={searchQuery}
                   onChangeText={(text) => {
@@ -475,7 +371,6 @@ export const TaskHistoryScreen: React.FC = () => {
                 )}
               </View>
 
-              {/* Dedicated Filter Button */}
               <TouchableOpacity
                 style={[
                   styles.filterButton,
@@ -496,8 +391,44 @@ export const TaskHistoryScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Active Filters Pill Strip (if any filter is selected) */}
-            {activeFilterCount > 0 && (
+            {/* Single Unified Segmented Status Tabs (NO DUPLICATE PILLS) */}
+            <View style={styles.tabsRow}>
+              {(
+                [
+                  { id: 'all', label: isHinglish ? 'Sabhi' : 'All', count: stats.totalCreated },
+                  { id: 'pending', label: isHinglish ? 'Active' : 'Active', count: stats.activeTasks },
+                  { id: 'done', label: isHinglish ? 'Pura Hua' : 'Completed', count: stats.totalCompleted },
+                  { id: 'missed', label: isHinglish ? 'Chhoot Gaya' : 'Missed', count: stats.totalMissed },
+                ] as const
+              ).map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <TouchableOpacity
+                    key={tab.id}
+                    onPress={() => {
+                      setActiveTab(tab.id);
+                      setDisplayLimit(10);
+                    }}
+                    activeOpacity={0.85}
+                    style={styles.tabTouch}
+                  >
+                    <View style={[styles.tabBtn, isActive ? styles.tabBtnActive : styles.tabBtnInactive]}>
+                      <Text style={[styles.tabBtnText, isActive ? styles.tabBtnTextActive : styles.tabBtnTextInactive]}>
+                        {tab.label}
+                      </Text>
+                      <View style={[styles.tabBadge, isActive ? styles.tabBadgeActive : styles.tabBadgeInactive]}>
+                        <Text style={[styles.tabBadgeText, isActive ? styles.tabBadgeTextActive : styles.tabBadgeTextInactive]}>
+                          {tab.count}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Active Filters Pill Strip (if date range or priority filter selected from modal) */}
+            {activeFilterCount > 0 && (timeframeFilter !== 'all' || priorityFilter !== 'all' || searchQuery.trim().length > 0) && (
               <View style={styles.activeFilterChipsRow}>
                 <Text style={styles.activeFilterLabel}>
                   {isHinglish ? 'Active Filters:' : 'Active Filters:'}
@@ -548,61 +479,6 @@ export const TaskHistoryScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             )}
-
-            {/* Segmented Status Tab Pills */}
-            <View style={styles.tabsRow}>
-              {(
-                [
-                  { id: 'all', label: isHinglish ? 'Sabhi' : 'All', count: stats.totalCreated },
-                  { id: 'done', label: isHinglish ? 'Pura Hua' : 'Completed', count: stats.totalCompleted },
-                  { id: 'pending', label: isHinglish ? 'Active' : 'Active', count: stats.activeTasks },
-                  { id: 'missed', label: isHinglish ? 'Missed' : 'Missed', count: stats.totalMissed },
-                ] as const
-              ).map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <TouchableOpacity
-                    key={tab.id}
-                    onPress={() => {
-                      setActiveTab(tab.id);
-                      setDisplayLimit(10);
-                    }}
-                    activeOpacity={0.85}
-                    style={styles.tabTouch}
-                  >
-                    <View style={[styles.tabBtn, isActive ? styles.tabBtnActive : styles.tabBtnInactive]}>
-                      <Text style={[styles.tabBtnText, isActive ? styles.tabBtnTextActive : styles.tabBtnTextInactive]}>
-                        {tab.label}
-                      </Text>
-                      <View style={[styles.tabBadge, isActive ? styles.tabBadgeActive : styles.tabBadgeInactive]}>
-                        <Text style={[styles.tabBadgeText, isActive ? styles.tabBadgeTextActive : styles.tabBadgeTextInactive]}>
-                          {tab.count}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* 10-Task View Notice & Timeline Header Row */}
-            <View style={styles.timelineHeaderRow}>
-              <View style={styles.timelineHeadingGroup}>
-                <Text style={styles.timelineHeading}>
-                  {isHinglish ? '🕒 Pichhle Kaam (Past Tasks)' : '🕒 Past Tasks'}
-                </Text>
-                <Text style={styles.timelineSubheading}>
-                  {isHinglish
-                    ? `Navinatam se purana · Pehle 10 task dikhaye ja rahe hain`
-                    : `Sorted newest to oldest · Showing latest 10 tasks`}
-                </Text>
-              </View>
-              <View style={styles.countPill}>
-                <Text style={styles.countPillText}>
-                  {displayedTasks.length} / {filteredTasks.length}
-                </Text>
-              </View>
-            </View>
           </View>
         }
         ListFooterComponent={
@@ -1111,7 +987,7 @@ export default TaskHistoryScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#EDF2F4', // User's app signature background
+    backgroundColor: '#F8FAF8',
   },
   topBrandBar: {
     flexDirection: 'row',
@@ -1126,16 +1002,23 @@ const styles = StyleSheet.create({
   topBrandLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
+  historyScreenHeading: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginLeft: 4,
+  },
+
   backBtn: {
     padding: 6,
     marginRight: 2,
   },
   backBtnIcon: {
-    fontSize: 22,
+    fontSize: 26,
     color: '#0F172A',
-    fontWeight: '700',
+    fontWeight: '400',
   },
   brandBarTitle: {
     fontSize: 20,
@@ -1395,7 +1278,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tabBtnActive: {
-    backgroundColor: '#EA580C', // User's vibrant accent button
+    backgroundColor: '#0D5C3A', // TaskAlert Forest Green
     ...shadows.soft,
   },
   tabBtnInactive: {
@@ -1434,109 +1317,68 @@ const styles = StyleSheet.create({
   tabBadgeTextInactive: {
     color: '#64748B',
   },
-  timelineHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-    paddingHorizontal: 2,
-  },
-  timelineHeadingGroup: {
-    gap: 1,
-  },
-  timelineHeading: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  timelineSubheading: {
-    fontSize: 10.5,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  countPill: {
-    backgroundColor: '#FFFBEB',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  countPillText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#B45309',
-  },
   taskCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
+    padding: 14,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    ...shadows.card,
+    gap: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  cardAccentBar: {
-    width: 4,
+  taskCardDone: {
+    backgroundColor: '#FAFDFB',
+    borderColor: '#DCFCE7',
   },
-  cardInner: {
+  statusCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusCircleDone: {
+    backgroundColor: '#DCFCE7',
+  },
+  statusCircleMissed: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusCircleActive: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusCircleText: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  statusCircleTextDone: {
+    color: '#15803D',
+  },
+  statusCircleTextMissed: {
+    color: '#DC2626',
+  },
+  statusCircleTextActive: {
+    color: '#D97706',
+  },
+  cardDetails: {
     flex: 1,
-    padding: 13,
-    gap: 6,
+    gap: 4,
   },
-  cardHeaderRow: {
+  cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
-    flexWrap: 'wrap',
-  },
-  cardChevron: {
-    fontSize: 18,
-    color: '#94A3B8',
-    fontWeight: '700',
-    marginTop: -2,
-  },
-  statusBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: radius.pill,
-  },
-  badgeDone: {
-    backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-  },
-  badgeMissed: {
-    backgroundColor: '#FEE2E2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  badgeActive: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  badgeTextDone: {
-    color: '#15803D',
-  },
-  badgeTextMissed: {
-    color: '#DC2626',
-  },
-  badgeTextActive: {
-    color: '#EA580C',
   },
   taskTitle: {
-    fontSize: 14.5,
+    flex: 1,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
     lineHeight: 20,
@@ -1545,43 +1387,54 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#94A3B8',
   },
-  descBox: {
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
   taskDescription: {
-    fontSize: 11.5,
-    color: '#475569',
-    lineHeight: 16,
+    fontSize: 12.5,
+    color: '#64748B',
+    lineHeight: 17,
   },
-  cardFooter: {
+  cardMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
     gap: 8,
-    flexWrap: 'wrap',
+    marginTop: 2,
   },
-  timeTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  statusTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  timeTagLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#94A3B8',
+  statusTagDone: {
+    backgroundColor: '#DCFCE7',
   },
-  timeTagValue: {
+  statusTagMissed: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusTagActive: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusTagText: {
     fontSize: 10.5,
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: '800',
+  },
+  statusTagTextDone: {
+    color: '#15803D',
+  },
+  statusTagTextMissed: {
+    color: '#DC2626',
+  },
+  statusTagTextActive: {
+    color: '#B45309',
+  },
+  scheduleMetaText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  cardChevron: {
+    fontSize: 20,
+    color: '#CBD5E1',
+    fontWeight: '600',
+    marginLeft: 2,
   },
   paginationCard: {
     backgroundColor: '#FFFFFF',

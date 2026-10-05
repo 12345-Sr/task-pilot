@@ -49,6 +49,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     isPremium,
     setPremiumStatusVisible,
     user,
+    isAuthenticated,
+    isGuest,
   } = useAppStore();
   const isHinglish = language === 'hi';
 
@@ -79,6 +81,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       return;
     }
     if (isVisible) {
+      if (!isAuthenticated || isGuest) {
+        setLoadingOrder(false);
+        return;
+      }
       createPaymentOrder();
     } else {
       if (pollTimerRef.current) {
@@ -314,19 +320,20 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
             style={styles.closeBtn}
             onPress={handleClose}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close"
           >
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
           <View style={styles.headerBrand}>
-            <BrandLogo size={24} showText={false} />
+            <BrandLogo size={22} showText={false} />
             <Text style={styles.headerBrandTitle}>
-              <Text style={{ color: colors.textPrimary }}>Task</Text>
-              <Text style={{ color: colors.warning }}>Alert</Text>
-              <Text style={{ color: colors.primary, fontWeight: '900' }}> PRO</Text>
+              <Text style={{ color: '#0F172A' }}>Task</Text>
+              <Text style={{ color: '#EAB308' }}>Alert</Text>
+              <Text style={{ color: '#0D5C3A', fontWeight: '900' }}> PRO</Text>
             </Text>
           </View>
           <View style={styles.shieldPill}>
-            <Text style={styles.shieldPillText}>🛡️ Razorpay</Text>
+            <Text style={styles.shieldPillText}>🔒 Secure</Text>
           </View>
         </View>
 
@@ -334,92 +341,60 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom, 24) + 40 },
+            { paddingBottom: Math.max(insets.bottom, 24) + 30 },
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Banner */}
-          <View style={styles.heroCard}>
-            <View style={styles.crownBadge}>
+          {/* Clean Hero matching Screen 10 */}
+          <View style={styles.heroSection}>
+            <View style={styles.crownCircle}>
               <Text style={styles.crownEmoji}>👑</Text>
             </View>
-            <Text style={styles.heroHeading}>
-              {isHinglish ? 'TaskAlert Pro Unlock Karein' : 'Unlock TaskAlert Pro'}
-            </Text>
-            <Text style={styles.heroSub}>
+            <Text style={styles.heroTitle}>Go Premium</Text>
+            <Text style={styles.heroSubtitle}>
               {isHinglish
-                ? 'Unlimited task reminders, proactive advance audio alerts aur poora power paayein.'
-                : 'Unlimited task reminders, proactive advance alerts, and complete productivity.'}
+                ? 'Behtar Focus. Har Kaam Time Par.'
+                : 'More Features. More Productivity.'}
             </Text>
-
-            {/* Price Tag */}
-            <View style={styles.priceContainer}>
-              <View style={styles.priceRow}>
-                <Text style={styles.currencySymbol}>₹</Text>
-                <Text style={styles.priceNumber}>399</Text>
-                <Text style={styles.pricePeriod}>{isHinglish ? ' / mahina' : ' / month'}</Text>
-              </View>
-              <View style={styles.offerBadge}>
-                <Text style={styles.offerBadgeText}>
-                  🔥 50% LIMITED DISCOUNT
-                </Text>
-              </View>
-            </View>
           </View>
 
-          {/* SINGLE RAZORPAY PAYMENT CARD (Opens on Chrome) */}
-          <View style={styles.paymentCard}>
-            <View style={styles.cardHeaderRow}>
-              <View style={styles.trustTag}>
-                <Text style={styles.trustTagText}>🛡️ RAZORPAY OFFICIAL GATEWAY</Text>
+          {/* Features Card matching Screen 10 */}
+          <View style={styles.featuresCard}>
+            {[
+              isHinglish ? 'Unlimited Tasks aur Daily Reminders' : 'Unlimited Tasks & Daily Reminders',
+              isHinglish ? 'Advance Audio Alerts aur Voice Alarms' : 'Advanced Audio Alerts & Ringing Alarms',
+              isHinglish ? 'Poora Task History aur Safe Records' : 'Complete Task History & Archive Records',
+              isHinglish ? '30 Din Ka Monthly Task Repeat' : '30-Day Monthly Task Recurring',
+              isHinglish ? 'Priority Support aur Ad-Free Experience' : 'Priority 24/7 Support & Ad-Free',
+            ].map((feat, idx) => (
+              <View key={idx} style={styles.featureRow}>
+                <View style={styles.featureCheckCircle}>
+                  <Text style={styles.featureCheckText}>✓</Text>
+                </View>
+                <Text style={styles.featureItemText}>{feat}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Price & Checkout Card matching Screen 10 */}
+          <View style={styles.priceCardMain}>
+            <View style={styles.priceHeaderRow}>
+              <View>
+                <View style={styles.priceValueRow}>
+                  <Text style={styles.priceCurrency}>₹</Text>
+                  <Text style={styles.priceNumber}>399</Text>
+                  <Text style={styles.pricePeriodText}>{isHinglish ? ' / mahina' : ' / month'}</Text>
+                </View>
+                <Text style={styles.priceCancelAnytimeText}>
+                  {isHinglish ? 'Cancel anytime • Turant unlock' : 'Cancel anytime • Instant unlock'}
+                </Text>
+              </View>
+              <View style={styles.discountBadge}>
+                <Text style={styles.discountBadgeText}>50% OFF</Text>
               </View>
             </View>
 
-            <Text style={styles.cardTitle}>
-              {isHinglish ? 'Sabhi Payment Tarike Accepted Hain' : 'All Payment Methods Accepted'}
-            </Text>
-            <Text style={styles.cardSubtitle}>
-              {isHinglish
-                ? 'Chrome mein Razorpay khulega jisme Debit/Credit Card, UPI, Net Banking aur Wallets automatically available rahenge.'
-                : 'Opens in Chrome where all payment options (Cards, UPI, Net Banking, Wallets) are automatically ready.'}
-            </Text>
-
-            {/* Methods 2x2 Grid */}
-            <View style={styles.methodsGrid}>
-              <View style={styles.methodBox}>
-                <Text style={styles.methodIcon}>💳</Text>
-                <View style={styles.methodTextWrap}>
-                  <Text style={styles.methodName}>Cards</Text>
-                  <Text style={styles.methodDetail}>Debit / Credit (Visa, RuPay, Master)</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodBox}>
-                <Text style={styles.methodIcon}>📱</Text>
-                <View style={styles.methodTextWrap}>
-                  <Text style={styles.methodName}>UPI</Text>
-                  <Text style={styles.methodDetail}>GPay, PhonePe, Paytm, Any UPI</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodBox}>
-                <Text style={styles.methodIcon}>🏦</Text>
-                <View style={styles.methodTextWrap}>
-                  <Text style={styles.methodName}>Net Banking</Text>
-                  <Text style={styles.methodDetail}>SBI, HDFC, ICICI & 50+ Banks</Text>
-                </View>
-              </View>
-
-              <View style={styles.methodBox}>
-                <Text style={styles.methodIcon}>👛</Text>
-                <View style={styles.methodTextWrap}>
-                  <Text style={styles.methodName}>Wallets</Text>
-                  <Text style={styles.methodDetail}>Paytm, Mobikwik, PayLater</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* ONLY ONE Single Action Button */}
+            {/* Direct Razorpay Checkout Action */}
             <TouchableOpacity
               style={[styles.primaryPayBtn, (launchingGateway || loadingOrder) && styles.btnDisabled]}
               activeOpacity={0.88}
@@ -427,127 +402,48 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
               disabled={launchingGateway || loadingOrder}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#3B82F6']}
+                colors={['#0D5C3A', '#15803D']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.primaryPayBtnGradient}
               >
                 {launchingGateway || loadingOrder ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <ActivityIndicator color={colors.surface} size="small" />
+                    <ActivityIndicator color="#FFFFFF" size="small" />
                     <Text style={styles.primaryPayBtnText}>
-                      {isHinglish ? 'Razorpay Khul Raha Hai...' : 'Opening Razorpay...'}
+                      {isHinglish ? 'Razorpay Khul Raha Hai...' : 'Opening Checkout...'}
                     </Text>
                   </View>
                 ) : (
-                  <>
-                    <Text style={styles.primaryPayBtnText}>
-                      💳 Pay ₹399 with Razorpay
-                    </Text>
-                    <Text style={styles.primaryPayBtnSub}>
-                      {isHinglish
-                        ? '⚡ Chrome par kholein • Sabhi payment options enabled'
-                        : '⚡ Open in Chrome to pay • All payment methods enabled'}
-                    </Text>
-                  </>
+                  <Text style={styles.primaryPayBtnText}>
+                    {isHinglish ? '💳 Pay ₹399 with Razorpay' : '💳 Pay ₹399 with Razorpay'}
+                  </Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
+
+            <Text style={styles.secureGatewayNote}>
+              🔒 100% Safe Checkout via Razorpay • UPI, Cards & NetBanking
+            </Text>
           </View>
 
-          {/* Real-time Status Radar & Manual Verify Button */}
-          <View style={styles.statusSection}>
-            <View style={styles.radarCard}>
-              <View style={styles.radarDotPulse}>
-                <View style={styles.radarDotInner} />
-              </View>
-              <Text style={styles.radarText}>
+          {/* Verification Footnote if user paid in browser */}
+          <TouchableOpacity
+            style={styles.verifyLinkBtn}
+            onPress={handleVerifyPayment}
+            activeOpacity={0.7}
+            disabled={verifying}
+          >
+            {verifying ? (
+              <ActivityIndicator color="#0D5C3A" size="small" />
+            ) : (
+              <Text style={styles.verifyLinkText}>
                 {isHinglish
-                  ? 'Auto-Detection Active: Chrome par payment karte hi Pro turant unlock ho jayega.'
-                  : 'Auto-Detection Active: Pro unlocks automatically once payment completes.'}
+                  ? 'Payment kar diya hai? Status verify karne ke liye yahan tap karein ›'
+                  : 'Already paid? Tap here to verify payment status ›'}
               </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.verifyButton, verifying && styles.btnDisabled]}
-              activeOpacity={0.85}
-              onPress={handleVerifyPayment}
-              disabled={verifying}
-            >
-              {verifying ? (
-                <ActivityIndicator color={colors.primaryOrange} size="small" />
-              ) : (
-                <Text style={styles.verifyButtonText}>
-                  {isHinglish ? '🔄 Payment Status Check Karein (Verify)' : '🔄 Check Payment Status (Verify)'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* What You Get with Pro */}
-          <View style={styles.benefitsCard}>
-            <Text style={styles.benefitsHeading}>
-              {isHinglish ? 'Pro Subscription Ke Fayde' : 'What You Get With Pro'}
-            </Text>
-
-            <View style={styles.featureItem}>
-              <Text style={styles.featureCheck}>✓</Text>
-              <View style={styles.featureInfo}>
-                <Text style={styles.featureTitle}>Unlimited Daily Tasks</Text>
-                <Text style={styles.featureDesc}>
-                  {isHinglish
-                    ? 'Bina kisi 3-task limit ke har roz naye kaam banayein aur schedule karein.'
-                    : 'Create and schedule unlimited tasks daily without any limits.'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.featureItem}>
-              <Text style={styles.featureCheck}>✓</Text>
-              <View style={styles.featureInfo}>
-                <Text style={styles.featureTitle}>2 Proactive Advance Audio Alerts</Text>
-                <Text style={styles.featureDesc}>
-                  {isHinglish
-                    ? 'Har kaam ke 2 alerts: 10 minute pehle warning aur exact samay par notification.'
-                    : '2 audio alerts for every task: 10 minutes prior warning and at deadline.'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.featureItem}>
-              <Text style={styles.featureCheck}>✓</Text>
-              <View style={styles.featureInfo}>
-                <Text style={styles.featureTitle}>Repeat Tasks For Whole Month</Text>
-                <Text style={styles.featureDesc}>
-                  {isHinglish
-                    ? 'Ek tap me pure 30 dino ke liye recurring tasks schedule karein.'
-                    : 'Schedule tasks once to automatically repeat daily for all 30 days.'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.featureItem}>
-              <Text style={styles.featureCheck}>✓</Text>
-              <View style={styles.featureInfo}>
-                <Text style={styles.featureTitle}>Daily Streak & Analytics</Text>
-                <Text style={styles.featureDesc}>
-                  {isHinglish
-                    ? 'Apna daily discipline banayein aur progress track karein.'
-                    : 'Build consistent habits and track your completion streaks.'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Trust Footer */}
-          <View style={styles.trustBanner}>
-            <Text style={styles.trustIcon}>🔒</Text>
-            <Text style={styles.trustText}>
-              {isHinglish
-                ? 'Razorpay Certified 256-Bit SSL Secured Payment. 30 din ki validity, auto-renew nahi hota.'
-                : 'Razorpay Certified 256-Bit SSL Secured Payment. 30 days validity, no auto-renewal.'}
-            </Text>
-          </View>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -614,295 +510,179 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
   },
-  heroCard: {
-    backgroundColor: colors.headerWarm,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+  heroSection: {
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FDE68A',
-    marginBottom: spacing.md,
-    ...shadows.card,
+    marginBottom: 20,
   },
-  crownBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.softYellow,
+  crownCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#DCFCE7',
     borderWidth: 2,
-    borderColor: colors.mediumYellow,
+    borderColor: '#86EFAC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 10,
   },
   crownEmoji: {
-    fontSize: 28,
+    fontSize: 32,
   },
-  heroHeading: {
-    ...typography.h2,
+  heroTitle: {
+    fontSize: 24,
     fontWeight: '900',
-    color: colors.textPrimary,
-    textAlign: 'center',
+    color: '#0F172A',
     marginBottom: 4,
-  },
-  heroSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.xs,
   },
-  priceContainer: {
+  heroSubtitle: {
+    fontSize: 13.5,
+    color: '#64748B',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  featuresCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 18,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  featureRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 12,
   },
-  priceRow: {
+  featureCheckCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureCheckText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  featureItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    flex: 1,
+  },
+  priceCardMain: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: '#DCFCE7',
+    marginBottom: 14,
+    shadowColor: '#0D5C3A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  priceHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  priceValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  currencySymbol: {
-    fontSize: 24,
+  priceCurrency: {
+    fontSize: 22,
     fontWeight: '800',
-    color: colors.primaryOrange,
+    color: '#EAB308',
   },
   priceNumber: {
-    fontSize: 38,
+    fontSize: 34,
     fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: -1,
+    color: '#0F172A',
+    letterSpacing: -0.5,
+    marginLeft: 2,
   },
-  pricePeriod: {
-    ...typography.bodySecondary,
-    color: colors.textSecondary,
+  pricePeriodText: {
+    fontSize: 14,
     fontWeight: '600',
+    color: '#64748B',
     marginLeft: 4,
   },
-  offerBadge: {
-    backgroundColor: colors.softRealRed,
-    borderColor: '#FCA5A5',
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  offerBadgeText: {
-    fontSize: 10.5,
-    color: colors.realRed,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  paymentCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    ...shadows.card,
-  },
-  cardHeaderRow: {
-    marginBottom: spacing.xs,
-  },
-  trustTag: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.goldSoft,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  trustTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#92400E',
-    letterSpacing: 0.5,
-  },
-  cardTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginTop: 4,
-    marginBottom: 2,
-  },
-  cardSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    lineHeight: 16,
-    marginBottom: spacing.md,
-  },
-  methodsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  methodBox: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.surfaceSecondary,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  methodIcon: {
-    fontSize: 18,
-  },
-  methodTextWrap: {
-    flex: 1,
-  },
-  methodName: {
+  priceCancelAnytimeText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: colors.textPrimary,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
   },
-  methodDetail: {
-    fontSize: 9.5,
-    color: colors.textSecondary,
-    marginTop: 1,
+  discountBadge: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECDD3',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  discountBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#DC2626',
+    letterSpacing: 0.4,
   },
   primaryPayBtn: {
-    borderRadius: radius.md,
+    borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: colors.primaryPurple,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#0D5C3A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryPayBtnGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
   },
   primaryPayBtnText: {
     fontSize: 16,
-    fontWeight: '900',
-    color: colors.surface,
-    letterSpacing: 0.2,
-  },
-  primaryPayBtnSub: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFDF7',
-    marginTop: 2,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   btnDisabled: {
     opacity: 0.65,
   },
-  statusSection: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-    ...shadows.card,
-  },
-  radarCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.softGreen,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-  },
-  radarDotPulse: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#BBF7D0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radarDotInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.successGreen,
-  },
-  radarText: {
-    flex: 1,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#166534',
-    lineHeight: 15,
-  },
-  verifyButton: {
-    backgroundColor: colors.surfaceSecondary,
-    paddingVertical: 13,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.primaryOrange,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  verifyButtonText: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: colors.primaryOrange,
-  },
-  benefitsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    gap: spacing.md,
-    ...shadows.card,
-  },
-  benefitsHeading: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  featureCheck: {
-    fontSize: 16,
-    color: colors.successGreen,
-    fontWeight: 'bold',
-    marginTop: 1,
-  },
-  featureInfo: {
-    flex: 1,
-  },
-  featureTitle: {
-    ...typography.bodyPrimary,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  featureDesc: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  trustBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: spacing.sm,
-  },
-  trustIcon: {
-    fontSize: 14,
-  },
-  trustText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+  secureGatewayNote: {
+    fontSize: 11.5,
+    color: '#64748B',
     textAlign: 'center',
+    marginTop: 10,
+    fontWeight: '500',
+  },
+  verifyLinkBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  verifyLinkText: {
+    fontSize: 12.5,
+    color: '#0D5C3A',
+    fontWeight: '700',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
 });
 

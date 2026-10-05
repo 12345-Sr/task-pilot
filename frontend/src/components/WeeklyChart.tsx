@@ -42,6 +42,15 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({
         const itemCompleted = item.completed || 0;
         const heightPct = itemCompleted > 0 ? Math.max((itemCompleted / maxCompleted) * 65, 14) : 6;
         const isBestDay = itemCompleted === maxCompleted && itemCompleted > 0;
+        const isMissed = (item as any).status === 'missed' || (item.active && itemCompleted === 0 && (item as any).missed);
+        const hasZeroOnActive = item.active && itemCompleted === 0 && item.total > 0;
+        const barColor = isMissed || hasZeroOnActive
+          ? '#EF4444' // Vibrant Urgent Red for Missed Days
+          : itemCompleted === 0
+          ? '#E2E8F0'
+          : isBestDay
+          ? colors.successGreen
+          : '#86EFAC';
 
         return (
           <View key={index} style={styles.column}>
@@ -50,17 +59,13 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({
                 style={[
                   styles.barFill,
                   {
-                    height: heightPct,
-                    backgroundColor: itemCompleted === 0
-                      ? '#E2E8F0'
-                      : isBestDay
-                      ? colors.successGreen
-                      : '#86EFAC',
+                    height: (isMissed || hasZeroOnActive) ? 22 : heightPct,
+                    backgroundColor: barColor,
                   },
                 ]}
               />
             </View>
-            <Text style={[styles.dayLabel, isBestDay && styles.dayLabelBest]}>
+            <Text style={[styles.dayLabel, isBestDay && styles.dayLabelBest, (isMissed || hasZeroOnActive) && { color: '#EF4444', fontWeight: '800' }]}>
               {item.day}
             </Text>
           </View>

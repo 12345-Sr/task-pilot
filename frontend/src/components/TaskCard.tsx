@@ -56,11 +56,20 @@ export const TaskCard: React.FC<TaskCardProps> = (props) => {
       <View style={styles.topRow}>
         {/* Checkbox */}
         <TouchableOpacity
-          activeOpacity={0.7}
-          style={[styles.checkbox, completed && styles.checkboxCompleted]}
+          activeOpacity={isMissed ? 1 : 0.7}
+          disabled={isMissed}
+          style={[
+            styles.checkbox,
+            completed && styles.checkboxCompleted,
+            isMissed && { borderColor: '#EF4444', backgroundColor: '#FEE2E2' },
+          ]}
           onPress={handleToggle}
         >
-          {completed ? <Text style={styles.checkIcon}>✓</Text> : null}
+          {completed ? (
+            <Text style={styles.checkIcon}>✓</Text>
+          ) : isMissed ? (
+            <Text style={[styles.checkIcon, { color: '#DC2626', fontSize: 11 }]}>✗</Text>
+          ) : null}
         </TouchableOpacity>
 
         {/* Title & Deadline */}
@@ -154,22 +163,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
+    backgroundColor: '#FFFFFF',
   },
   checkboxCompleted: {
-    backgroundColor: colors.successGreen,
-    borderColor: colors.successGreen,
+    backgroundColor: '#0D5C3A',
+    borderColor: '#0D5C3A',
   },
   checkIcon: {
-    color: colors.white,
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '900',
   },
   content: {

@@ -5,70 +5,7 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-let tasksDatabase: Task[] = [
-  {
-    id: 'task_001',
-    title: 'Client ko report bhejna',
-    description: 'Report client ko mail karni hai.',
-    date: todayStr(),
-    time: '6:00 PM',
-    priority: 'URGENT',
-    completed: false,
-    reminderMinutes: 30,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'task_002',
-    title: 'Team meeting',
-    description: 'Weekly sprint review on Google Meet.',
-    date: todayStr(),
-    time: '10:30 AM',
-    priority: 'MEDIUM',
-    completed: true,
-    completedAt: new Date().toISOString(),
-    reminderMinutes: 10,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'task_003',
-    title: 'Invoice check karna',
-    description: 'Vendor invoice cross verification with accounting.',
-    date: todayStr(),
-    time: '4:00 PM',
-    priority: 'NORMAL',
-    completed: false,
-    reminderMinutes: 30,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'task_004',
-    title: 'Presentation prepare karna',
-    description: 'Product roadmap slide deck.',
-    date: todayStr(),
-    time: '11:00 AM',
-    priority: 'URGENT',
-    completed: false,
-    reminderMinutes: 60,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'task_005',
-    title: 'Client follow-up',
-    description: 'Check in with Rohit regarding feedback.',
-    date: todayStr(),
-    time: '3:00 PM',
-    priority: 'MEDIUM',
-    completed: true,
-    completedAt: new Date().toISOString(),
-    reminderMinutes: 15,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+let tasksDatabase: Task[] = [];
 
 const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 

@@ -1,14 +1,14 @@
 export const colors = {
-  // Panel 10 Mockup Exact Base
-  background: '#EDF2F4',
-  bg: '#EDF2F4',
+  // TaskAlert Design System (Mockup Exact Scheme)
+  background: '#F8FAF8',
+  bg: '#F8FAF8',
   surface: '#FFFFFF',
   card: '#FFFFFF',
   white: '#FFFFFF',
-  surfaceSecondary: '#F8FAFC',
-  inputBg: '#F8FAFC', // Clean modern soft slate
-  headerWarm: '#FFF9F0',
-  headerWarmAlt: '#FAF5EB',
+  surfaceSecondary: '#F1F5F2',
+  inputBg: '#FFFFFF', // Clean modern crisp card inputs with soft border
+  headerWarm: '#F0FDF4',
+  headerWarmAlt: '#DCFCE7',
 
   // Typography
   textPrimary: '#0F172A',
@@ -17,50 +17,56 @@ export const colors = {
   secondaryText: '#64748B',
   textMuted: '#94A3B8',
 
-  // Brand Accents - Modern Purple-to-Blue Gradient Scheme
-  primary: '#6366F1',
-  primaryPurple: '#8B5CF6',
-  primaryBlue: '#3B82F6',
-  buttonGradient: ['#8B5CF6', '#3B82F6'] as const,
-  buttonGradientAlt: ['#7C3AED', '#2563EB'] as const,
-  primaryOrange: '#6366F1',
-  darkOrange: '#4F46E5',
-  brandGold: '#6366F1',
-  goldSoft: '#EEF2FF',
-  goldLight: '#F5F3FF',
+  // TaskAlert Brand Green Scheme
+  primary: '#0D5C3A', // Rich Deep Forest Green from mockup
+  primaryDark: '#083B25', // Deep Midnight Pine for headers
+  primaryLight: '#EBFBF3', // Soft green pill background
+  primaryGreen: '#0D5C3A',
+  primaryAccent: '#15803D',
+  primaryPurple: '#0D5C3A',
+  primaryBlue: '#15803D',
+  buttonGradient: ['#0D5C3A', '#15803D'] as const,
+  buttonGradientAlt: ['#083B25', '#0D5C3A'] as const,
 
-  // Priority Accents (from Panel 10 Mockup)
-  // Red (Important) / Zaroori: Sea-Green / Teal #26A69A
-  tealZaroori: '#26A69A',
-  tealDark: '#0D9488',
-  softTeal: '#E6FFFA',
-  urgentRed: '#26A69A',
-  importantRed: '#26A69A',
-  softRed: '#E6FFFA',
+  // Yellow & Gold Accents (Crown, Flame, 3 Days Free Trial)
+  brandGold: '#EAB308',
+  primaryOrange: '#F59E0B',
+  darkOrange: '#D97706',
+  goldSoft: '#FEF3C7',
+  goldLight: '#FFFBEB',
+
+  // Priority Accents (from Mockup Panel 4 & 6)
+  // Red (Zaroori / High / Missed)
+  urgentRed: '#DC2626',
+  importantRed: '#DC2626',
+  softRed: '#FEE2E2',
   danger: '#EF4444',
   realRed: '#DC2626',
   softRealRed: '#FEE2E2',
+  tealZaroori: '#DC2626',
+  tealDark: '#B91C1C',
+  softTeal: '#FEE2E2',
 
-  // Yellow (Medium / Nodom): Warm Sand Amber #E5A83B
-  mediumYellow: '#E5A83B',
+  // Yellow / Amber (Medium)
+  mediumYellow: '#D97706',
   softYellow: '#FEF3C7',
-  warning: '#E5A83B',
+  warning: '#F59E0B',
 
-  // Green (Normal / Greeess): Fresh Emerald #2CC55E
-  normalGreen: '#2CC55E',
-  successGreen: '#2CC55E',
+  // Green (Normal / Completed)
+  normalGreen: '#15803D',
+  successGreen: '#15803D',
   softGreen: '#DCFCE7',
-  success: '#2CC55E',
+  success: '#15803D',
 
-  // Evening & Night Theme Accents
-  eveningIndigo: '#1E1B4B',
-  eveningPurple: '#4F46E5',
-  eveningSoft: '#EEF2FF',
+  // Evening & Night Theme Accents (Panel 7)
+  eveningIndigo: '#083B25', // Deep night forest green
+  eveningPurple: '#0D5C3A',
+  eveningSoft: '#EBFBF3',
 
   // Borders, Dividers & Shadows
   border: '#E2E8F0',
   line: '#E2E8F0',
-  shadowColor: '#0F172A',
+  shadowColor: '#0A3622',
 };
 
 export default colors;

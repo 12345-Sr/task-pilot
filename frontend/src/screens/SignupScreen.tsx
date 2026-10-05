@@ -23,23 +23,13 @@ import { useRegister, useSendRegisterOtp } from '../hooks';
 import RobotCaptcha from '../components/RobotCaptcha';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { signInWithGoogle } from '../services/auth/googleAuth.service';
-
-const LANGUAGES = [
-  { code: 'en', native: 'English', label: 'English' },
-  { code: 'hi', native: 'Hinglish', label: 'Hinglish' },
-  { code: 'mr', native: 'मराठी', label: 'Marathi' },
-  { code: 'bn', native: 'বাংলা', label: 'Bengali' },
-  { code: 'ta', native: 'தமிழ்', label: 'Tamil' },
-  { code: 'te', native: 'తెలుగు', label: 'Telugu' },
-  { code: 'gu', native: 'ગુજરાતી', label: 'Gujarati' },
-  { code: 'pa', native: 'ਪੰਜਾਬੀ', label: 'Punjabi' },
-];
+import { LanguageModal, SUPPORTED_LANGUAGES } from '../components/LanguageModal';
 
 export const SignupScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { language, setLanguage } = useAppStore();
+  const { language, setLanguage, setGuestMode } = useAppStore();
   const registerMutation = useRegister();
   const sendOtpMutation = useSendRegisterOtp();
 
@@ -72,7 +62,7 @@ export const SignupScreen: React.FC = () => {
     return () => clearTimeout(timer);
   }, [otpCountdown]);
 
-  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   const handleSendOtp = () => {
     setErrorMsg('');
@@ -258,21 +248,29 @@ export const SignupScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Compact Header */}
+          {/* Back button if available */}
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Back"
+            >
+              <Text style={styles.backButtonText}>‹</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Header matching TaskAlert Screen 2 design */}
           <View style={styles.header}>
             <Text style={styles.mainTitle}>
-              {language === 'hi' ? 'Aapka Reminder Saathi' : 'Your Reminder Companion'}
+              {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
             </Text>
             <Text style={styles.subTitle}>
-              {language === 'hi' ? 'Kal ka kaam, aaj set karein.' : 'Set tomorrow\'s tasks today.'}
+              {language === 'hi' ? 'TaskAlert se judein aur behtar kal ki shuruat karein.' : 'Join TaskAlert and stay on track with your goals.'}
             </Text>
           </View>
 
           {/* Floating White Card */}
           <View style={styles.card}>
-            <Text style={styles.cardHeading}>
-              {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
-            </Text>
 
             {errorMsg ? (
               <View style={styles.errorBox}>
@@ -474,7 +472,7 @@ export const SignupScreen: React.FC = () => {
               </Text>
             </View>
 
-            {/* Vibrant Purple-Blue Gradient Primary CTA Button */}
+            {/* TaskAlert Deep Forest Green Primary CTA Button */}
             <TouchableOpacity
               style={[styles.primaryButtonTouch, registerMutation.isPending && styles.buttonDisabled]}
               onPress={handleSignup}
@@ -482,7 +480,7 @@ export const SignupScreen: React.FC = () => {
               activeOpacity={0.88}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#3B82F6']}
+                colors={['#0D5C3A', '#15803D']}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 style={styles.primaryButton}
@@ -491,7 +489,7 @@ export const SignupScreen: React.FC = () => {
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.primaryButtonText}>
-                    {language === 'hi' ? 'Naya Account Banayein →' : 'Create Account →'}
+                    {language === 'hi' ? 'Naya Account Banayein' : 'Create Account'}
                   </Text>
                 )}
               </LinearGradient>
@@ -529,49 +527,16 @@ export const SignupScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
+
+
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Language Selection Modal */}
-      <Modal visible={showLangModal} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowLangModal(false)}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {language === 'hi' ? 'Bhasha Chunein' : 'Select Language'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowLangModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            {LANGUAGES.map((item) => {
-              const selected = language === item.code;
-              return (
-                <TouchableOpacity
-                  key={item.code}
-                  style={[styles.langModalItem, selected && styles.langModalItemSelected]}
-                  onPress={() => {
-                    setLanguage(item.code as any);
-                    setShowLangModal(false);
-                  }}
-                >
-                  <View style={styles.langModalItemLeft}>
-                    <Text style={styles.langItemNative}>{item.native}</Text>
-                    <Text style={styles.langItemLabel}>{item.label}</Text>
-                  </View>
-                  <View style={[styles.radioCircle, selected && styles.radioCircleActive]}>
-                    {selected && <View style={styles.radioInner} />}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      {/* Shared Language Selection Modal */}
+      <LanguageModal
+        visible={showLangModal}
+        onClose={() => setShowLangModal(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -602,6 +567,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#0F172A',
     letterSpacing: -0.3,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    marginBottom: 6,
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#0F172A',
+    fontWeight: '400',
+    lineHeight: 28,
   },
   header: {
     marginBottom: 8,
@@ -723,7 +700,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   sendOtpBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#0D5C3A',
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 35,
@@ -739,9 +716,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   otpSection: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#EBFBF3',
     borderWidth: 1.5,
-    borderColor: '#FED7AA',
+    borderColor: '#A7F3D0',
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
@@ -755,19 +732,19 @@ const styles = StyleSheet.create({
   otpTimerText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: colors.primaryOrange,
+    color: '#0D5C3A',
   },
   resendLinkText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: colors.primaryOrange,
+    color: '#0D5C3A',
   },
   otpInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#FDBA74',
+    borderColor: '#A7F3D0',
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
@@ -787,7 +764,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#0D5C3A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -871,9 +848,9 @@ const styles = StyleSheet.create({
   primaryButtonTouch: {
     height: 48,
     borderRadius: 13,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     overflow: 'hidden',
@@ -924,7 +901,7 @@ const styles = StyleSheet.create({
   footerLink: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary,
+    color: '#0D5C3A',
   },
   modalOverlay: {
     flex: 1,
@@ -1021,6 +998,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
+  },
+  guestStartBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#0D5C3A',
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  guestStartText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0D5C3A',
   },
 });
 

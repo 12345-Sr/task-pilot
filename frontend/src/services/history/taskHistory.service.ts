@@ -247,6 +247,31 @@ class TaskHistoryService {
   }
 
   /**
+   * Delete a task from local history
+   */
+  async deleteTaskFromHistory(taskId: string, userId?: string): Promise<TaskHistoryItem[]> {
+    try {
+      const key = this.getKey(userId);
+      const existing = await this.getLocalHistory(userId);
+      const updated = existing.filter((t) => t.id !== taskId);
+      this.inMemoryCache[key] = updated;
+      await AsyncStorage.setItem(key, JSON.stringify(updated));
+      return updated;
+    } catch (err) {
+      console.warn('[TASK HISTORY] Failed to delete task:', err);
+      return this.inMemoryCache[this.getKey(userId)] || [];
+    }
+  }
+
+  /**
+   * Get local history without hardcoded demo tasks
+   */
+  async getOrInitLocalHistory(userId?: string): Promise<TaskHistoryItem[]> {
+    const list = await this.getLocalHistory(userId);
+    return list;
+  }
+
+  /**
    * Clear history for a specific user
    */
   async clearHistory(userId?: string): Promise<void> {
@@ -260,3 +285,4 @@ class TaskHistoryService {
 
 export const taskHistoryService = new TaskHistoryService();
 export default taskHistoryService;
+

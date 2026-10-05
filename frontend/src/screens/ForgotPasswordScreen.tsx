@@ -279,7 +279,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   disabled={forgotMutation.isPending}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#3B82F6']}
+                    colors={['#0D5C3A', '#15803D']}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
@@ -331,7 +331,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   disabled={verifyMutation.isPending}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#3B82F6']}
+                    colors={['#0D5C3A', '#15803D']}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
@@ -424,7 +424,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   disabled={resetMutation.isPending}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#3B82F6']}
+                    colors={['#0D5C3A', '#15803D']}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
@@ -457,7 +457,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   onPress={() => navigation.navigate('Login')}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#3B82F6']}
+                    colors={['#0D5C3A', '#15803D']}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={styles.primaryButtonGradient}
@@ -704,10 +704,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 52,
     borderRadius: 15,
-    backgroundColor: '#6366F1',
-    shadowColor: '#6366F1',
+    backgroundColor: '#0D5C3A',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     marginTop: 8,

@@ -38,11 +38,8 @@ export const PremiumScreen: React.FC = () => {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-          <Text style={styles.closeText}>✕</Text>
+          <Text style={styles.closeText}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle} numberOfLines={1}>
-          {t(language, 'appName')} Premium
-        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -57,141 +54,70 @@ export const PremiumScreen: React.FC = () => {
           <View style={styles.crownCircle}>
             <Text style={styles.crownIcon}>👑</Text>
           </View>
-          <Text style={styles.heroTitle}>{t(language, 'premium_modal_title')}</Text>
-          <Text style={styles.heroSubtitle}>{t(language, 'premium_modal_subtitle')}</Text>
+          <Text style={styles.heroTitle}>Go Premium</Text>
+          <Text style={styles.heroSubtitle}>More Features. More Productivity.</Text>
         </View>
 
-        {/* Feature Comparison */}
-        <View style={styles.featuresCard}>
-          <View style={styles.featureRow}>
-            <Text style={styles.checkIcon}>✓</Text>
-            <View style={styles.featureTextWrapper}>
-              <Text style={styles.featureTitle}>{t(language, 'feat_unlimited')}</Text>
-              <Text style={styles.featureDesc}>{t(language, 'free_plan_tag')}</Text>
-            </View>
-          </View>
-
-          <View style={styles.featureRow}>
-            <Text style={styles.checkIcon}>✓</Text>
-            <View style={styles.featureTextWrapper}>
-              <Text style={styles.featureTitle}>{t(language, 'feat_smart_reminders')}</Text>
-              <Text style={styles.featureDesc}>{t(language, 'timeline_2h')} + {t(language, 'timeline_1h')}</Text>
-            </View>
-          </View>
-
-          <View style={styles.featureRow}>
-            <Text style={styles.checkIcon}>✓</Text>
-            <View style={styles.featureTextWrapper}>
-              <Text style={styles.featureTitle}>{t(language, 'feat_streak')}</Text>
-              <Text style={styles.featureDesc}>{t(language, 'progress_subtitle')}</Text>
-            </View>
-          </View>
-
-          <View style={styles.featureRow}>
-            <Text style={styles.checkIcon}>✓</Text>
-            <View style={styles.featureTextWrapper}>
-              <Text style={styles.featureTitle}>{t(language, 'repeat_monthly_title')}</Text>
-              <Text style={styles.featureDesc}>{t(language, 'repeat_monthly_sub')}</Text>
-            </View>
-          </View>
-
-          <View style={styles.featureRow}>
-            <Text style={styles.checkIcon}>✓</Text>
-            <View style={styles.featureTextWrapper}>
-              <Text style={styles.featureTitle}>{t(language, 'feat_privacy')}</Text>
-              <Text style={styles.featureDesc}>100% Privacy</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Plan Selectors */}
-        <Text style={styles.choosePlanTitle}>{t(language, 'choose_plan')}</Text>
-
-        <View style={styles.plansContainer}>
-          {/* Yearly Plan */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === 'yearly' && styles.planCardSelected,
-            ]}
-            activeOpacity={0.8}
-            onPress={() => setSelectedPlan('yearly')}
-          >
-            <View style={styles.popularBadge}>
-              <Text style={styles.popularBadgeText}>{t(language, 'most_popular')}</Text>
-            </View>
-
-            <View style={styles.planCardBody}>
-              <View>
-                <Text style={styles.planName}>{t(language, 'yearly_plan')}</Text>
-                <Text style={styles.planSub}>₹333 / mo</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.planPrice}>₹3,999</Text>
-                <Text style={styles.planDuration}>{t(language, 'per_year')}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* Monthly Plan */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === 'monthly' && styles.planCardSelected,
-            ]}
-            activeOpacity={0.8}
-            onPress={() => setSelectedPlan('monthly')}
-          >
-            <View style={styles.planCardBody}>
-              <View>
-                <Text style={styles.planName}>{t(language, 'monthly_plan')}</Text>
-                <Text style={styles.planSub}>Flexible</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.planPrice}>₹399</Text>
-                <Text style={styles.planDuration}>{t(language, 'per_month')}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* UPI & Payment trust row */}
-        <View style={styles.trustBox}>
-          <Text style={styles.trustText}>
-            {t(language, 'payment_secure_note')}
-          </Text>
-        </View>
-
-        {/* Upgrade CTA / View Pro Details CTA */}
-        <TouchableOpacity
-          style={[styles.upgradeBtn, upgradeMutation.isPending && styles.btnDisabled]}
-          activeOpacity={0.85}
-          onPress={handleSubscribe}
-          disabled={upgradeMutation.isPending}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#3B82F6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.upgradeBtnGradient}
-          >
-            {upgradeMutation.isPending ? (
-              <ActivityIndicator color={colors.surface} />
-            ) : (
-              <Text style={styles.upgradeBtnText}>
-                {isPremium
-                  ? (language === 'hi' ? '👑 Pro Status & Details Dekhein' : '👑 View Pro Details & Status')
-                  : (language === 'hi' ? '3 Din Free Try Karein' : t(language, 'unlock_pro'))}
+        {/* 3 Days Free Trial Banner Card */}
+        <View style={styles.trialBannerCard}>
+          <View style={styles.trialHeaderRow}>
+            <Text style={{ fontSize: 24 }}>☀️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.trialCardTitle}>3 Days Free Trial</Text>
+              <Text style={styles.trialCardSub}>
+                Explore all premium features without any charges.
               </Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-        <Text style={styles.cancelAnytimeText}>
-          {isPremium
-            ? (language === 'hi' ? 'Aapka TaskAlert Pro plan active hai.' : 'Your TaskAlert Pro plan is currently active.')
-            : (language === 'hi' ? 'Kabhi bhi cancel kar sakte hain.' : 'Cancel anytime with 1 tap.')}
-        </Text>
+        {/* Features List matching Screen 10 */}
+        <View style={styles.featuresCard}>
+          {[
+            'Unlimited Tasks',
+            'Advanced Reminders',
+            'Task History',
+            'Priority Support',
+            'Ad-free Experience',
+          ].map((feat, idx) => (
+            <View key={idx} style={styles.featureRow}>
+              <View style={styles.featureCheckCircle}>
+                <Text style={styles.featureCheckText}>✓</Text>
+              </View>
+              <Text style={styles.featureItemText}>{feat}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Price Card matching Screen 10 */}
+        <View style={styles.priceCardMain}>
+          <Text style={styles.priceValueText}>₹399 <Text style={styles.pricePeriodText}>/ month</Text></Text>
+          <Text style={styles.priceCancelAnytimeText}>Cancel anytime</Text>
+
+          <TouchableOpacity
+            style={styles.startTrialBtn}
+            activeOpacity={0.88}
+            onPress={handleSubscribe}
+          >
+            <Text style={styles.startTrialBtnText}>
+              {isPremium ? 'View Pro Status' : 'Start Free Trial'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.restoreBtn}
+          onPress={() => {
+            Alert.alert(
+              'Restore Purchase',
+              'Checking purchase history with App Store / Google Play...'
+            );
+          }}
+        >
+          <Text style={styles.restoreBtnText}>
+            Already a premium member? <Text style={styles.restoreUnderline}>Restore Purchase</Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Razorpay Payment Wall & UPI QR Modal */}
@@ -320,83 +246,100 @@ const styles = StyleSheet.create({
     borderColor: colors.primaryOrange,
     backgroundColor: '#FFFBF5',
   },
-  popularBadge: {
-    backgroundColor: colors.primaryOrange,
-    paddingVertical: 4,
-    alignItems: 'center',
+  trialBannerCard: {
+    backgroundColor: '#083B25',
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 10,
   },
-  popularBadgeText: {
-    ...typography.caption,
-    color: colors.surface,
-    fontWeight: '800',
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  planCardBody: {
+  trialHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.md,
+    gap: 12,
   },
-  planName: {
-    ...typography.h3,
-    color: colors.textPrimary,
+  trialCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FCD34D',
   },
-  planSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
+  trialCardSub: {
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#A7F3D0',
     marginTop: 2,
   },
-  planPrice: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.primaryOrange,
-  },
-  planDuration: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  trustBox: {
-    backgroundColor: '#F5F7FB',
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  trustText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  upgradeBtn: {
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-    shadowColor: colors.primaryPurple,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  upgradeBtnGradient: {
-    paddingVertical: spacing.md,
+  featureCheckCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#DCFCE7',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
   },
-  btnDisabled: {
-    opacity: 0.7,
+  featureCheckText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#15803D',
   },
-  upgradeBtnText: {
-    ...typography.button,
-    color: colors.surface,
-    fontWeight: '800',
-  },
-  cancelAnytimeText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
+  featureItemText: {
+    fontSize: 14.5,
     fontWeight: '600',
+    color: '#0F172A',
+  },
+  priceCardMain: {
+    backgroundColor: '#083B25',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginTop: 14,
+    gap: 6,
+  },
+  priceValueText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  pricePeriodText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#A7F3D0',
+  },
+  priceCancelAnytimeText: {
+    fontSize: 13,
+    color: '#A7F3D0',
+    marginBottom: 8,
+  },
+  startTrialBtn: {
+    backgroundColor: '#FCD34D',
+    borderRadius: 14,
+    width: '100%',
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FCD34D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  startTrialBtnText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#083B25',
+  },
+  restoreBtn: {
+    alignItems: 'center',
+    marginTop: 14,
+    paddingVertical: 8,
+  },
+  restoreBtnText: {
+    fontSize: 12.5,
+    color: '#64748B',
+  },
+  restoreUnderline: {
+    fontWeight: '700',
+    color: '#0D5C3A',
+    textDecorationLine: 'underline',
   },
 });
 

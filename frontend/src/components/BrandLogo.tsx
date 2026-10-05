@@ -19,7 +19,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'light',
 }) => {
   const isDark = variant === 'dark';
-  const taskColor = isDark ? '#FFFFFF' : '#0F172A';
+  const taskColor = isDark ? '#FFFFFF' : '#0D5C3A';
   const alertColor = '#EAB308';
   const subtextColor = isDark ? '#94A3B8' : colors.textSecondary;
 

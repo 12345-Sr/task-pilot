@@ -55,24 +55,17 @@ export const AddTaskScreen: React.FC = () => {
   });
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [remindBefore, setRemindBefore] = useState(true);
+  const [remindAtTime, setRemindAtTime] = useState(true);
 
-  const handleToggleRepeatMonthly = () => {
-    if (!isPremium) {
-      setPaywallVisible(true);
-      return;
-    }
-    setRepeatMonthly((prev) => !prev);
-  };
-
-  const handleReviewTask = () => {
+  const handleSaveTask = () => {
     setErrorMsg('');
     if (!title.trim()) {
       setErrorMsg(t(language, 'enter_task_title_error'));
       return;
     }
 
-    // Time is mandatory and cannot be skipped - validate for past time
+    // Time is mandatory - validate for past time if selectedDate is today
     const parts = reminderTime.replace(/am|pm/gi, '').trim().split(':');
     const isPM = /pm/i.test(reminderTime);
     const hStr = parts[0] || '09';
@@ -85,25 +78,6 @@ export const AddTaskScreen: React.FC = () => {
       );
       return;
     }
-
-    const { used: freeUsed } = useAppStore.getState().getFreeUsage();
-    if (!isPremium && freeUsed >= 3) {
-      NotificationService.sendQuotaLimitNotification(
-        language === 'hi' ? '⚠️ Free Tier Limit Pura Ho Gaya' : '⚠️ Free Tier Limit Reached',
-        language === 'hi'
-          ? 'Aapke 3 free tasks poore ho chuke hain. Naye tasks aur reminder alerts ke liye Pro me upgrade karein.'
-          : 'Your free tier is over (3/3 tasks used). Upgrade to Pro to create new tasks and receive reminder alerts.'
-      );
-      setPaywallVisible(true);
-      return;
-    }
-
-    // Open confirmation preview popup with all task details
-    setIsConfirmModalVisible(true);
-  };
-
-  const handleConfirmAndSave = () => {
-    setIsConfirmModalVisible(false);
 
     const { used: freeUsed } = useAppStore.getState().getFreeUsage();
     if (!isPremium && freeUsed >= 3) {
@@ -141,7 +115,6 @@ export const AddTaskScreen: React.FC = () => {
           if (createdTask?.id && taskDesc) {
             useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
           }
-          // 1. Immediate system notification confirming task has been added
           await NotificationService.sendTaskAddedNotification(
             taskTitle,
             selectedDate,
@@ -150,15 +123,16 @@ export const AddTaskScreen: React.FC = () => {
             t(language, 'task_added_msg')
           );
 
-          // 2. Schedule future deadline / alert (time is mandatory)
-          await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
-          const wasRepeated = repeatMonthly;
+          if (remindAtTime || remindBefore) {
+            await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
+          }
+
           setTitle('');
           setDescription('');
           setRepeatMonthly(false);
           Alert.alert(
             t(language, 'task_added_success'),
-            wasRepeated ? t(language, 'repeat_monthly_success') : t(language, 'task_added_msg'),
+            t(language, 'task_added_msg'),
             [
               {
                 text: 'OK',
@@ -205,14 +179,11 @@ export const AddTaskScreen: React.FC = () => {
       >
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>←</Text>
+            <Text style={styles.backBtnText}>‹</Text>
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle} numberOfLines={1}>
-              {language === 'hi' ? 'Naya Kaam' : t(language, 'add_task_title')}
-            </Text>
-            <Text style={styles.headerSub} numberOfLines={1}>
-              {language === 'hi' ? 'Kal ke liye ek kaam jodein' : t(language, 'tagline')}
+              Create New Task
             </Text>
           </View>
           <View style={{ width: 40 }} />
@@ -221,7 +192,7 @@ export const AddTaskScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingBottom: Math.max(insets.bottom, 24) + 140 },
+            { paddingBottom: Math.max(insets.bottom, 24) + 120 },
           ]}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
@@ -232,62 +203,25 @@ export const AddTaskScreen: React.FC = () => {
             </View>
           ) : null}
 
-          {/* Free Tier Task Creation Step Counter (1, 2, 3) */}
-          {!isPremium && (
-            <View style={styles.freeStepNoticeCard}>
-              <View style={styles.freeStepNoticeLeft}>
-                <View
-                  style={[
-                    styles.freeStepNoticeIconWrap,
-                    freeUsed === 2 && styles.freeStepNoticeIconWrapFinal,
-                  ]}
-                >
-                  <Text style={styles.freeStepNoticeIcon}>
-                    {freeUsed === 0 ? '1️⃣' : freeUsed === 1 ? '2️⃣' : '🔥'}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.freeStepNoticeTitle}>
-                    {freeUsed === 0
-                      ? (language === 'hi' ? 'Free Task 1 / 3 banaya ja raha hai' : 'Creating Task 1 of 3 (Free Tier)')
-                      : freeUsed === 1
-                        ? (language === 'hi' ? 'Free Task 2 / 3 banaya ja raha hai' : 'Creating Task 2 of 3 (Free Tier)')
-                        : (language === 'hi' ? 'Free Task 3 / 3 (Aakhri free task!)' : 'Creating Task 3 of 3 (Final Free Task!)')}
-                  </Text>
-                  <Text style={styles.freeStepNoticeSub}>
-                    {freeUsed === 0
-                      ? (language === 'hi' ? 'Iske baad 2 aur free tasks bachenge' : '2 free tasks will remain after this')
-                      : freeUsed === 1
-                        ? (language === 'hi' ? 'Iske baad 1 aakhri free task bachega' : '1 final free task will remain after this')
-                        : (language === 'hi' ? 'Yeh aapka aakhri free task hai · Unlimited ke liye Pro lein' : 'This is your final free task · Go Pro for unlimited')}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.freeStepNoticeBadge}>
-                <Text style={styles.freeStepNoticeBadgeText}>{Math.min(3, freeUsed + 1)}/3</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Title Input */}
+          {/* Title Input matching Mockup Screen 4 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t(language, 'task_title_label')} *</Text>
+            <Text style={styles.label}>Task Name *</Text>
             <TextInput
               style={styles.input}
-              placeholder={t(language, 'task_title_placeholder')}
-              placeholderTextColor={colors.textSecondary}
+              placeholder="Enter task name"
+              placeholderTextColor="#94A3B8"
               value={title}
               onChangeText={setTitle}
             />
           </View>
 
-          {/* Description Input */}
+          {/* Notes (Optional) matching Mockup Screen 4 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t(language, 'notes_label')}</Text>
+            <Text style={styles.label}>Notes (Optional)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder={t(language, 'notes_placeholder')}
-              placeholderTextColor={colors.textSecondary}
+              placeholder="Add any additional details..."
+              placeholderTextColor="#94A3B8"
               value={description}
               onChangeText={setDescription}
               multiline
@@ -295,7 +229,37 @@ export const AddTaskScreen: React.FC = () => {
             />
           </View>
 
-          {/* Priority Picker */}
+          {/* Target Date Picker */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t(language, 'select_date_heading')}</Text>
+            <DatePickerCard
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              language={language}
+            />
+          </View>
+
+          {/* Reminder Section with Sliding Time Picker */}
+          <View style={styles.reminderCard}>
+            <View style={styles.reminderHeader}>
+              <View style={styles.reminderHeaderLeft}>
+                <Text style={styles.reminderTitle}>{t(language, 'reminder_time_heading')}</Text>
+                <Text style={styles.reminderSubtitle}>
+                  {`${reminderTime} ${t(language, 'alert_at_time')}`}
+                </Text>
+              </View>
+            </View>
+
+            {/* 3-Column Time Slider Picker */}
+            <TimeSliderPicker
+              value={reminderTime}
+              onChange={setReminderTime}
+              language={language}
+              selectedDate={selectedDate}
+            />
+          </View>
+
+          {/* Priority Picker matching Mockup Screen 4 */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t(language, 'priority_label')}</Text>
             <View style={styles.priorityRow}>
@@ -315,93 +279,47 @@ export const AddTaskScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Target Date Picker (Today, Tomorrow, and Other Date) */}
+          {/* Reminders Checkboxes matching Mockup Screen 4 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t(language, 'select_date_heading')}</Text>
-            <DatePickerCard
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              language={language}
-            />
-          </View>
-
-          {/* Reminder Section with Sliding Time Picker - Mandatory & Important */}
-          <View style={styles.reminderCard}>
-            <View style={styles.reminderHeader}>
-              <View style={styles.reminderHeaderLeft}>
-                <Text style={styles.reminderTitle}>{t(language, 'reminder_time_heading')}</Text>
-                <Text style={styles.reminderSubtitle}>
-                  {`${reminderTime} ${t(language, 'alert_at_time')}`}
+            <Text style={styles.label}>Reminders</Text>
+            <View style={styles.remindersCard}>
+              <TouchableOpacity
+                style={styles.reminderCheckRow}
+                onPress={() => setRemindBefore(!remindBefore)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.reminderCheckbox, remindBefore && styles.reminderCheckboxActive]}>
+                  {remindBefore && <Text style={styles.reminderCheckmark}>✓</Text>}
+                </View>
+                <Text style={styles.reminderCheckLabel}>
+                  {language === 'hi' ? '10 minute pehle alert' : '10 minutes before deadline'}
                 </Text>
-              </View>
-              <View style={styles.importantBadge}>
-                <View style={styles.importantDot} />
-                <Text style={styles.importantBadgeText}>
-                  {language === 'hi' ? 'महत्वपूर्ण' : 'Important'}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.reminderCheckRow}
+                onPress={() => setRemindAtTime(!remindAtTime)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.reminderCheckbox, remindAtTime && styles.reminderCheckboxActive]}>
+                  {remindAtTime && <Text style={styles.reminderCheckmark}>✓</Text>}
+                </View>
+                <Text style={styles.reminderCheckLabel}>
+                  {language === 'hi' ? `Theek samay par alert (${reminderTime})` : `At exact time (${reminderTime})`}
                 </Text>
-              </View>
-            </View>
-
-            {/* 3-Column Time Slider Picker */}
-            <TimeSliderPicker
-              value={reminderTime}
-              onChange={setReminderTime}
-              language={language}
-              selectedDate={selectedDate}
-            />
-
-            {/* Focused Task Alert Note */}
-            <View style={styles.alertNoteBox}>
-              <Text style={styles.alertNoteIcon}>🔔</Text>
-              <Text style={styles.alertNoteText}>
-                {language === 'hi'
-                  ? `Is kaam ke 2 alerts aayenge: 10 minute pehle warning aur theek samay (${reminderTime}) par alert.`
-                  : `2 alerts will sound for this task: 10 minutes before and at the exact scheduled time (${reminderTime}).`}
-              </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Pro Feature: Repeat Daily for Whole Month */}
-          <TouchableOpacity
-            style={[
-              styles.proFeatureCard,
-              repeatMonthly && styles.proFeatureCardActive,
-            ]}
-            activeOpacity={0.85}
-            onPress={handleToggleRepeatMonthly}
-          >
-            <View style={styles.proFeatureInfo}>
-              <View style={styles.proFeatureTitleRow}>
-                <Text style={styles.proFeatureTitle}>
-                  {t(language, 'repeat_monthly_title')}
-                </Text>
-                {!isPremium && (
-                  <View style={styles.proPill}>
-                    <Text style={styles.proPillText}>PRO</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.proFeatureSub}>
-                {t(language, 'repeat_monthly_sub')}
-              </Text>
-            </View>
-            <Switch
-              value={repeatMonthly}
-              onValueChange={handleToggleRepeatMonthly}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.surface}
-            />
-          </TouchableOpacity>
-
-          {/* Review & Save CTA */}
+          {/* Direct Save CTA Button */}
           <TouchableOpacity
             style={[styles.saveButtonTouch, createTaskMutation.isPending && styles.buttonDisabled]}
             activeOpacity={0.85}
-            onPress={handleReviewTask}
+            onPress={handleSaveTask}
             disabled={createTaskMutation.isPending}
           >
             <LinearGradient
-              colors={['#8B5CF6', '#3B82F6']}
+              colors={['#0D5C3A', '#15803D']}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.saveButton}
@@ -410,127 +328,13 @@ export const AddTaskScreen: React.FC = () => {
                 <ActivityIndicator color={colors.surface} />
               ) : (
                 <Text style={styles.saveButtonText}>
-                  {language === 'hi' ? 'Kaam Jodo →' : `${t(language, 'save_task')} →`}
+                  Save Task
                 </Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Task Confirmation & Preview Modal Popup */}
-      <Modal
-        visible={isConfirmModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsConfirmModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconWrap}>
-                <Text style={styles.modalIcon}>📋</Text>
-              </View>
-              <Text style={styles.modalTitle}>{t(language, 'confirm_task_popup_title')}</Text>
-              <Text style={styles.modalSub}>{t(language, 'confirm_task_popup_sub')}</Text>
-            </View>
-
-            {/* Task Details Content */}
-            <ScrollView
-              style={styles.modalScrollView}
-              contentContainerStyle={styles.modalScrollContent}
-              showsVerticalScrollIndicator={false}
-              bounces={false}
-            >
-              <View style={styles.previewBox}>
-                <View style={styles.previewRow}>
-                  <Text style={styles.previewLabel}>📝 {t(language, 'task_title_label')}:</Text>
-                  <Text style={styles.previewValueTitle}>{title.trim()}</Text>
-                </View>
-
-                <View style={styles.previewDivider} />
-
-                <View style={styles.previewRow}>
-                  <Text style={styles.previewLabel}>📅 {t(language, 'date_label')}:</Text>
-                  <Text style={styles.previewValue}>{selectedDate}</Text>
-                </View>
-
-                <View style={styles.previewDivider} />
-
-                <View style={styles.previewRow}>
-                  <Text style={styles.previewLabel}>⏰ {t(language, 'reminder_time_heading').replace(/^[^\w\s\u0900-\u0DFF]+/, '').trim()}:</Text>
-                  <Text style={styles.previewValue}>{reminderTime}</Text>
-                </View>
-
-                <View style={styles.previewDivider} />
-
-                <View style={styles.previewRow}>
-                  <Text style={styles.previewLabel}>🎯 {t(language, 'priority_label')}:</Text>
-                  <PriorityChip priority={priority.toUpperCase() as any} size="sm" />
-                </View>
-
-                {repeatMonthly && (
-                  <>
-                    <View style={styles.previewDivider} />
-                    <View style={styles.previewRow}>
-                      <Text style={styles.previewLabel}>🔁 Repeat:</Text>
-                      <Text style={[styles.previewValue, { color: colors.primaryOrange, fontWeight: '700' }]}>
-                        Daily 30 Days 👑
-                      </Text>
-                    </View>
-                  </>
-                )}
-
-                {description.trim() ? (
-                  <>
-                    <View style={styles.previewDivider} />
-                    <View style={styles.previewRowCol}>
-                      <Text style={styles.previewLabel}>📄 {t(language, 'notes_label')}:</Text>
-                      <Text style={styles.previewDescText}>{description.trim()}</Text>
-                    </View>
-                  </>
-                ) : null}
-              </View>
-            </ScrollView>
-
-            {/* Modal Action Buttons */}
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.modalEditBtn}
-                activeOpacity={0.7}
-                onPress={() => setIsConfirmModalVisible(false)}
-              >
-                <Text style={styles.modalEditBtnText} numberOfLines={1}>
-                  {t(language, 'edit_details_btn')}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalSubmitBtnTouch, createTaskMutation.isPending && styles.buttonDisabled]}
-                activeOpacity={0.85}
-                onPress={handleConfirmAndSave}
-                disabled={createTaskMutation.isPending}
-              >
-                <LinearGradient
-                  colors={['#8B5CF6', '#3B82F6']}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={styles.modalSubmitBtn}
-                >
-                  {createTaskMutation.isPending ? (
-                    <ActivityIndicator color={colors.surface} size="small" />
-                  ) : (
-                    <Text style={styles.modalSubmitBtnText} numberOfLines={1}>
-                      {t(language, 'confirm_task_submit')}
-                    </Text>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <PaywallModal
         visible={paywallVisible}
@@ -767,9 +571,9 @@ const styles = StyleSheet.create({
   saveButtonTouch: {
     borderRadius: radius.md,
     marginTop: spacing.md,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
     overflow: 'hidden',
@@ -786,6 +590,45 @@ const styles = StyleSheet.create({
   saveButtonText: {
     ...typography.button,
     color: colors.surface,
+  },
+  remindersCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  reminderCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  reminderCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#94A3B8',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reminderCheckboxActive: {
+    backgroundColor: '#0D5C3A',
+    borderColor: '#0D5C3A',
+  },
+  reminderCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 15,
+  },
+  reminderCheckLabel: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#1E293B',
   },
   modalOverlay: {
     flex: 1,
@@ -923,9 +766,9 @@ const styles = StyleSheet.create({
     flex: 1.3,
     height: 46,
     borderRadius: radius.md,
-    shadowColor: '#6366F1',
+    shadowColor: '#0D5C3A',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 3,
     overflow: 'hidden',
@@ -988,6 +831,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#78350F',
     lineHeight: 16,
+  },
+  quickPresetsWrap: {
+    marginBottom: spacing.sm,
+  },
+  quickPresetsHeading: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 8,
+  },
+  quickPresetsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 4,
+  },
+  presetChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    gap: 6,
+  },
+  presetChipActive: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#10B981',
+  },
+  presetChipIcon: {
+    fontSize: 14,
+  },
+  presetChipText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  presetChipTextActive: {
+    color: '#047857',
+    fontWeight: '700',
   },
 });
 

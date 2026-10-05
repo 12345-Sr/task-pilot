@@ -28,23 +28,23 @@ export const PriorityChip: React.FC<PriorityChipProps> = ({
   let textCol = '#065F46';
 
   if (p === 'ZAROORI' || p === 'URGENT' || p === 'HIGH' || p === 'IMPORTANT') {
-    label = t(language, 'priority_zaroori');
-    dotColor = colors.tealZaroori;
-    bg = selected ? colors.tealZaroori : colors.softTeal;
-    borderColor = selected ? colors.tealDark : '#B2F5EA';
-    textCol = selected ? colors.white : '#0D9488';
+    label = language === 'hi' ? 'Zaroori' : 'High';
+    dotColor = '#DC2626';
+    bg = selected ? '#DC2626' : '#FEE2E2';
+    borderColor = selected ? '#B91C1C' : '#FECACA';
+    textCol = selected ? '#FFFFFF' : '#DC2626';
   } else if (p === 'MEDIUM') {
-    label = t(language, 'priority_medium');
-    dotColor = colors.mediumYellow;
-    bg = selected ? colors.mediumYellow : colors.softYellow;
-    borderColor = selected ? colors.primary : '#FDE68A';
-    textCol = selected ? colors.white : '#B45309';
+    label = 'Medium';
+    dotColor = '#D97706';
+    bg = selected ? '#D97706' : '#FEF3C7';
+    borderColor = selected ? '#B45309' : '#FDE68A';
+    textCol = selected ? '#FFFFFF' : '#D97706';
   } else {
-    label = t(language, 'priority_normal');
-    dotColor = colors.normalGreen;
-    bg = selected ? colors.normalGreen : colors.softGreen;
-    borderColor = selected ? '#059669' : '#A7F3D0';
-    textCol = selected ? colors.white : '#047857';
+    label = language === 'hi' ? 'Normal' : 'Normal';
+    dotColor = '#15803D';
+    bg = selected ? '#15803D' : '#DCFCE7';
+    borderColor = selected ? '#166534' : '#BBF7D0';
+    textCol = selected ? '#FFFFFF' : '#15803D';
   }
 
   const content = (

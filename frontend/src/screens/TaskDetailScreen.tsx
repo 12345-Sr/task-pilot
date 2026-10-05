@@ -16,6 +16,7 @@ import { useAppStore } from '../store';
 import { t, formatLocalizedDate } from '../i18n';
 import {
   useTodayTasks,
+  useTask,
   useUpdateTask,
   useCompleteTask,
   useDeleteTask,
@@ -34,7 +35,8 @@ export const TaskDetailScreen: React.FC = () => {
   const { language, isPremium, setPaywallVisible, taskDescriptions, setTaskDescription } = useAppStore();
   const { taskId, isReadOnly = false, task: paramTask } = route.params || {};
 
-  const { data: tasks, isLoading } = useTodayTasks();
+  const { data: tasks, isLoading: isTodayLoading } = useTodayTasks();
+  const { data: singleTask, isLoading: isSingleLoading } = useTask(taskId);
   const updateMutation = useUpdateTask();
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
@@ -44,7 +46,8 @@ export const TaskDetailScreen: React.FC = () => {
   const [confirmRepeatVisible, setConfirmRepeatVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  const task: Task | undefined = (tasks || []).find((t) => t.id === taskId) || paramTask;
+  const task: Task | undefined = (tasks || []).find((t) => t.id === taskId) || singleTask || paramTask;
+  const isLoading = isTodayLoading && isSingleLoading && !task;
 
   // Check if first alert has arrived
   const hasFirstAlertFired = useMemo(() => {
@@ -148,6 +151,9 @@ export const TaskDetailScreen: React.FC = () => {
   const isMissed = task.confirmationStatus === 'MISSED';
 
   const handleToggleComplete = () => {
+    // If task is already missed, it cannot be changed to completed
+    if (isMissed) return;
+
     completeMutation.mutate(
       { id: task.id, completed: !isDone, status: !isDone ? 'COMPLETED' : undefined },
       {
@@ -159,11 +165,9 @@ export const TaskDetailScreen: React.FC = () => {
   };
 
   const handleMarkTaskLeft = () => {
-    if (isMissed) {
-      completeMutation.mutate({ id: task.id, completed: false, status: undefined });
-    } else {
-      completeMutation.mutate({ id: task.id, completed: false, status: 'MISSED' });
-    }
+    // Once marked as MISSED, it is permanently locked as MISSED
+    if (isMissed) return;
+    completeMutation.mutate({ id: task.id, completed: false, status: 'MISSED' });
   };
 
   const handleRepeatMonthlyPress = () => {
@@ -422,16 +426,19 @@ export const TaskDetailScreen: React.FC = () => {
               style={[
                 styles.toggleActionButton,
                 isDone ? styles.buttonIncomplete : styles.buttonComplete,
+                isMissed && { opacity: 0.35, backgroundColor: '#94A3B8' },
               ]}
-              activeOpacity={0.85}
+              activeOpacity={isMissed ? 1 : 0.85}
               onPress={handleToggleComplete}
-              disabled={completeMutation.isPending}
+              disabled={completeMutation.isPending || isMissed}
             >
               {completeMutation.isPending ? (
                 <ActivityIndicator color={colors.surface} />
               ) : (
                 <Text style={styles.toggleActionText}>
-                  {isDone
+                  {isMissed
+                    ? (language === 'hi' ? '✗ Task Chhoot Gaya Hai (Locked)' : '✗ Task Missed (Locked)')
+                    : isDone
                     ? t(language, 'mark_incomplete_btn')
                     : language === 'hi'
                       ? '✓ Kaam Ho Gaya'
@@ -446,15 +453,15 @@ export const TaskDetailScreen: React.FC = () => {
                 styles.taskLeftButton,
                 isMissed && styles.taskLeftButtonActive,
               ]}
-              activeOpacity={0.85}
+              activeOpacity={isMissed ? 1 : 0.85}
               onPress={handleMarkTaskLeft}
-              disabled={completeMutation.isPending}
+              disabled={completeMutation.isPending || isMissed}
             >
               {completeMutation.isPending ? (
                 <ActivityIndicator color={isMissed ? colors.surface : '#DC2626'} />
               ) : (
                 <Text style={[styles.taskLeftText, isMissed && styles.taskLeftTextActive]}>
-                  {isMissed ? t(language, 'task_left_marked_btn') : t(language, 'task_left_btn')}
+                  {isMissed ? (language === 'hi' ? '✗ Chhoot Gaya (Missed)' : '✗ Marked as Missed') : t(language, 'task_left_btn')}
                 </Text>
               )}
             </TouchableOpacity>
