@@ -24,16 +24,18 @@ try {
           }
           const taskId = notification?.data?.taskId || Date.now();
           const taskTitle = notification?.data?.taskTitle || 'Task';
+          const soundId = notification?.data?.soundId || 'classic_bell';
+          const channelId = `task-alarm-${soundId}`;
           await notifee.createTriggerNotification(
             {
               id: `alarm_${taskId}`,
               title: `⏰ Snoozed: ${taskTitle}`,
               body: `Aapka kaam "${taskTitle}" abhi complete karne ka samay hai!`,
               android: {
-                channelId: 'task-alarms-v2',
+                channelId,
                 category: AndroidCategory.ALARM,
                 importance: notifeeMod.AndroidImportance?.HIGH || 4,
-                sound: 'default',
+                sound: soundId,
                 loopSound: true,
                 ongoing: true,
                 pressAction: { id: 'default', launchActivity: 'default' },

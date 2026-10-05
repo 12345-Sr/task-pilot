@@ -23,6 +23,8 @@ import TimeSliderPicker, { isTimeInPast, getNextValidFutureTime } from './TimeSl
 import DatePickerCard from './DatePickerCard';
 import PriorityChip from './PriorityChip';
 import NotificationService from '../services/notifications/notification.service';
+import AlarmSoundPicker from './AlarmSoundPicker';
+import { AlarmSoundId } from '../services/sound/sound.service';
 
 interface EditTaskModalProps {
   visible: boolean;
@@ -37,7 +39,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { language, taskDescriptions, setTaskDescription } = useAppStore();
+  const { language, taskDescriptions, setTaskDescription, taskAlarmSounds, setTaskAlarmSound, selectedAlarmSound } = useAppStore();
   const updateMutation = useUpdateTask();
 
   const [title, setTitle] = useState('');
@@ -45,6 +47,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [selectedDate, setSelectedDate] = useState('');
   const [reminderTime, setReminderTime] = useState('06:00 PM');
   const [priority, setPriority] = useState<Priority>('medium');
+  const [selectedSound, setSelectedSound] = useState<AlarmSoundId>('classic_bell');
   const [errorMsg, setErrorMsg] = useState('');
 
   // Populate fields whenever the selected task changes
@@ -67,6 +70,9 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     const initialTime =
       task.deadlineTime || task.time || task.reminderTime || '06:00 PM';
     setReminderTime(initialTime);
+
+    const initialSound = (task as any).alarmSound || taskAlarmSounds[task.id] || selectedAlarmSound || 'classic_bell';
+    setSelectedSound(initialSound as AlarmSoundId);
 
     const p = String(task.priority || 'MEDIUM').toUpperCase();
     if (p === 'URGENT' || p === 'HIGH' || p === 'ZAROORI' || p === 'IMPORTANT') {
@@ -130,13 +136,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       } as any,
       {
         onSuccess: async (updated: any) => {
+          setTaskAlarmSound(task.id, selectedSound);
           // Reschedule alert notifications (time is mandatory)
           await NotificationService.cancelTaskAlerts(task.id);
           await NotificationService.scheduleTaskAlerts(
             trimmedTitle,
             selectedDate,
             reminderTime,
-            task.id
+            task.id,
+            selectedSound
           );
 
           Alert.alert(
@@ -288,6 +296,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                   selectedDate={selectedDate}
                 />
               </View>
+            </View>
+
+            {/* Choose Alarm Sound */}
+            <View style={styles.fieldBlock}>
+              <AlarmSoundPicker
+                selectedSound={selectedSound}
+                onSelectSound={setSelectedSound}
+                language={language}
+              />
             </View>
 
             {/* 5. Notes / Description */}

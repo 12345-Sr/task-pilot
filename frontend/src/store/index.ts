@@ -3,6 +3,15 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, SupportedLanguage } from '../types';
 import { setAuthHeader } from '../api/client';
+import { AlarmSoundId } from '../services/sound/sound.service';
+
+export interface ActiveAlarmData {
+  taskId?: string;
+  taskTitle: string;
+  deadlineTime?: string;
+  soundId?: AlarmSoundId;
+  description?: string;
+}
 
 export interface AppState {
   user: User | null;
@@ -23,6 +32,9 @@ export interface AppState {
   taskDescriptions: Record<string, string>;
   freeUsageByDate: Record<string, number>;
   freeLifetimeCreated: number;
+  selectedAlarmSound: AlarmSoundId;
+  taskAlarmSounds: Record<string, AlarmSoundId>;
+  activeAlarm: ActiveAlarmData | null;
 
   // Actions
   setUser: (user: User | null) => void;
@@ -41,6 +53,10 @@ export interface AppState {
   setSelectedTaskId: (id: string | null) => void;
   setTaskDescription: (key: string, description: string) => void;
   setFreeLifetimeCreated: (count: number) => void;
+  setSelectedAlarmSound: (sound: AlarmSoundId) => void;
+  setTaskAlarmSound: (taskId: string, sound: AlarmSoundId) => void;
+  setActiveAlarm: (alarm: ActiveAlarmData | null) => void;
+  dismissActiveAlarm: () => void;
   recordTaskCreation: (dateStr?: string) => void;
   recordTaskDeletion: (dateStr?: string) => void;
   getFreeUsage: (dateStr?: string, activeCount?: number) => { used: number; total: number; remaining: number };
@@ -68,6 +84,9 @@ export const useAppStore = create<AppState>()(
       taskDescriptions: {},
       freeUsageByDate: {},
       freeLifetimeCreated: 0,
+      selectedAlarmSound: 'classic_bell',
+      taskAlarmSounds: {},
+      activeAlarm: null,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => {
@@ -149,6 +168,13 @@ export const useAppStore = create<AppState>()(
         set(() => ({
           freeLifetimeCreated: Math.min(3, Math.max(0, count || 0)),
         })),
+      setSelectedAlarmSound: (sound) => set({ selectedAlarmSound: sound }),
+      setTaskAlarmSound: (taskId, sound) =>
+        set((state) => ({
+          taskAlarmSounds: { ...state.taskAlarmSounds, [String(taskId)]: sound },
+        })),
+      setActiveAlarm: (alarm) => set({ activeAlarm: alarm }),
+      dismissActiveAlarm: () => set({ activeAlarm: null }),
       setTaskDescription: (key, description) =>
         set((state) => ({
           taskDescriptions: {
@@ -221,6 +247,8 @@ export const useAppStore = create<AppState>()(
         taskDescriptions: state.taskDescriptions,
         freeUsageByDate: state.freeUsageByDate,
         freeLifetimeCreated: state.freeLifetimeCreated,
+        selectedAlarmSound: state.selectedAlarmSound,
+        taskAlarmSounds: state.taskAlarmSounds,
       }),
     }
   )

@@ -27,11 +27,13 @@ import TimeSliderPicker, { getNextValidFutureTime, isTimeInPast } from '../compo
 import DatePickerCard from '../components/DatePickerCard';
 import NotificationService from '../services/notifications/notification.service';
 import { taskHistoryService } from '../services/history/taskHistory.service';
+import AlarmSoundPicker from '../components/AlarmSoundPicker';
+import { AlarmSoundId } from '../services/sound/sound.service';
 
 export const AddTaskScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, paywallVisible, setPaywallVisible, getFreeUsage } = useAppStore();
+  const { language, isPremium, paywallVisible, setPaywallVisible, getFreeUsage, selectedAlarmSound, setTaskAlarmSound } = useAppStore();
   const { data: existingTasks } = useTodayTasks();
   const createTaskMutation = useCreateTask();
 
@@ -57,6 +59,7 @@ export const AddTaskScreen: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [remindBefore, setRemindBefore] = useState(true);
   const [remindAtTime, setRemindAtTime] = useState(true);
+  const [selectedSound, setSelectedSound] = useState<AlarmSoundId>(selectedAlarmSound || 'classic_bell');
 
   const handleSaveTask = () => {
     setErrorMsg('');
@@ -109,11 +112,15 @@ export const AddTaskScreen: React.FC = () => {
         reminderTime: reminderTime,
         time: reminderTime,
         repeatMonthly: Boolean(repeatMonthly),
+        alarmSound: selectedSound,
       },
       {
         onSuccess: async (createdTask: any) => {
-          if (createdTask?.id && taskDesc) {
-            useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
+          if (createdTask?.id) {
+            setTaskAlarmSound(String(createdTask.id), selectedSound);
+            if (taskDesc) {
+              useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
+            }
           }
           await NotificationService.sendTaskAddedNotification(
             taskTitle,
@@ -124,7 +131,13 @@ export const AddTaskScreen: React.FC = () => {
           );
 
           if (remindAtTime || remindBefore) {
-            await NotificationService.scheduleTaskAlerts(taskTitle, selectedDate, reminderTime, createdTask?.id);
+            await NotificationService.scheduleTaskAlerts(
+              taskTitle,
+              selectedDate,
+              reminderTime,
+              createdTask?.id,
+              selectedSound
+            );
           }
 
           setTitle('');
@@ -310,6 +323,17 @@ export const AddTaskScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Choose Alarm Sound Section */}
+          {(remindAtTime || remindBefore) && (
+            <View style={styles.inputGroup}>
+              <AlarmSoundPicker
+                selectedSound={selectedSound}
+                onSelectSound={setSelectedSound}
+                language={language}
+              />
+            </View>
+          )}
 
           {/* Direct Save CTA Button */}
           <TouchableOpacity

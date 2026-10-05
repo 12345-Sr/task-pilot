@@ -28,6 +28,7 @@ import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
 import { PaywallModal } from '../components/PaywallModal';
 import { PremiumStatusModal } from '../components/PremiumStatusModal';
+import AlarmSoundPicker from '../components/AlarmSoundPicker';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -42,6 +43,8 @@ export const SettingsScreen: React.FC = () => {
     subscriptionInfo,
     isAuthenticated,
     isGuest,
+    selectedAlarmSound,
+    setSelectedAlarmSound,
   } = useAppStore();
   const isHindi = language === 'hi';
   const { data: user } = useUserProfile();
@@ -348,6 +351,47 @@ export const SettingsScreen: React.FC = () => {
               thumbColor={colors.surface}
             />
           </View>
+
+          {/* Alarm Sound Picker */}
+          {soundEnabled && (
+            <View style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FAFAFA', borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
+              <AlarmSoundPicker
+                selectedSound={selectedAlarmSound}
+                onSelectSound={setSelectedAlarmSound}
+                language={language}
+              />
+
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#16A34A',
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderRadius: 12,
+                  marginTop: 10,
+                  gap: 8,
+                }}
+                activeOpacity={0.8}
+                onPress={async () => {
+                  Alert.alert(
+                    isHindi ? '⏰ टेस्ट अलार्म सेट हो गया' : '⏰ Test Alarm Scheduled',
+                    isHindi
+                      ? '5 सेकंड में आपका चुना हुआ अलार्म फुल स्क्रीन में बजेगा!'
+                      : 'Your chosen alarm will ring full-screen in 5 seconds!',
+                    [{ text: 'OK' }]
+                  );
+                  await NotificationService.triggerTestAlert(5, selectedAlarmSound);
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>🚨</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13.5 }}>
+                  {isHindi ? 'फुल स्क्रीन अलार्म टेस्ट करें (5 सेकंड)' : 'Test Full Screen Alarm (5s)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Support & Legal Section */}

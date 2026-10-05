@@ -45,6 +45,24 @@ try {
 export class NotificationService {
   private static isInitialized = false;
   private static hasCustomChannel = false;
+  private static alarmListeners: Set<(data: any) => void> = new Set();
+
+  static onAlarmTriggered(listener: (data: any) => void): () => void {
+    this.alarmListeners.add(listener);
+    return () => {
+      this.alarmListeners.delete(listener);
+    };
+  }
+
+  static triggerAlarmModal(data: any): void {
+    this.alarmListeners.forEach((l) => {
+      try {
+        l(data);
+      } catch (err) {
+        console.warn('[NOTIF] alarm listener error:', err);
+      }
+    });
+  }
 
   /**
    * Initializes notification channels for both Notifee (Full-Screen Alarm Clock)
@@ -53,9 +71,38 @@ export class NotificationService {
   static async init(): Promise<void> {
     if (this.isInitialized || Platform.OS === 'web') return;
 
+    const ALARM_SOUND_KEYS = [
+      'classic_bell',
+      'morning_alarm',
+      'soft_chime',
+      'gentle_tone',
+      'urgent_alert',
+      'digital_bell',
+    ];
+
     if (Platform.OS === 'android') {
       if (notifee) {
-        // 1. Full-Screen Alarm Channel with Max Priority, Alarm Category & Looping Sound
+        // 1. Create channels for each alarm sound so Android can play the exact chosen sound
+        for (const sKey of ALARM_SOUND_KEYS) {
+          try {
+            await notifee.createChannel({
+              id: `task-alarm-${sKey}`,
+              name: `Alarm (${sKey.replace('_', ' ')})`,
+              description: `Full-screen alarm with ${sKey} sound`,
+              importance: AndroidImportance.HIGH,
+              visibility: AndroidVisibility.PUBLIC,
+              vibration: true,
+              sound: sKey,
+              bypassDnd: true,
+              lights: true,
+              lightColor: '#16A34A',
+            });
+          } catch (err) {
+            console.warn(`[NOTIF] channel for ${sKey} notice:`, err);
+          }
+        }
+
+        // Legacy / default fallback channel
         try {
           await notifee.createChannel({
             id: 'task-alarms-v2',
@@ -64,7 +111,7 @@ export class NotificationService {
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
             vibration: true,
-            sound: 'default',
+            sound: 'classic_bell',
             bypassDnd: true,
             lights: true,
             lightColor: '#16A34A',
@@ -89,9 +136,25 @@ export class NotificationService {
         }
       }
 
-      // 3. Fallback channel for Expo Notifications
+      // 3. Fallback channels for Expo Notifications
       try {
         if (typeof Notifications.setNotificationChannelAsync === 'function') {
+          for (const sKey of ALARM_SOUND_KEYS) {
+            try {
+              await Notifications.setNotificationChannelAsync(`task-alarm-${sKey}`, {
+                name: `Task Alerts (${sKey.replace('_', ' ')})`,
+                importance: Notifications.AndroidImportance.MAX,
+                sound: sKey,
+                lightColor: '#16A34A',
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                bypassDnd: true,
+                enableLights: true,
+                enableVibrate: true,
+                showBadge: true,
+              });
+            } catch {}
+          }
+
           await Notifications.setNotificationChannelAsync('task-alerts', {
             name: 'Task Alerts & Reminders',
             description: 'Timely reminders and deadline alerts for your tasks',
@@ -121,7 +184,7 @@ export class NotificationService {
     // Register push token with backend if available
     try {
       await this.syncPushToken();
-    } catch {}
+    } catch { }
 
     this.isInitialized = true;
     console.log('[NOTIF] NotificationService successfully initialized.');
@@ -134,7 +197,7 @@ export class NotificationService {
       if (notifee) {
         try {
           await notifee.requestPermission();
-        } catch {}
+        } catch { }
       }
 
       // 2. Expo notifications permission check
@@ -173,7 +236,7 @@ export class NotificationService {
         if (deviceTokenData?.data) {
           return deviceTokenData.data;
         }
-      } catch {}
+      } catch { }
 
       const projectId =
         Constants?.expoConfig?.extra?.eas?.projectId ??
@@ -198,9 +261,9 @@ export class NotificationService {
     try {
       const token = await this.getDevicePushToken();
       if (token) {
-        await apiClient.patch('/auth/push-token', { pushToken: token }).catch(() => {});
+        await apiClient.patch('/auth/push-token', { pushToken: token }).catch(() => { });
       }
-    } catch {}
+    } catch { }
   }
 
   /**
@@ -214,7 +277,8 @@ export class NotificationService {
     taskTitle: string,
     taskDate: string,
     deadlineTime: string,
-    taskId?: string | number
+    taskId?: string | number,
+    soundId: string = 'classic_bell'
   ): Promise<boolean> {
     if (Platform.OS === 'web') return false;
 
@@ -230,7 +294,7 @@ export class NotificationService {
       const now = Date.now();
       const diffMs = deadlineDate.getTime() - now;
 
-      console.log(`[EXACT ALARM] Scheduling "${taskTitle}" due at:`, deadlineDate, `(${Math.round(diffMs / 1000)}s from now)`);
+      console.log(`[EXACT ALARM] Scheduling "${taskTitle}" (${soundId}) due at:`, deadlineDate, `(${Math.round(diffMs / 1000)}s from now)`);
 
       if (diffMs <= 0) {
         console.log('[ALERT] Target time is in the past, skipping future schedule.');
@@ -240,18 +304,20 @@ export class NotificationService {
       const cleanTaskId = String(taskId || Math.abs(Math.sin(deadlineDate.getTime()) * 1000000 | 0));
       const alarmId = `alarm_${cleanTaskId}`;
       const warningId = `warning_${cleanTaskId}`;
+      const chosenSound = soundId || 'classic_bell';
+      const channelId = `task-alarm-${chosenSound}`;
 
       // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
       // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
       if (notifee) {
         try {
           await notifee.createChannel({
-            id: 'task-alarms-v2',
-            name: 'TaskAlert Alarm Clock',
+            id: channelId,
+            name: `TaskAlert (${chosenSound.replace('_', ' ')})`,
             importance: AndroidImportance.HIGH,
             visibility: AndroidVisibility.PUBLIC,
             vibration: true,
-            sound: 'default',
+            sound: chosenSound,
             bypassDnd: true,
             lights: true,
             lightColor: '#16A34A',
@@ -263,10 +329,10 @@ export class NotificationService {
               title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
               body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
               android: {
-                channelId: 'task-alarms-v2',
+                channelId,
                 category: AndroidCategory.ALARM,
                 importance: AndroidImportance.HIGH,
-                sound: 'default',
+                sound: chosenSound,
                 loopSound: true,
                 ongoing: true,
                 autoCancel: false,
@@ -294,6 +360,7 @@ export class NotificationService {
                 taskId: cleanTaskId,
                 taskTitle,
                 deadlineTime,
+                soundId: chosenSound,
                 type: 'EXACT_ALARM',
               },
             },
@@ -305,7 +372,7 @@ export class NotificationService {
               },
             }
           );
-          console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
+          console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK, sound: ${chosenSound}`);
         } catch (notifeeErr) {
           console.warn('[NOTIF] Notifee trigger notice, proceeding with Expo dual delivery:', notifeeErr);
         }
@@ -318,15 +385,16 @@ export class NotificationService {
           content: {
             title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
             body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
-            sound: 'default',
+            sound: chosenSound,
             priority: Notifications.AndroidNotificationPriority.MAX,
-            data: { taskId: cleanTaskId, taskTitle, deadlineTime, type: 'EXACT_ALARM' },
+            data: { taskId: cleanTaskId, taskTitle, deadlineTime, soundId: chosenSound, type: 'EXACT_ALARM' },
           },
           trigger: {
             date: deadlineDate,
+            channelId,
           } as any,
         });
-        console.log(`[EXPO NOTIF] Dual scheduled for ${deadlineDate.toISOString()}`);
+        console.log(`[EXPO NOTIF] Dual scheduled for ${deadlineDate.toISOString()} with sound ${chosenSound}`);
       } catch (expoErr) {
         console.warn('[NOTIF] Expo schedule fallback notice:', expoErr);
       }
@@ -363,7 +431,7 @@ export class NotificationService {
             vibration: true,
             sound: 'default',
           });
-        } catch {}
+        } catch { }
 
         await notifee.createTriggerNotification(
           {
@@ -405,6 +473,21 @@ export class NotificationService {
   }
 
   /**
+   * Reschedules an alarm for a specified number of minutes from now
+   */
+  static async snoozeTaskAlarm(
+    taskId: string | number,
+    taskTitle: string,
+    minutes: number = 5,
+    soundId: string = 'classic_bell'
+  ): Promise<boolean> {
+    const snoozeDate = new Date(Date.now() + minutes * 60 * 1000);
+    const dateStr = `${snoozeDate.getFullYear()}-${String(snoozeDate.getMonth() + 1).padStart(2, '0')}-${String(snoozeDate.getDate()).padStart(2, '0')}`;
+    const timeStr = snoozeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return this.scheduleTaskAlerts(taskTitle, dateStr, timeStr, taskId, soundId);
+  }
+
+  /**
    * Cancels both exact alarm and warning for a task
    */
   static async cancelTaskAlerts(taskId: string | number): Promise<void> {
@@ -412,10 +495,10 @@ export class NotificationService {
     try {
       const cleanId = String(taskId);
       if (notifee) {
-        await notifee.cancelNotification(`alarm_${cleanId}`).catch(() => {});
-        await notifee.cancelNotification(`warning_${cleanId}`).catch(() => {});
+        await notifee.cancelNotification(`alarm_${cleanId}`).catch(() => { });
+        await notifee.cancelNotification(`warning_${cleanId}`).catch(() => { });
       }
-      await Notifications.cancelScheduledNotificationAsync(`alarm_${cleanId}`).catch(() => {});
+      await Notifications.cancelScheduledNotificationAsync(`alarm_${cleanId}`).catch(() => { });
       console.log(`[ALARM CANCELLED] For task ${cleanId}`);
     } catch (e) {
       console.warn('Error cancelling task alert:', e);
@@ -541,7 +624,7 @@ export class NotificationService {
             },
           });
           return true;
-        } catch {}
+        } catch { }
       }
 
       await Notifications.scheduleNotificationAsync({
@@ -622,20 +705,22 @@ export class NotificationService {
    * Fires a test full-screen alarm in N seconds (default 5s)
    * so the user can verify sound, screen-wake, and action buttons immediately!
    */
-  static async triggerTestAlert(seconds: number = 5): Promise<boolean> {
+  static async triggerTestAlert(seconds: number = 5, soundId: string = 'classic_bell'): Promise<boolean> {
     try {
       await this.init();
 
       const triggerTimestamp = Date.now() + seconds * 1000;
+      const chosenSound = soundId || 'classic_bell';
+      const channelId = `task-alarm-${chosenSound}`;
 
       if (notifee) {
         await notifee.createChannel({
-          id: 'task-alarms-v2',
-          name: 'TaskAlert Alarm Clock',
+          id: channelId,
+          name: `TaskAlert (${chosenSound.replace('_', ' ')})`,
           importance: AndroidImportance.HIGH,
           visibility: AndroidVisibility.PUBLIC,
           vibration: true,
-          sound: 'default',
+          sound: chosenSound,
           bypassDnd: true,
           lights: true,
           lightColor: '#16A34A',
@@ -647,10 +732,10 @@ export class NotificationService {
             title: '⏰ TEST ALARM: TaskAlert Alert!',
             body: `Yeh test alarm ${seconds} second baad baja hai! Sound loop karega jab tak aap Poora ya Dismiss na dabayein.`,
             android: {
-              channelId: 'task-alarms-v2',
+              channelId,
               category: AndroidCategory.ALARM,
               importance: AndroidImportance.HIGH,
-              sound: 'default',
+              sound: chosenSound,
               loopSound: true,
               ongoing: true,
               autoCancel: false,
@@ -677,7 +762,8 @@ export class NotificationService {
             data: {
               taskId: 'test_task',
               taskTitle: 'Test Task Alert',
-              type: 'TEST_ALARM',
+              soundId: chosenSound,
+              type: 'EXACT_ALARM',
             },
           },
           {
@@ -688,7 +774,7 @@ export class NotificationService {
             },
           }
         );
-        console.log(`[TEST EXACT ALARM] Notifee scheduled for ${seconds}s from now.`);
+        console.log(`[TEST EXACT ALARM] Notifee scheduled for ${seconds}s from now with sound ${chosenSound}.`);
       }
 
       // Always also trigger via Expo Notifications for dual guarantee
@@ -697,10 +783,16 @@ export class NotificationService {
           content: {
             title: '⏰ TEST ALARM: TaskAlert Alert!',
             body: `Yeh test alert ${seconds} second baad baja hai!`,
-            sound: 'default',
+            sound: chosenSound,
             priority: Notifications.AndroidNotificationPriority.MAX,
+            data: {
+              taskId: 'test_task',
+              taskTitle: 'Test Task Alert',
+              soundId: chosenSound,
+              type: 'EXACT_ALARM',
+            },
           },
-          trigger: { seconds } as any,
+          trigger: { seconds, channelId } as any,
         });
         console.log(`[TEST EXPO NOTIF] Dual scheduled for ${seconds}s.`);
       } catch (e) {

@@ -41,6 +41,7 @@ export interface Task {
   alert_count?: number;
   completedAt?: string;
   reminderMinutes?: number;
+  alarmSound?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,6 +57,7 @@ export interface CreateTaskInput {
   reminderTime?: string;
   priority: Priority;
   reminderMinutes?: number;
+  alarmSound?: string;
   repeatMonthly?: boolean;
 }
 
@@ -69,9 +71,11 @@ export interface UpdateTaskInput {
   deadlineTime?: string;
   reminderTime?: string;
   priority?: Priority;
-  completed?: boolean;
-  confirmationStatus?: 'PENDING' | 'COMPLETED' | 'MISSED';
   reminderMinutes?: number;
+  alarmSound?: string;
+  completed?: boolean;
+  status?: TaskStatus;
+  confirmationStatus?: 'PENDING' | 'COMPLETED' | 'MISSED';
 }
 
 export interface User {
