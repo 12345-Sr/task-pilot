@@ -272,6 +272,47 @@ router.post('/create-order', requireUser, async (req, res) => {
   }
 });
 
+// POST /api/subscription/create-web-order
+// Public order endpoint for taskalert.in website visitors
+router.post('/create-web-order', async (req, res) => {
+  try {
+    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '39900', 10);
+    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
+    const receipt = `web_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+
+    const activeKeyId = getCleanKeyId();
+    const activeKeySecret = getCleanKeySecret();
+    const rzp = getRzpInstance(activeKeyId, activeKeySecret);
+
+    if (!rzp || !activeKeyId || !activeKeySecret) {
+      return res.status(500).json({ error: 'Razorpay keys are not configured on the server.' });
+    }
+
+    const order = await rzp.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt,
+      payment_capture: 1,
+      notes: {
+        source: 'taskalert_website',
+        plan: 'pro_monthly',
+      },
+    });
+
+    res.json({
+      ok: true,
+      orderId: order.id,
+      keyId: activeKeyId,
+      amount: planPriceInr,
+      amountPaise,
+      currency: 'INR',
+    });
+  } catch (err) {
+    console.error('Failed to create web payment order:', err);
+    res.status(500).json({ error: 'Failed to create web payment order.' });
+  }
+});
+
 
 // POST /api/subscription/verify-payment
 // Called from the mobile app after user returns from Chrome checkout.

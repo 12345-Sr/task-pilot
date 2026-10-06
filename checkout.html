@@ -47,7 +47,31 @@
     }
 
     if (!orderId || !keyId) {
-      showError('Missing payment details in the link. Please go back to the app and try again.');
+      label.innerText = 'Connecting to payment gateway… ⏳';
+      btn.innerText = 'Loading Razorpay…';
+      btn.disabled = true;
+      var webOrderUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/create-web-order';
+      fetch(webOrderUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data && data.orderId && data.keyId) {
+          orderId = data.orderId;
+          keyId = data.keyId;
+          amountPaise = data.amountPaise || 39900;
+          currency = data.currency || 'INR';
+          label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
+          btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+          btn.disabled = false;
+        } else {
+          showError('Unable to generate payment order. Please refresh this page to try again.');
+        }
+      })
+      .catch(function(err) {
+        showError('Could not connect to payment server. Please check your internet connection.');
+      });
     } else {
       label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
       btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
