@@ -239,7 +239,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     const userId = user?.id || '';
 
     // Strictly open frontend checkout at https://taskalert.in/checkout.html
-    const targetUrl = `https://taskalert.in/checkout.html?order_id=${encodeURIComponent(orderId)}&user_id=${encodeURIComponent(userId)}&key_id=${encodeURIComponent(activeKey)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}&real_order=1&api_base=https://api-task-pilot.deificglobal.tech`;
+    const targetUrl = `https://taskalert.in/checkout.html?order_id=${encodeURIComponent(orderId)}&user_id=${encodeURIComponent(userId)}&key_id=${encodeURIComponent(activeKey)}&amount=${amountPaise}&plan_amount=399&currency=INR&name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}&real_order=1&api_base=https://taskalert.in/checkout.html`;
+
 
 
     try {

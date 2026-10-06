@@ -143,7 +143,7 @@ router.post('/create-order', requireUser, async (req, res) => {
   try {
     // Subscription fee: configured via SUBSCRIPTION_PRICE_PAISE (default 100 paise = ₹1.00 for testing production Razorpay keys)
     const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
-    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
+    const planPriceInr = 399;
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     let order = null;
@@ -198,7 +198,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     // The checkout page URL is strictly hosted on the frontend at https://taskalert.in/checkout.html
     const checkoutBase = 'https://taskalert.in/checkout.html';
     const backendBase = 'https://api-task-pilot.deificglobal.tech';
-    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
+    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&plan_amount=399&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
 
     const paymentLinkUrl = checkoutUrl;
 
@@ -246,8 +246,8 @@ router.post('/create-order', requireUser, async (req, res) => {
 // Public order endpoint for taskalert.in website visitors
 router.post('/create-web-order', async (req, res) => {
   try {
-    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '39900', 10);
-    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
+    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
+    const planPriceInr = 399;
     const receipt = `web_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     const activeKeyId = getCleanKeyId();
@@ -274,6 +274,7 @@ router.post('/create-web-order', async (req, res) => {
       orderId: order.id,
       keyId: activeKeyId,
       amount: planPriceInr,
+      planAmount: planPriceInr,
       amountPaise,
       currency: 'INR',
     });
@@ -287,15 +288,17 @@ router.post('/create-web-order', async (req, res) => {
 // Returns public key_id configured in .env (never secret)
 router.get('/public-key', (req, res) => {
   const activeKeyId = getCleanKeyId();
-  const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '39900', 10);
+  const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
   res.json({
     ok: !!activeKeyId,
     keyId: activeKeyId || '',
     amountPaise,
-    amount: Math.max(1, Math.round(amountPaise / 100)),
+    amount: 399,
+    planAmount: 399,
     currency: 'INR',
   });
 });
+
 
 
 // POST /api/subscription/verify-payment

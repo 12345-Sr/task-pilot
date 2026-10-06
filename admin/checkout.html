@@ -304,7 +304,8 @@
   var orderId = qp('order_id');
   var userId = qp('user_id');
   var keyId = qp('key_id');
-  var amountPaise = parseInt(qp('amount') || '39900', 10);
+  var planAmount = qp('plan_amount') || '399';
+  var amountPaise = parseInt(qp('amount') || '100', 10);
   var currency = qp('currency') || 'INR';
   var userName = qp('name') || 'TaskAlert User';
   var userEmail = qp('email') || '';
@@ -319,10 +320,9 @@
   var errorBanner = document.getElementById('error-banner');
 
   function updateAmountUI() {
-    var rupees = (amountPaise / 100).toFixed(0);
-    displayAmount.innerText = '₹' + rupees;
+    displayAmount.innerText = '₹' + planAmount;
     if (keyId) {
-      btn.innerHTML = '<span>Pay ₹' + rupees + ' with Razorpay</span>';
+      btn.innerHTML = '<span>Pay ₹' + planAmount + ' with Razorpay</span>';
       btn.disabled = false;
     }
   }
@@ -361,6 +361,7 @@
         if (data.keyId) keyId = data.keyId;
         if (data.orderId) orderId = data.orderId;
         if (data.amountPaise) amountPaise = data.amountPaise;
+        if (data.planAmount) planAmount = String(data.planAmount);
         updateAmountUI();
       } else {
         fetchPublicKeyFallback();
@@ -379,6 +380,7 @@
         if (data && data.keyId) {
           keyId = data.keyId;
           if (data.amountPaise) amountPaise = data.amountPaise;
+          if (data.planAmount) planAmount = String(data.planAmount);
           updateAmountUI();
         } else {
           showError('Payment gateway key is being configured on the server. Please try again in a few moments.');
