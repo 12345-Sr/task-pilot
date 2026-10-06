@@ -307,6 +307,8 @@ export class NotificationService {
       const chosenSound = soundId || 'classic_bell';
       const channelId = `task-alarm-${chosenSound}`;
 
+      let notifeeScheduled = false;
+
       // 1. ZERO-DELAY EXACT ALARM CLOCK (Android AlarmManager.setAlarmClock)
       // Rings at the exact second, bypasses Doze mode, launches full-screen intent on lockscreen
       if (notifee) {
@@ -372,34 +374,36 @@ export class NotificationService {
               },
             }
           );
+          notifeeScheduled = true;
           console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK, sound: ${chosenSound}`);
         } catch (notifeeErr) {
-          console.warn('[NOTIF] Notifee trigger notice, proceeding with Expo dual delivery:', notifeeErr);
+          console.warn('[NOTIF] Notifee trigger notice, falling back to Expo scheduler:', notifeeErr);
         }
       }
 
-      // 2. DUAL DELIVERY: Guarantee alarm delivery via Expo Notifications backup
-      try {
-        await Notifications.scheduleNotificationAsync({
-          identifier: alarmId,
-          content: {
-            title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
-            body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
-            sound: chosenSound,
-            priority: Notifications.AndroidNotificationPriority.MAX,
-            data: { taskId: cleanTaskId, taskTitle, deadlineTime, soundId: chosenSound, type: 'EXACT_ALARM' },
-          },
-          trigger: {
-            date: deadlineDate,
-            channelId,
-          } as any,
-        });
-        console.log(`[EXPO NOTIF] Dual scheduled for ${deadlineDate.toISOString()} with sound ${chosenSound}`);
-      } catch (expoErr) {
-        console.warn('[NOTIF] Expo schedule fallback notice:', expoErr);
+      // 2. Fallback to Expo Notifications ONLY if Notifee was unavailable or failed
+      // Must use valid DATE trigger type so it never fires immediately!
+      if (!notifeeScheduled) {
+        try {
+          await Notifications.scheduleNotificationAsync({
+            identifier: alarmId,
+            content: {
+              title: `⏰ Kaam Ka Waqt Ho Gaya: ${taskTitle}`,
+              body: `Aapka kaam "${taskTitle}" (${deadlineTime}) complete karne ka theek waqt ho gaya hai!`,
+              sound: chosenSound,
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              data: { taskId: cleanTaskId, taskTitle, deadlineTime, soundId: chosenSound, type: 'EXACT_ALARM' },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: deadlineDate,
+            } as any,
+          });
+          console.log(`[EXPO NOTIF] Fallback scheduled for ${deadlineDate.toISOString()} with sound ${chosenSound}`);
+        } catch (expoErr) {
+          console.warn('[NOTIF] Expo schedule fallback notice:', expoErr);
+        }
       }
-
-      console.log(`[EXACT ALARM REGISTERED] Id: ${alarmId} set at exact millisecond (${deadlineDate.toISOString()}) with SET_ALARM_CLOCK`);
 
       // 2. Intelligent Advance Warning:
       // If task is scheduled > 10m away: warning fires 10 minutes prior
@@ -531,25 +535,26 @@ export class NotificationService {
 
       let delivered = false;
 
-      // 1. Try Notifee native notification if present
+      // 1. Try Notifee native notification if present (silent confirmation banner)
       if (notifee) {
         try {
           await notifee.createChannel({
-            id: 'task-reminders',
-            name: 'TaskAlert Reminders',
-            importance: AndroidImportance.HIGH,
-            visibility: AndroidVisibility.PUBLIC,
-            vibration: true,
-            sound: 'default',
+            id: 'task-added-notice',
+            name: 'Task Confirmations',
+            importance: AndroidImportance.LOW,
+            visibility: AndroidVisibility.PRIVATE,
+            vibration: false,
+            sound: undefined,
           });
 
           await notifee.displayNotification({
             title,
             body,
             android: {
-              channelId: 'task-reminders',
-              importance: AndroidImportance.HIGH,
-              sound: 'default',
+              channelId: 'task-added-notice',
+              importance: AndroidImportance.LOW,
+              sound: undefined,
+              vibrationPattern: [],
               color: '#16A34A',
               pressAction: { id: 'default', launchActivity: 'default' },
             },
@@ -560,14 +565,14 @@ export class NotificationService {
         }
       }
 
-      // 2. Fallback to Expo Notifications if needed
+      // 2. Fallback to Expo Notifications if needed (silent)
       if (!delivered) {
         await Notifications.scheduleNotificationAsync({
           content: {
             title,
             body,
-            sound: 'default',
-            priority: Notifications.AndroidNotificationPriority.HIGH,
+            sound: false as any,
+            priority: Notifications.AndroidNotificationPriority.LOW,
             badge: 1,
             data: {
               type: 'TASK_ADDED',
@@ -777,26 +782,36 @@ export class NotificationService {
         console.log(`[TEST EXACT ALARM] Notifee scheduled for ${seconds}s from now with sound ${chosenSound}.`);
       }
 
-      // Always also trigger via Expo Notifications for dual guarantee
-      try {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '⏰ TEST ALARM: TaskAlert Alert!',
-            body: `Yeh test alert ${seconds} second baad baja hai!`,
-            sound: chosenSound,
-            priority: Notifications.AndroidNotificationPriority.MAX,
-            data: {
-              taskId: 'test_task',
-              taskTitle: 'Test Task Alert',
-              soundId: chosenSound,
-              type: 'EXACT_ALARM',
+      let notifeeTestScheduled = false;
+      if (notifee) {
+        notifeeTestScheduled = true;
+      }
+
+      // Expo Notifications fallback only if Notifee isn't available
+      if (!notifeeTestScheduled) {
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '⏰ TEST ALARM: TaskAlert Alert!',
+              body: `Yeh test alert ${seconds} second baad baja hai!`,
+              sound: chosenSound,
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              data: {
+                taskId: 'test_task',
+                taskTitle: 'Test Task Alert',
+                soundId: chosenSound,
+                type: 'EXACT_ALARM',
+              },
             },
-          },
-          trigger: { seconds, channelId } as any,
-        });
-        console.log(`[TEST EXPO NOTIF] Dual scheduled for ${seconds}s.`);
-      } catch (e) {
-        console.warn('[TEST ALARM] Expo notice:', e);
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+              seconds,
+            } as any,
+          });
+          console.log(`[TEST EXPO NOTIF] Scheduled for ${seconds}s.`);
+        } catch (e) {
+          console.warn('[TEST ALARM] Expo notice:', e);
+        }
       }
 
       return true;

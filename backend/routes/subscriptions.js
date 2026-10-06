@@ -141,9 +141,9 @@ router.get('/status', requireUser, async (req, res) => {
 // Creates a Razorpay order and generates dynamic UPI QR details for the payment wall
 router.post('/create-order', requireUser, async (req, res) => {
   try {
-    // Original TaskAlert Pro monthly subscription fee: ₹399 (39900 paise)
-    const planPriceInr = 399;
-    const amountPaise = 39900;
+    // Subscription fee: configured via SUBSCRIPTION_PRICE_PAISE (default 100 paise = ₹1.00 for testing production Razorpay keys)
+    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
+    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
     const receipt = `tp_${String(req.userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     let order = null;
@@ -195,7 +195,7 @@ router.post('/create-order', requireUser, async (req, res) => {
          user_id, status, plan_price, currency, payment_provider,
          provider_subscription_id, updated_at
        )
-       VALUES ($1, 'free', 399.00, 'INR', 'razorpay', $2, now())
+       VALUES ($1, 'free', ${planPriceInr}.00, 'INR', 'razorpay', $2, now())
        ON CONFLICT (user_id) DO UPDATE SET
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          updated_at = now()`,
@@ -235,9 +235,9 @@ router.get('/checkout', async (req, res) => {
     if (!keyId) {
       return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
     }
-    // Original TaskAlert Pro monthly subscription fee: ₹399 (39900 paise)
-    const planPriceInr = 399;
-    const amountPaise = 39900;
+    // Subscription fee: configured via SUBSCRIPTION_PRICE_PAISE (default 100 paise = ₹1.00 for testing production Razorpay keys)
+    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
+    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
 
     let userName = 'TaskAlert User';
     let userEmail = 'user@taskalert.app';
@@ -608,10 +608,10 @@ router.get('/payment-callback', async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 399.00,
+         plan_price = ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,
@@ -656,7 +656,7 @@ router.get('/payment-callback', async (req, res) => {
     <p>Aapka payment safalta-poorvak verify ho gaya hai. TaskAlert Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
     <div class="ref-box">
       <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
-      <div><b>Amount:</b> ₹399.00</div>
+      <div><b>Amount:</b> ₹${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00</div>
       <div><b>Validity:</b> 30 Days Unlimited Access</div>
     </div>
     <div class="note">
@@ -835,10 +835,10 @@ router.post('/verify-payment', requireUser, async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = 399.00,
+         plan_price = ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,

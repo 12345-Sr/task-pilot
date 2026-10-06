@@ -83,20 +83,45 @@ export function mapDbTask(t: any): Task {
     priority: priorityVal,
     completed: isDone,
     confirmationStatus: confirmation,
-    createdAt: t.created_at,
-    updatedAt: t.updated_at,
+    createdAt: t.created_at || t.createdAt,
+    updatedAt: t.updated_at || t.updatedAt,
   };
 }
+
+export const getTaskSortTime = (t: Task): number => {
+  if (t.createdAt) {
+    const ms = new Date(t.createdAt).getTime();
+    if (!isNaN(ms) && ms > 0) return ms;
+  }
+  if ((t as any).createdAtTimestamp) {
+    const ts = Number((t as any).createdAtTimestamp);
+    if (!isNaN(ts) && ts > 0) return ts;
+  }
+  if (t.updatedAt) {
+    const ms = new Date(t.updatedAt).getTime();
+    if (!isNaN(ms) && ms > 0) return ms;
+  }
+  if (typeof t.id === 'string' && t.id.startsWith('task_')) {
+    const parts = t.id.split('_');
+    const ts = parseInt(parts[1], 10);
+    if (!isNaN(ts) && ts > 0) return ts;
+  }
+  const num = parseInt(String(t.id), 10);
+  if (!isNaN(num) && num > 0) return num;
+  return 0;
+};
 
 export class RemoteTasksRepository implements TasksRepository {
   async getToday(): Promise<Task[]> {
     const all = await this.getAll();
     const now = new Date();
     const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    return all.filter((task) => {
-      const taskDate = task.targetDate || task.date;
-      return !taskDate || taskDate === todayIso || (taskDate < todayIso && !task.completed);
-    });
+    return all
+      .filter((task) => {
+        const taskDate = task.targetDate || task.date;
+        return !taskDate || taskDate === todayIso || (taskDate < todayIso && !task.completed);
+      })
+      .sort((a, b) => getTaskSortTime(b) - getTaskSortTime(a));
   }
 
   async getAll(): Promise<Task[]> {
@@ -113,7 +138,11 @@ export class RemoteTasksRepository implements TasksRepository {
         if (Array.isArray(list) && list.length > 0) {
           const mapped = list.map(mapDbTask);
           await taskHistoryService.syncWithServer(mapped, userId);
-          return mapped;
+          const historyTasks = await taskHistoryService.getLocalHistory(userId);
+          const deletedSet = new Set(historyTasks.filter((t) => t.deletedFromToday).map((t) => t.id));
+          return mapped
+            .filter((t) => !deletedSet.has(t.id))
+            .sort((a, b) => getTaskSortTime(b) - getTaskSortTime(a));
         }
       } catch (err: any) {
         // Fallback to local storage
@@ -122,7 +151,9 @@ export class RemoteTasksRepository implements TasksRepository {
 
     // Load from local AsyncStorage (seeded with helpful friendly tasks if first time)
     const local = await taskHistoryService.getOrInitLocalHistory(userId);
-    return local;
+    return local
+      .filter((t) => !t.deletedFromToday)
+      .sort((a, b) => getTaskSortTime(b) - getTaskSortTime(a));
   }
 
   async getById(id: string): Promise<Task> {
@@ -320,7 +351,8 @@ export class RemoteTasksRepository implements TasksRepository {
     const userId = useAppStore.getState().user?.id;
     const token = useAppStore.getState().token;
 
-    await taskHistoryService.deleteTaskFromHistory(id, userId);
+    // Do NOT delete from History! Keep in history and only remove from Today's screen
+    await taskHistoryService.markDeletedFromToday(id, userId);
 
     if (token) {
       apiClient.delete(`/tasks/${id}`).catch(() => {});

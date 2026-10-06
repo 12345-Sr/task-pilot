@@ -112,12 +112,13 @@ export const AddTaskScreen: React.FC = () => {
         reminderTime: reminderTime,
         time: reminderTime,
         repeatMonthly: Boolean(repeatMonthly),
-        alarmSound: selectedSound,
+        alarmSound: selectedAlarmSound || 'classic_bell',
       },
       {
         onSuccess: async (createdTask: any) => {
+          const soundToUse = selectedAlarmSound || 'classic_bell';
           if (createdTask?.id) {
-            setTaskAlarmSound(String(createdTask.id), selectedSound);
+            setTaskAlarmSound(String(createdTask.id), soundToUse);
             if (taskDesc) {
               useAppStore.getState().setTaskDescription(String(createdTask.id), taskDesc);
             }
@@ -136,7 +137,7 @@ export const AddTaskScreen: React.FC = () => {
               selectedDate,
               reminderTime,
               createdTask?.id,
-              selectedSound
+              soundToUse
             );
           }
 
@@ -324,14 +325,30 @@ export const AddTaskScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Choose Alarm Sound Section */}
+          {/* Alarm sound indicator (configured centrally in Settings > Sound section) */}
           {(remindAtTime || remindBefore) && (
-            <View style={styles.inputGroup}>
-              <AlarmSoundPicker
-                selectedSound={selectedSound}
-                onSelectSound={setSelectedSound}
-                language={language}
-              />
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#F0FDF4',
+              borderRadius: 12,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              borderWidth: 1,
+              borderColor: '#BBF7D0',
+              marginBottom: 16,
+              gap: 10,
+            }}>
+              <Text style={{ fontSize: 18 }}>🔔</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#166534' }}>
+                  {language === 'hi' ? 'अलार्म आवाज: ' : 'Alarm Sound: '}
+                  {(selectedAlarmSound || 'classic_bell').replace('_', ' ').toUpperCase()}
+                </Text>
+                <Text style={{ fontSize: 11, color: '#15803D', marginTop: 1 }}>
+                  {language === 'hi' ? 'साउंड सेटिंग्स सेक्शन से बदल सकते हैं' : 'Configured in Settings > Sound section'}
+                </Text>
+              </View>
             </View>
           )}
 

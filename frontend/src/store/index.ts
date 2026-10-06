@@ -194,12 +194,21 @@ export const useAppStore = create<AppState>()(
           },
         }));
       },
-      recordTaskDeletion: (_dateStr) => {
-        // Free users quota
+      recordTaskDeletion: (dateStr) => {
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const key = (dateStr || today).slice(0, 10);
+        set((state) => ({
+          freeLifetimeCreated: Math.max(0, (state.freeLifetimeCreated || 1) - 1),
+          freeUsageByDate: {
+            ...state.freeUsageByDate,
+            [key]: Math.max(0, (state.freeUsageByDate[key] || 1) - 1),
+          },
+        }));
       },
       getFreeUsage: (_dateStr, activeCount) => {
         const currentRecorded = get().freeLifetimeCreated || 0;
-        const count = Math.max(currentRecorded, typeof activeCount === 'number' ? activeCount : 0);
+        const count = typeof activeCount === 'number' ? activeCount : currentRecorded;
         const used = Math.min(3, Math.max(0, count));
         return {
           used,

@@ -52,12 +52,6 @@ export const TodayScreen: React.FC = () => {
   const { data: tasks, isLoading, refetch, isRefetching } = useTodayTasks();
   const completeMutation = useCompleteTask();
 
-  // Sync store quota if tasks count is higher (monotonic, never decreases on delete)
-  useEffect(() => {
-    if (Array.isArray(tasks) && tasks.length > 0) {
-      setFreeLifetimeCreated(tasks.length);
-    }
-  }, [tasks, setFreeLifetimeCreated]);
 
   const [selectedDay, setSelectedDay] = useState<'today' | 'scheduled'>('today');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -96,11 +90,37 @@ export const TodayScreen: React.FC = () => {
   const now = new Date();
   const todayIso = getLocalDateIso(now);
 
-  // 1. Today's Tasks Window
-  const todayTasks = (tasks || []).filter((task) => {
-    const taskDate = task.targetDate || task.date;
-    return !taskDate || taskDate === todayIso || (taskDate < todayIso && !task.completed);
-  });
+  // Helper to get sort timestamp for newest tasks first
+  const getTaskSortTime = (t: Task): number => {
+    if (t.createdAt) {
+      const ms = new Date(t.createdAt).getTime();
+      if (!isNaN(ms) && ms > 0) return ms;
+    }
+    if ((t as any).createdAtTimestamp) {
+      const ts = Number((t as any).createdAtTimestamp);
+      if (!isNaN(ts) && ts > 0) return ts;
+    }
+    if (t.updatedAt) {
+      const ms = new Date(t.updatedAt).getTime();
+      if (!isNaN(ms) && ms > 0) return ms;
+    }
+    if (typeof t.id === 'string' && t.id.startsWith('task_')) {
+      const parts = t.id.split('_');
+      const ts = parseInt(parts[1], 10);
+      if (!isNaN(ts) && ts > 0) return ts;
+    }
+    const num = parseInt(String(t.id), 10);
+    if (!isNaN(num) && num > 0) return num;
+    return 0;
+  };
+
+  // 1. Today's Tasks Window: Newly added tasks appear above, old tasks go down
+  const todayTasks = (tasks || [])
+    .filter((task) => {
+      const taskDate = task.targetDate || task.date;
+      return !taskDate || taskDate === todayIso || (taskDate < todayIso && !task.completed);
+    })
+    .sort((a, b) => getTaskSortTime(b) - getTaskSortTime(a));
 
   // 2. Scheduled Tasks Window
   const scheduledTasks = (tasks || [])
@@ -111,7 +131,8 @@ export const TodayScreen: React.FC = () => {
     .sort((a, b) => {
       const da = a.targetDate || a.date || '';
       const db = b.targetDate || b.date || '';
-      return da.localeCompare(db);
+      if (da !== db) return da.localeCompare(db);
+      return getTaskSortTime(b) - getTaskSortTime(a);
     });
 
   const displayedTasks = selectedDay === 'today' ? todayTasks : scheduledTasks;

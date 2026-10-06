@@ -41,7 +41,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: '7:00 AM',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'Subah Ki Briefing',
@@ -49,7 +49,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'Alerts',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'Time Se Pehle Smart Alert',
@@ -57,7 +57,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: '8:00 PM',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'Shaam Ka Confirmation',
@@ -72,7 +72,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: '7:00 AM',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'Morning Briefing',
@@ -80,7 +80,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'Alerts',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'Proactive Timely Alerts',
@@ -88,7 +88,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: '8:00 PM',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'Evening Review & Streak',
@@ -103,7 +103,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'सकाळी ७:००',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'सकाळची ब्रीफिंग',
@@ -111,7 +111,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'अलर्ट',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'वेळेपूर्वी स्मार्ट अलर्ट',
@@ -119,7 +119,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'संध्याकाळी ८:००',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'संध्याकाळ पुष्टीकरण व स्ट्रीक',
@@ -134,7 +134,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'সকাল ৭:০০',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'সকালের ব্রিফিং',
@@ -142,7 +142,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'অ্যালার্ট',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'সময়ের আগে স্মার্ট অ্যালার্ট',
@@ -150,7 +150,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'সন্ধ্যা ৮:০০',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'সন্ধ্যার নিশ্চিতকরণ ও স্ট্রিক',
@@ -165,7 +165,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'காலை 7:00',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'காலை சுருக்கம்',
@@ -173,7 +173,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'அலர்ட்',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'நேரத்திற்கு முன் அலர்ட்',
@@ -181,7 +181,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'மாலை 8:00',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'மாலை உறுதிப்படுத்தல்',
@@ -196,7 +196,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'ఉదయం 7:00',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'ఉదయం బ్రీఫింగ్',
@@ -204,7 +204,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'హెచ్చరికలు',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'సమయానికి ముందే అలర్ట్‌లు',
@@ -212,7 +212,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'రాత్రి 8:00',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'సాయంత్రం సమీక్ష & స్ట్రీక్',
@@ -227,7 +227,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'સવારે 7:00',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'સવારની બ્રીફિંગ',
@@ -235,7 +235,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'એલર્ટ',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'સમય પહેલાં સ્માર્ટ એલર્ટ',
@@ -243,7 +243,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'સાંજે 8:00',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'સાંજે કન્ફર્મેશન અને સ્ટ્રીક',
@@ -258,7 +258,7 @@ const FEATURE_DATA: Record<
     pillars: [
       {
         icon: '🌅',
-        badge: 'ਸਵੇਰੇ 7:00',
+        badge: '',
         badgeColor: '#B45309',
         badgeBg: '#FEF3C7',
         title: 'ਸਵੇਰ ਦੀ ਬ੍ਰੀਫਿੰਗ',
@@ -266,7 +266,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🔔',
-        badge: 'ਅਲਰਟ',
+        badge: '',
         badgeColor: '#0284C7',
         badgeBg: '#E0F2FE',
         title: 'ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਸਮਾਰਟ ਅਲਰਟ',
@@ -274,7 +274,7 @@ const FEATURE_DATA: Record<
       },
       {
         icon: '🌙',
-        badge: 'ਸ਼ਾਮ 8:00',
+        badge: '',
         badgeColor: '#15803D',
         badgeBg: '#DCFCE7',
         title: 'ਸ਼ਾਮ ਦੀ ਪੁਸ਼ਟੀ ਅਤੇ ਸਟ੍ਰੀਕ',
@@ -382,24 +382,26 @@ export default function WelcomeScreen({ navigation }: any) {
                       <Text style={styles.pillarTitle} numberOfLines={1}>
                         {pillar.title}
                       </Text>
-                      <View
-                        style={[
-                          styles.pillarBadge,
-                          {
-                            backgroundColor: pillar.badgeBg,
-                            borderColor: pillar.badgeColor + '30',
-                          },
-                        ]}
-                      >
-                        <Text
+                      {Boolean(pillar.badge) && (
+                        <View
                           style={[
-                            styles.pillarBadgeText,
-                            { color: pillar.badgeColor },
+                            styles.pillarBadge,
+                            {
+                              backgroundColor: pillar.badgeBg,
+                              borderColor: pillar.badgeColor + '30',
+                            },
                           ]}
                         >
-                          {pillar.badge}
-                        </Text>
-                      </View>
+                          <Text
+                            style={[
+                              styles.pillarBadgeText,
+                              { color: pillar.badgeColor },
+                            ]}
+                          >
+                            {pillar.badge}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                     <Text style={styles.pillarDesc} numberOfLines={2}>
                       {pillar.desc}

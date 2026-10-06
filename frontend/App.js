@@ -69,11 +69,12 @@ export default function App() {
 
           // When alarm rings or user taps the heads-up banner, open full-screen alarm immediately
           if (isAlarm && (type === EventType.DELIVERED || type === EventType.PRESS)) {
+            const currentSound = notification?.data?.soundId || useAppStore.getState().selectedAlarmSound || 'classic_bell';
             setActiveAlarm({
               taskId: notification?.data?.taskId,
               taskTitle: notification?.data?.taskTitle || notification?.title || 'Kaam Ka Waqt Ho Gaya',
               deadlineTime: notification?.data?.deadlineTime,
-              soundId: notification?.data?.soundId || 'classic_bell',
+              soundId: currentSound,
             });
           }
 
@@ -131,11 +132,12 @@ export default function App() {
     const expoNotifSub = Notifications.addNotificationReceivedListener((notification) => {
       const data = notification?.request?.content?.data;
       if (data?.type === 'EXACT_ALARM') {
+        const currentSound = data.soundId || useAppStore.getState().selectedAlarmSound || 'classic_bell';
         setActiveAlarm({
           taskId: data.taskId,
           taskTitle: data.taskTitle || notification.request.content.title || 'Kaam Ka Waqt Ho Gaya',
           deadlineTime: data.deadlineTime,
-          soundId: data.soundId || 'classic_bell',
+          soundId: currentSound,
         });
       }
     });
@@ -143,11 +145,12 @@ export default function App() {
     const expoRespSub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response?.notification?.request?.content?.data;
       if (data?.type === 'EXACT_ALARM') {
+        const currentSound = data.soundId || useAppStore.getState().selectedAlarmSound || 'classic_bell';
         setActiveAlarm({
           taskId: data.taskId,
           taskTitle: data.taskTitle || response.notification.request.content.title || 'Kaam Ka Waqt Ho Gaya',
           deadlineTime: data.deadlineTime,
-          soundId: data.soundId || 'classic_bell',
+          soundId: currentSound,
         });
       }
     });

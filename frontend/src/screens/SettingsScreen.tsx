@@ -28,7 +28,8 @@ import { TermsAndConditionsModal } from '../components/TermsAndConditionsModal';
 import { SupportTicketModal } from '../components/SupportTicketModal';
 import { PaywallModal } from '../components/PaywallModal';
 import { PremiumStatusModal } from '../components/PremiumStatusModal';
-import AlarmSoundPicker from '../components/AlarmSoundPicker';
+import { AlarmSoundModal } from '../components/AlarmSoundModal';
+import { SoundService } from '../services/sound/sound.service';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -62,6 +63,7 @@ export const SettingsScreen: React.FC = () => {
   const [morningNotification, setMorningNotification] = useState(true);
   const [eveningNotification, setEveningNotification] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [alarmSoundModalVisible, setAlarmSoundModalVisible] = useState(false);
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
@@ -352,45 +354,34 @@ export const SettingsScreen: React.FC = () => {
             />
           </View>
 
-          {/* Alarm Sound Picker */}
+          {/* Alarm Ringtone & Sound Tab Row (Opens Alarm App style Sound Modal) */}
           {soundEnabled && (
-            <View style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FAFAFA', borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
-              <AlarmSoundPicker
-                selectedSound={selectedAlarmSound}
-                onSelectSound={setSelectedAlarmSound}
-                language={language}
-              />
-
-              <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#16A34A',
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  borderRadius: 12,
-                  marginTop: 10,
-                  gap: 8,
-                }}
-                activeOpacity={0.8}
-                onPress={async () => {
-                  Alert.alert(
-                    isHindi ? '⏰ टेस्ट अलार्म सेट हो गया' : '⏰ Test Alarm Scheduled',
-                    isHindi
-                      ? '5 सेकंड में आपका चुना हुआ अलार्म फुल स्क्रीन में बजेगा!'
-                      : 'Your chosen alarm will ring full-screen in 5 seconds!',
-                    [{ text: 'OK' }]
-                  );
-                  await NotificationService.triggerTestAlert(5, selectedAlarmSound);
-                }}
-              >
-                <Text style={{ fontSize: 16 }}>🚨</Text>
-                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13.5 }}>
-                  {isHindi ? 'फुल स्क्रीन अलार्म टेस्ट करें (5 सेकंड)' : 'Test Full Screen Alarm (5s)'}
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => setAlarmSoundModalVisible(true)}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>⏰</Text>
+                <View style={styles.settingTextWrap}>
+                  <Text style={styles.settingLabel}>
+                    {isHindi ? 'अलार्म टोन / साउंड' : 'Alarm Ringtone & Sound'}
+                  </Text>
+                  <Text style={styles.settingSubLabel}>
+                    {isHindi
+                      ? 'रिमाइंडर्स के लिए आवाज़ चुनें'
+                      : 'Choose sound for reminder alarms'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.settingRight}>
+                <Text style={styles.settingValue}>
+                  {SoundService.getSoundMeta(selectedAlarmSound).emoji}{' '}
+                  {SoundService.getSoundMeta(selectedAlarmSound).name}
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <Text style={styles.chevron}>›</Text>
+              </View>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -496,11 +487,16 @@ export const SettingsScreen: React.FC = () => {
         onCancel={() => setLogoutDialogVisible(false)}
       />
 
-      {/* In-Page Language Selection Modal */}
       {/* Shared Language Selection Modal */}
       <LanguageModal
         visible={languageModalVisible}
         onClose={() => setLanguageModalVisible(false)}
+      />
+
+      {/* Alarm Sound Selection Modal (Alarm App Style) */}
+      <AlarmSoundModal
+        visible={alarmSoundModalVisible}
+        onClose={() => setAlarmSoundModalVisible(false)}
       />
 
       {/* Terms & Conditions Modal */}

@@ -389,9 +389,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                   {isHinglish ? 'Cancel anytime • Turant unlock' : 'Cancel anytime • Instant unlock'}
                 </Text>
               </View>
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountBadgeText}>50% OFF</Text>
-              </View>
             </View>
 
             {/* Direct Razorpay Checkout Action */}

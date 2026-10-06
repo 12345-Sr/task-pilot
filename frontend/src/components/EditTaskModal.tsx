@@ -136,7 +136,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       } as any,
       {
         onSuccess: async (updated: any) => {
-          setTaskAlarmSound(task.id, selectedSound);
+          const soundToUse = selectedAlarmSound || 'classic_bell';
+          setTaskAlarmSound(task.id, soundToUse);
           // Reschedule alert notifications (time is mandatory)
           await NotificationService.cancelTaskAlerts(task.id);
           await NotificationService.scheduleTaskAlerts(
@@ -144,7 +145,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
             selectedDate,
             reminderTime,
             task.id,
-            selectedSound
+            soundToUse
           );
 
           Alert.alert(
@@ -298,13 +299,29 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               </View>
             </View>
 
-            {/* Choose Alarm Sound */}
-            <View style={styles.fieldBlock}>
-              <AlarmSoundPicker
-                selectedSound={selectedSound}
-                onSelectSound={setSelectedSound}
-                language={language}
-              />
+            {/* Alarm Sound configured centrally in Settings > Sound section */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#F0FDF4',
+              borderRadius: 12,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              borderWidth: 1,
+              borderColor: '#BBF7D0',
+              marginBottom: 16,
+              gap: 10,
+            }}>
+              <Text style={{ fontSize: 18 }}>🔔</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#166534' }}>
+                  {language === 'hi' ? 'अलार्म आवाज: ' : 'Alarm Sound: '}
+                  {(selectedAlarmSound || 'classic_bell').replace('_', ' ').toUpperCase()}
+                </Text>
+                <Text style={{ fontSize: 11, color: '#15803D', marginTop: 1 }}>
+                  {language === 'hi' ? 'साउंड सेटिंग्स सेक्शन से बदल सकते हैं' : 'Configured in Settings > Sound section'}
+                </Text>
+              </View>
             </View>
 
             {/* 5. Notes / Description */}

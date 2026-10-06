@@ -101,12 +101,12 @@ router.get('/', requireUser, async (req, res) => {
     `;
     if (date) {
       result = await db.query(
-        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND t.task_date = $2 AND (t.deleted_at IS NULL) ORDER BY t.task_time ASC`,
+        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND t.task_date = $2 AND (t.deleted_at IS NULL) ORDER BY t.created_at DESC, t.id DESC`,
         [req.userId, date]
       );
     } else {
       result = await db.query(
-        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND (t.deleted_at IS NULL) ORDER BY t.task_date ASC, t.task_time ASC`,
+        `SELECT ${alertCols} FROM tasks t WHERE t.user_id = $1 AND (t.deleted_at IS NULL) ORDER BY t.created_at DESC, t.id DESC`,
         [req.userId]
       );
     }
@@ -125,12 +125,12 @@ router.get('/', requireUser, async (req, res) => {
   } catch (e) {
     if (date) {
       result = await db.query(
-        'SELECT * FROM tasks WHERE user_id = $1 AND task_date = $2 ORDER BY task_time ASC',
+        'SELECT * FROM tasks WHERE user_id = $1 AND task_date = $2 ORDER BY created_at DESC, id DESC',
         [req.userId, date]
       );
     } else {
       result = await db.query(
-        'SELECT * FROM tasks WHERE user_id = $1 ORDER BY task_date ASC, task_time ASC',
+        'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC, id DESC',
         [req.userId]
       );
     }

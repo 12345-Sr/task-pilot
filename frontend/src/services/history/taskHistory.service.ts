@@ -6,6 +6,7 @@ export interface TaskHistoryItem extends Task {
   createdAtTimestamp?: number;
   completedAtTimestamp?: number;
   isDeleted?: boolean;
+  deletedFromToday?: boolean;
   repeatMonthly?: boolean;
 }
 
@@ -187,6 +188,7 @@ class TaskHistoryService {
           createdAtTimestamp: createdAtTime,
           completed: sTask.completed ?? existing?.completed ?? false,
           confirmationStatus: sTask.confirmationStatus || existing?.confirmationStatus,
+          deletedFromToday: existing?.deletedFromToday ?? (sTask as any)?.deletedFromToday ?? false,
         };
         map.set(sTask.id, merged);
       });
@@ -244,6 +246,32 @@ class TaskHistoryService {
       importantTasks,
       completionRate,
     };
+  }
+
+  /**
+   * Remove a task from Today's active view while strictly preserving it in History!
+   */
+  async markDeletedFromToday(taskId: string, userId?: string): Promise<TaskHistoryItem[]> {
+    try {
+      const key = this.getKey(userId);
+      const existing = await this.getLocalHistory(userId);
+      const updated = existing.map((t) => {
+        if (t.id === taskId) {
+          return {
+            ...t,
+            deletedFromToday: true,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return t;
+      });
+      this.inMemoryCache[key] = updated;
+      await AsyncStorage.setItem(key, JSON.stringify(updated));
+      return updated;
+    } catch (err) {
+      console.warn('[TASK HISTORY] Failed to mark task deleted from today:', err);
+      return this.inMemoryCache[this.getKey(userId)] || [];
+    }
   }
 
   /**

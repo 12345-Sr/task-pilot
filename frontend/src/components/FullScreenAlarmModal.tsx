@@ -52,7 +52,7 @@ export const FullScreenAlarmModal: React.FC<FullScreenAlarmModalProps> = ({
     }, 1000);
 
     // Start sound loop
-    const soundId: AlarmSoundId = alarm.soundId || 'classic_bell';
+    const soundId: AlarmSoundId = alarm.soundId || useAppStore.getState().selectedAlarmSound || 'classic_bell';
     SoundService.startAlarmLoop(soundId).catch(() => {});
 
     // Start vibration pattern: 500ms on, 500ms off

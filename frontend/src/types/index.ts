@@ -42,6 +42,7 @@ export interface Task {
   completedAt?: string;
   reminderMinutes?: number;
   alarmSound?: string;
+  deletedFromToday?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
