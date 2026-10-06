@@ -575,7 +575,7 @@ export const SettingsScreen: React.FC = () => {
               <Text style={{ color: '#EAB308' }}>Alert</Text>
             </Text>
             <Text style={styles.appTagline}>"{t(language, 'tagline')}"</Text>
-            <Text style={styles.appVersion}>Version 1.0.3 (TaskAlert Production)</Text>
+            <Text style={styles.appVersion}>Version 1.0.5 (TaskAlert Production)</Text>
           </View>
         </View>
 
