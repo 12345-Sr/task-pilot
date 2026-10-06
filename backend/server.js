@@ -128,12 +128,32 @@ app.get('/api/db-status', async (req, res) => {
 const adminDir = require('fs').existsSync(path.join(__dirname, '../admin'))
   ? path.join(__dirname, '../admin')
   : path.join(__dirname, '../admin-panel');
+const publicDir = path.join(__dirname, '../public');
+const fs = require('fs');
+
 app.use('/admin', express.static(adminDir, { dotfiles: 'allow' }));
+if (fs.existsSync(publicDir)) {
+  app.use('/public', express.static(publicDir));
+  app.use(express.static(publicDir));
+}
+
+const resolveCheckoutPath = () => {
+  const publicPath = path.join(publicDir, 'checkout.html');
+  const adminPath = path.join(adminDir, 'checkout.html');
+  const rootPath = path.join(__dirname, '../checkout.html');
+  if (fs.existsSync(publicPath)) return publicPath;
+  if (fs.existsSync(adminPath)) return adminPath;
+  return rootPath;
+};
+
 app.get('/checkout.html', (req, res) => {
-  res.sendFile(path.join(adminDir, 'checkout.html'));
+  res.sendFile(resolveCheckoutPath());
 });
 app.get('/checkout', (req, res) => {
-  res.sendFile(path.join(adminDir, 'checkout.html'));
+  res.sendFile(resolveCheckoutPath());
+});
+app.get('/public/checkout.html', (req, res) => {
+  res.sendFile(resolveCheckoutPath());
 });
 
 app.use('/api/auth', authRoutes);
