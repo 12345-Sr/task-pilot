@@ -195,44 +195,13 @@ router.post('/create-order', requireUser, async (req, res) => {
       }
     } catch (e) { }
 
-    // The checkout page URL is loaded from FRONTEND_CHECKOUT_BASE (e.g. https://taskalert.in/checkout.html)
-    // or falls back cleanly to the hosted checkout page on the current server domain.
-    const defaultCheckoutBase = 'https://taskalert.in/checkout.html';
-    const checkoutBase = (process.env.FRONTEND_CHECKOUT_BASE || defaultCheckoutBase).replace(/\/$/, '');
-
+    // The checkout page URL is strictly hosted on the frontend at https://taskalert.in/checkout.html
+    const checkoutBase = 'https://taskalert.in/checkout.html';
     const backendBase = 'https://api-task-pilot.deificglobal.tech';
-    let checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
+    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
 
-    // Resilient fallback: Try creating a Razorpay hosted Payment Link (https://rzp.io)
-    // rzp.io links NEVER get blocked by Razorpay's "website does not match registered website" check.
-    let paymentLinkUrl = null;
-    const rzpClient = rzp;
-    if (rzpClient && rzpClient.paymentLink && typeof rzpClient.paymentLink.create === 'function') {
-      try {
-        const pLink = await rzpClient.paymentLink.create({
-          amount: amountPaise,
-          currency: 'INR',
-          description: 'TaskAlert Pro Plan',
-          customer: {
-            name: userNameForCheckout,
-            email: userEmailForCheckout || undefined,
-            contact: userPhoneForCheckout || undefined,
-          },
-          notify: { sms: false, email: false },
-          callback_url: `TaskAlert://payment-success?user_id=${encodeURIComponent(req.userId)}&order_id=${encodeURIComponent(order.id)}`,
-          callback_method: 'get',
-          notes: {
-            userId: String(req.userId),
-            orderId: order.id,
-          },
-        });
-        if (pLink && pLink.short_url) {
-          paymentLinkUrl = pLink.short_url;
-        }
-      } catch (plErr) {
-        console.log('[PAYMENT-LINK] Payment link optional fallback not created:', plErr?.message);
-      }
-    }
+    const paymentLinkUrl = checkoutUrl;
+
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'TaskAlert.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
@@ -520,7 +489,7 @@ router.post('/cancel', requireUser, async (req, res) => {
 router.post('/public-confirm', async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id } = req.body;
-    if (!user_id || !razorpay_payment_id) {
+    if (!razorpay_payment_id) {
       return res.status(400).json({ error: 'Missing payment confirmation parameters' });
     }
 
@@ -547,27 +516,32 @@ router.post('/public-confirm', async (req, res) => {
     periodEnd.setDate(periodEnd.getDate() + 30);
     const planPrice = Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100));
 
-    await db.query(
-      `INSERT INTO subscriptions (
-         user_id, status, plan_price, currency, payment_provider,
-         provider_subscription_id, provider_customer_id,
-         current_period_start, current_period_end, updated_at
-       )
-       VALUES ($1, 'active', ${planPrice}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
-       ON CONFLICT (user_id) DO UPDATE SET
-         status = 'active',
-         plan_price = ${planPrice}.00,
-         payment_provider = 'razorpay',
-         provider_subscription_id = EXCLUDED.provider_subscription_id,
-         provider_customer_id = EXCLUDED.provider_customer_id,
-         current_period_start = now(),
-         current_period_end = EXCLUDED.current_period_end,
-         cancelled_at = NULL,
-         updated_at = now()`,
-      [user_id, razorpay_order_id || `ord_${Date.now()}`, razorpay_payment_id, periodEnd]
-    );
+    if (user_id) {
+      await db.query(
+        `INSERT INTO subscriptions (
+           user_id, status, plan_price, currency, payment_provider,
+           provider_subscription_id, provider_customer_id,
+           current_period_start, current_period_end, updated_at
+         )
+         VALUES ($1, 'active', ${planPrice}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+         ON CONFLICT (user_id) DO UPDATE SET
+           status = 'active',
+           plan_price = ${planPrice}.00,
+           payment_provider = 'razorpay',
+           provider_subscription_id = EXCLUDED.provider_subscription_id,
+           provider_customer_id = EXCLUDED.provider_customer_id,
+           current_period_start = now(),
+           current_period_end = EXCLUDED.current_period_end,
+           cancelled_at = NULL,
+           updated_at = now()`,
+        [user_id, razorpay_order_id || `ord_${Date.now()}`, razorpay_payment_id, periodEnd]
+      );
 
-    console.log(`[PUBLIC-CONFIRM] Pro activated for user ${user_id}, payment ${razorpay_payment_id}`);
+      console.log(`[PUBLIC-CONFIRM] Pro activated for user ${user_id}, payment ${razorpay_payment_id}`);
+    } else {
+      console.log(`[PUBLIC-CONFIRM] Web guest payment verified ${razorpay_payment_id}`);
+    }
+
 
     db.query('SELECT push_token, language FROM users WHERE id = $1', [user_id])
       .then((uR) => {

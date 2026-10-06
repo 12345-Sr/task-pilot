@@ -137,25 +137,6 @@ if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
 }
 
-const resolveCheckoutPath = () => {
-  const publicPath = path.join(publicDir, 'checkout.html');
-  const adminPath = path.join(adminDir, 'checkout.html');
-  const rootPath = path.join(__dirname, '../checkout.html');
-  if (fs.existsSync(publicPath)) return publicPath;
-  if (fs.existsSync(adminPath)) return adminPath;
-  return rootPath;
-};
-
-app.get('/checkout.html', (req, res) => {
-  res.sendFile(resolveCheckoutPath());
-});
-app.get('/checkout', (req, res) => {
-  res.sendFile(resolveCheckoutPath());
-});
-app.get('/public/checkout.html', (req, res) => {
-  res.sendFile(resolveCheckoutPath());
-});
-
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/tickets', ticketRoutes);
@@ -183,7 +164,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   // Keep-alive heartbeat for cloud platforms (pings /api/health every 10 mins to prevent cold-starts)
   const https = require('https');
   const http = require('http');
-  const keepAliveUrl = process.env.RENDER_EXTERNAL_URL || process.env.API_BASE_URL || 'https://task-pilot-api.onrender.com';
+  const keepAliveUrl = process.env.API_BASE_URL || 'https://api-task-pilot.deificglobal.tech';
   setInterval(() => {
     try {
       const client = keepAliveUrl.startsWith('https') ? https : http;
@@ -195,3 +176,4 @@ app.listen(PORT, '0.0.0.0', async () => {
     } catch (e) {}
   }, 10 * 60 * 1000);
 });
+

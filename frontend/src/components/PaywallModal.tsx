@@ -215,32 +215,32 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     }
 
     setLaunchingGateway(true);
-    let targetUrl = orderData?.checkoutUrl || orderData?.paymentLinkUrl;
 
-    // 2. If order is not ready yet, create order on-demand right now and launch immediately
-    if (!targetUrl) {
+    let activeOrderData = orderData;
+    // 2. If order is not ready yet, create order on-demand right now
+    if (!activeOrderData?.orderId) {
       try {
         const res: any = await apiClient.post('/subscription/create-order');
         if (res?.ok && res?.orderId) {
+          activeOrderData = res;
           setOrderData(res);
           startPaymentPolling(res.orderId);
-          targetUrl = res.checkoutUrl || res.paymentLinkUrl;
         }
       } catch (err: any) {
         console.warn('[PAYWALL] On-demand order creation failed:', err?.message || err);
       }
     }
 
-    if (!targetUrl) {
-      setLaunchingGateway(false);
-      Alert.alert(
-        isHinglish ? 'Payment Server Connect Nahi Hua' : 'Payment Server Unavailable',
-        isHinglish
-          ? 'Payment gateway se connect karne me dikkat aa rahi hai. Kripya apna internet connection check karein aur dobara koshish karein.'
-          : 'Unable to connect to the payment gateway. Please check your internet connection and try again.'
-      );
-      return;
-    }
+    const orderId = activeOrderData?.orderId || '';
+    const activeKey = activeOrderData?.keyId || '';
+    const amountPaise = activeOrderData?.amountPaise || 39900;
+    const userName = user?.name || 'TaskAlert User';
+    const userEmail = user?.email || '';
+    const userId = user?.id || '';
+
+    // Strictly open frontend checkout at https://taskalert.in/checkout.html
+    const targetUrl = `https://taskalert.in/checkout.html?order_id=${encodeURIComponent(orderId)}&user_id=${encodeURIComponent(userId)}&key_id=${encodeURIComponent(activeKey)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}&real_order=1&api_base=https://api-task-pilot.deificglobal.tech`;
+
 
     try {
       await Linking.openURL(targetUrl);

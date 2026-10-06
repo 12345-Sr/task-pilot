@@ -2,201 +2,523 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TaskAlert Pro — Checkout</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TaskAlert Pro — Secure Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
-  body { font-family: -apple-system, system-ui, sans-serif; background:#0B0A08; color:#F4EFE4; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:24px; }
-  .card { max-width: 380px; width:100%; text-align:center; }
-  h1 { font-size: 22px; margin-bottom: 6px; }
-  p { color:#B8AE9A; font-size:14px; margin-bottom: 24px; }
-  button { width:100%; padding:16px; border:none; border-radius:12px; background:#C5A059; color:#1A1710; font-weight:700; font-size:15px; cursor:pointer; }
-  button:disabled { opacity:0.6; }
-  #error-banner { display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; margin-top:16px; text-align:left; line-height:1.5; }
+  :root {
+    --bg-dark: #0B0A08;
+    --card-bg: #14120E;
+    --border-color: rgba(197, 160, 89, 0.2);
+    --gold: #C5A059;
+    --gold-hover: #D4B26F;
+    --text-primary: #F4EFE4;
+    --text-secondary: #A89F8D;
+    --success: #22C55E;
+    --error: #EF4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(197, 160, 89, 0.12) 0%, transparent 60%),
+      radial-gradient(circle at 50% 100%, rgba(197, 160, 89, 0.05) 0%, transparent 50%);
+  }
+  .container {
+    max-width: 420px;
+    width: 100%;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+  }
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(197, 160, 89, 0.1);
+    border: 1px solid rgba(197, 160, 89, 0.25);
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+  h1 span {
+    color: var(--gold);
+  }
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.4;
+  }
+  .pricing-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+  .pricing-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .pricing-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .pricing-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold);
+    text-align: right;
+  }
+  .pricing-period {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .features-list {
+    text-align: left;
+    list-style: none;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .features-list li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .features-list li .check {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .btn-pay {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--gold);
+    color: #12100C;
+    font-weight: 700;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(197, 160, 89, 0.25);
+  }
+  .btn-pay:hover:not(:disabled) {
+    background: var(--gold-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(197, 160, 89, 0.35);
+  }
+  .btn-pay:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .secure-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+  .secure-footer svg {
+    width: 13px;
+    height: 13px;
+    fill: var(--gold);
+  }
+  #error-banner {
+    display: none;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #FCA5A5;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 12.5px;
+    margin-top: 16px;
+    text-align: left;
+    line-height: 1.4;
+  }
+  /* Success View */
+  #success-view {
+    display: none;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 2px solid var(--success);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-bottom: 16px;
+    animation: scaleIn 0.3s ease;
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>TaskAlert <span style="color:#C5A059">PRO</span></h1>
-    <p id="amount-label">Loading order…</p>
-    <button id="pay-btn" disabled>Please wait…</button>
-    <div id="error-banner"></div>
+
+<div class="container">
+  <div class="card" id="checkout-card">
+    <!-- Active Checkout View -->
+    <div id="payment-view">
+      <div class="brand-badge">
+        <span>👑</span> TaskAlert Pro Official
+      </div>
+      <h1>TaskAlert <span>PRO</span></h1>
+      <p class="subtitle">Supercharge your productivity with unlimited daily reminders and alarms</p>
+
+      <div class="pricing-box">
+        <div>
+          <div class="pricing-title">30-Day Pro Pass</div>
+          <div class="pricing-sub">Single one-time activation</div>
+        </div>
+        <div>
+          <div class="pricing-amount" id="display-amount">₹399</div>
+          <div class="pricing-period">for 1 month</div>
+        </div>
+      </div>
+
+      <ul class="features-list">
+        <li><span class="check">✓</span> Unlimited daily tasks & reminders</li>
+        <li><span class="check">✓</span> High-priority loud alarm ringtones</li>
+        <li><span class="check">✓</span> Repeat tasks across timeline dates</li>
+        <li><span class="check">✓</span> Automatic cloud sync & backup</li>
+      </ul>
+
+      <button id="pay-btn" class="btn-pay" disabled>
+        <span>Loading Payment… ⏳</span>
+      </button>
+
+      <div class="secure-footer">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        <span>100% Safe Checkout via Razorpay (UPI, Card, NetBanking)</span>
+      </div>
+
+      <div id="error-banner"></div>
+    </div>
+
+    <!-- Payment Success View -->
+    <div id="success-view">
+      <div class="success-icon">✓</div>
+      <h1 style="color:var(--success);">Payment Successful!</h1>
+      <p class="subtitle" style="margin-top:6px;">Your TaskAlert Pro subscription is now active for 30 days.</p>
+      
+      <div class="pricing-box" style="margin-top:20px;">
+        <div>
+          <div class="pricing-title">Payment ID</div>
+          <div class="pricing-sub" id="success-payment-id">Confirmed</div>
+        </div>
+        <div>
+          <div class="pricing-amount" style="color:var(--success); font-size:16px;">ACTIVE ✓</div>
+        </div>
+      </div>
+
+      <button id="app-btn" class="btn-pay" style="margin-top:16px;">
+        Open TaskAlert App →
+      </button>
+
+      <a href="https://taskalert.in/" class="btn-secondary">
+        Return to Home Page
+      </a>
+    </div>
   </div>
+</div>
 
-  <script>
-    function qp(name) {
+<script>
+  function qp(name) {
+    try {
       return new URLSearchParams(window.location.search).get(name) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  var orderId = qp('order_id');
+  var userId = qp('user_id');
+  var keyId = qp('key_id');
+  var amountPaise = parseInt(qp('amount') || '39900', 10);
+  var currency = qp('currency') || 'INR';
+  var userName = qp('name') || 'TaskAlert User';
+  var userEmail = qp('email') || '';
+  var userPhone = qp('phone') || '';
+  var apiBase = qp('api_base') || 'https://api-task-pilot.deificglobal.tech';
+  if (!apiBase || apiBase.indexOf('file:') === 0 || apiBase === 'null') {
+    apiBase = 'https://api-task-pilot.deificglobal.tech';
+  }
+
+  var btn = document.getElementById('pay-btn');
+  var displayAmount = document.getElementById('display-amount');
+  var errorBanner = document.getElementById('error-banner');
+
+  function updateAmountUI() {
+    var rupees = (amountPaise / 100).toFixed(0);
+    displayAmount.innerText = '₹' + rupees;
+    if (keyId) {
+      btn.innerHTML = '<span>Pay ₹' + rupees + ' with Razorpay</span>';
+      btn.disabled = false;
+    }
+  }
+
+  function showError(msg) {
+    if (!errorBanner) return;
+    errorBanner.style.display = 'block';
+    errorBanner.innerHTML = '⚠️ ' + msg;
+  }
+
+  function clearError() {
+    if (!errorBanner) return;
+    errorBanner.style.display = 'none';
+    errorBanner.innerHTML = '';
+  }
+
+  // 1. Fetch public key & web order dynamically if not supplied in query params
+  function initOrder() {
+    if (keyId && orderId) {
+      updateAmountUI();
+      return;
     }
 
-    var orderId = qp('order_id');
-    var userId = qp('user_id');
-    var keyId = qp('key_id'); // Loaded dynamically from URL or server .env
-    var amountPaise = parseInt(qp('amount') || '39900', 10);
-    var currency = qp('currency') || 'INR';
-    var userName = qp('name') || 'TaskAlert User';
-    var userEmail = qp('email') || '';
-    var userPhone = qp('phone') || '';
-    var apiBase = qp('api_base') || 'https://api-task-pilot.deificglobal.tech';
-    if (!apiBase || apiBase.indexOf('file:') === 0 || apiBase === 'null') {
-      apiBase = 'https://api-task-pilot.deificglobal.tech';
-    }
+    btn.disabled = true;
+    btn.innerHTML = '<span>Preparing order… ⏳</span>';
 
-    var btn = document.getElementById('pay-btn');
-    var label = document.getElementById('amount-label');
-
-    function showError(msg) {
-      var b = document.getElementById('error-banner');
-      b.style.display = 'block';
-      b.innerHTML = '⚠️ ' + msg;
-    }
-
-    function setReadyState() {
-      if (keyId) {
-        label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
-        btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
-        btn.disabled = false;
+    var webOrderUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/create-web-order';
+    fetch(webOrderUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data && (data.keyId || data.orderId)) {
+        if (data.keyId) keyId = data.keyId;
+        if (data.orderId) orderId = data.orderId;
+        if (data.amountPaise) amountPaise = data.amountPaise;
+        updateAmountUI();
       } else {
-        label.innerText = 'Fetching payment details… ⏳';
-        btn.innerText = 'Please wait…';
-        btn.disabled = true;
+        fetchPublicKeyFallback();
       }
-    }
+    })
+    .catch(function() {
+      fetchPublicKeyFallback();
+    });
+  }
 
-    setReadyState();
-
-    function fetchPublicKey() {
-      if (keyId) return;
-      var pubKeyUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-key';
-      fetch(pubKeyUrl)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data && data.keyId) {
-            keyId = data.keyId;
-            if (data.amountPaise) amountPaise = data.amountPaise;
-            setReadyState();
-          } else {
-            showError('Payment gateway key is not configured in backend .env.');
-          }
-        })
-        .catch(function() {
-          showError('Could not reach backend payment server. Please verify your connection.');
-        });
-    }
-
-    // If keyId or orderId is not provided in URL, retrieve dynamically from backend .env
-    if (!keyId || !orderId) {
-      var webOrderUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/create-web-order';
-      fetch(webOrderUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      })
+  function fetchPublicKeyFallback() {
+    var pubKeyUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-key';
+    fetch(pubKeyUrl)
       .then(function(res) { return res.json(); })
       .then(function(data) {
-        if (data && (data.keyId || data.orderId)) {
-          if (data.keyId) keyId = data.keyId;
-          if (data.orderId) orderId = data.orderId;
+        if (data && data.keyId) {
+          keyId = data.keyId;
           if (data.amountPaise) amountPaise = data.amountPaise;
-          setReadyState();
+          updateAmountUI();
         } else {
-          fetchPublicKey();
+          showError('Payment gateway key is being configured on the server. Please try again in a few moments.');
         }
       })
       .catch(function() {
-        fetchPublicKey();
+        showError('Could not connect to payment backend server. Please verify your connection.');
       });
-    }
+  }
 
-    function returnToApp(path, params) {
-      var qs = Object.keys(params).map(function (k) {
-        return k + '=' + encodeURIComponent(params[k] || '');
-      }).join('&');
-      var intentUrl = 'intent://' + path + '?' + qs + '#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
-      var customScheme = 'TaskAlert://' + path + '?' + qs;
+  initOrder();
+
+  function returnToApp(path, params) {
+    var qs = Object.keys(params || {}).map(function (k) {
+      return k + '=' + encodeURIComponent(params[k] || '');
+    }).join('&');
+    var intentUrl = 'intent://' + path + '?' + qs + '#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
+    var customScheme = 'TaskAlert://' + path + '?' + qs;
+
+    try { window.location.href = customScheme; } catch (e) {}
+    setTimeout(function () {
       try { window.location.href = intentUrl; } catch (e) {}
-      setTimeout(function () {
-        try { window.location.href = customScheme; } catch (e) {}
-      }, 300);
+    }, 400);
+  }
+
+  function showSuccess(payload) {
+    document.getElementById('payment-view').style.display = 'none';
+    var sv = document.getElementById('success-view');
+    sv.style.display = 'block';
+    if (payload && payload.razorpay_payment_id) {
+      document.getElementById('success-payment-id').innerText = payload.razorpay_payment_id;
     }
 
-    function launch() {
-      if (typeof Razorpay === 'undefined') {
-        showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
-        return;
-      }
-      if (!keyId) {
-        showError('Razorpay key is not configured on the server. Please set RAZORPAY_KEY_ID in .env.');
-        return;
-      }
-      btn.disabled = true;
-      btn.innerText = 'Opening Razorpay… ⏳';
+    var appBtn = document.getElementById('app-btn');
+    appBtn.addEventListener('click', function() {
+      returnToApp('payment-success', payload);
+    });
 
-      var options = {
-        key: keyId,
-        amount: amountPaise,
-        currency: currency,
-        name: 'TaskAlert Pro',
-        description: '30-Day Pro Subscription',
-        prefill: { name: userName, email: userEmail, contact: userPhone },
-        theme: { color: '#C5A059' },
-        config: {
-          display: {
-            blocks: {
-              upi_intent_block: { name: 'Pay using UPI apps', instruments: [{ method: 'upi', flows: ['intent'] }] },
-              other_methods_block: { name: 'Other payment methods', instruments: [{ method: 'upi', flows: ['collect', 'qr'] }, { method: 'card' }, { method: 'netbanking' }, { method: 'wallet' }] }
+    // Auto-attempt redirect to app if on mobile
+    returnToApp('payment-success', payload);
+  }
+
+  function launch() {
+    clearError();
+    if (typeof Razorpay === 'undefined') {
+      showError('Payment gateway script failed to load. Please check your internet connection.');
+      return;
+    }
+    if (!keyId) {
+      showError('Payment gateway key not loaded yet. Please wait a second and retry.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>Opening Razorpay… ⏳</span>';
+
+    var options = {
+      key: keyId,
+      amount: amountPaise,
+      currency: currency,
+      name: 'TaskAlert Pro',
+      description: '30-Day Pro Subscription',
+      prefill: {
+        name: userName,
+        email: userEmail,
+        contact: userPhone
+      },
+      theme: { color: '#C5A059' },
+      config: {
+        display: {
+          blocks: {
+            upi_intent_block: {
+              name: 'Pay using UPI apps',
+              instruments: [{ method: 'upi', flows: ['intent'] }]
             },
-            sequence: ['block.upi_intent_block', 'block.other_methods_block'],
-            preferences: { show_default_blocks: false }
-          }
-        },
-        handler: function (response) {
-          btn.innerText = 'Activating Pro… ⏳';
-          var payload = {
-            razorpay_payment_id: response.razorpay_payment_id || '',
-            razorpay_order_id: response.razorpay_order_id || orderId,
-            razorpay_signature: response.razorpay_signature || '',
-            user_id: userId
-          };
-
-          var targetEndpoint = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-confirm';
-          fetch(targetEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }).catch(function(err) {
-            console.warn('Backend confirmation warning:', err);
-          }).finally(function() {
-            returnToApp('payment-success', payload);
-          });
-        },
-        modal: {
-          ondismiss: function () {
-            btn.disabled = false;
-            btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
-          }
+            other_methods_block: {
+              name: 'Other payment methods',
+              instruments: [
+                { method: 'upi', flows: ['collect', 'qr'] },
+                { method: 'card' },
+                { method: 'netbanking' },
+                { method: 'wallet' }
+              ]
+            }
+          },
+          sequence: ['block.upi_intent_block', 'block.other_methods_block'],
+          preferences: { show_default_blocks: false }
         }
-      };
+      },
+      handler: function (response) {
+        btn.innerHTML = '<span>Activating Pro Plan… ⏳</span>';
+        var payload = {
+          razorpay_payment_id: response.razorpay_payment_id || '',
+          razorpay_order_id: response.razorpay_order_id || orderId,
+          razorpay_signature: response.razorpay_signature || '',
+          user_id: userId
+        };
 
-      if (orderId) {
-        options.order_id = orderId;
-      }
-
-      try {
-        var rzp = new Razorpay(options);
-        rzp.on('payment.failed', function (response) {
-          btn.disabled = false;
-          btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
-          var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
-          showError(reason);
+        var targetEndpoint = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-confirm';
+        fetch(targetEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(function() {
+          showSuccess(payload);
+        })
+        .catch(function(err) {
+          console.warn('Backend confirmation warning:', err);
+          showSuccess(payload);
         });
-        rzp.open();
-      } catch (e) {
-        btn.disabled = false;
-        btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
-        showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + ').');
+      },
+      modal: {
+        ondismiss: function () {
+          updateAmountUI();
+        }
       }
+    };
+
+    if (orderId) {
+      options.order_id = orderId;
     }
 
-    btn.addEventListener('click', launch);
-  </script>
+    try {
+      var rzp = new Razorpay(options);
+      rzp.on('payment.failed', function (resp) {
+        updateAmountUI();
+        var reason = (resp && resp.error && resp.error.description) 
+          ? resp.error.description 
+          : 'Payment cancelled or failed. Please try again.';
+        showError(reason);
+      });
+      rzp.open();
+    } catch (e) {
+      updateAmountUI();
+      showError('Could not open payment window (' + (e && e.message ? e.message : 'error') + ').');
+    }
+  }
+
+  btn.addEventListener('click', launch);
+</script>
 </body>
 </html>
