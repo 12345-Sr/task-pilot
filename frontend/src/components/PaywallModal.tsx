@@ -20,6 +20,7 @@ import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { BrandLogo } from './BrandLogo';
 import { NotificationService } from '../services/notifications/notification.service';
 
@@ -42,6 +43,7 @@ interface OrderData {
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const {
     paywallVisible,
     setPaywallVisible,
@@ -191,20 +193,55 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handleOpenRazorpayCheckout = async () => {
-    const targetUrl = orderData?.checkoutUrl || orderData?.paymentLinkUrl;
-    if (!targetUrl) {
-      // No real order was created (backend order creation failed) — retry instead of
-      // opening a checkout page with no key_id/order_id, which can never succeed.
+    // 1. If not authenticated or in guest mode, prompt user to login/signup so their Pro subscription is linked
+    if (!isAuthenticated || isGuest) {
       Alert.alert(
-        isHinglish ? 'Payment Ready Nahi Hai' : 'Payment Not Ready',
+        isHinglish ? 'Account Zaroori Hai' : 'Account Required',
         isHinglish
-          ? 'Payment order abhi taiyaar nahi hai. Dobara try kar rahe hain...'
-          : 'Payment order is not ready yet. Retrying...'
+          ? 'Pro subscription khareedne ke liye kripya pehle apna account banayein ya login karein, taaki aapka Pro subscription hamesha surakshit rahe.'
+          : 'Please sign in or create an account first to upgrade to Pro, so your subscription is safely linked to your account.',
+        [
+          { text: isHinglish ? 'Baad Mein' : 'Cancel', style: 'cancel' },
+          {
+            text: isHinglish ? 'Login / Signup Karein' : 'Sign In / Sign Up',
+            onPress: () => {
+              handleClose();
+              navigation.navigate('Login');
+            },
+          },
+        ]
       );
-      createPaymentOrder();
       return;
     }
+
     setLaunchingGateway(true);
+    let targetUrl = orderData?.checkoutUrl || orderData?.paymentLinkUrl;
+
+    // 2. If order is not ready yet, create order on-demand right now and launch immediately
+    if (!targetUrl) {
+      try {
+        const res: any = await apiClient.post('/subscription/create-order');
+        if (res?.ok && res?.orderId) {
+          setOrderData(res);
+          startPaymentPolling(res.orderId);
+          targetUrl = res.checkoutUrl || res.paymentLinkUrl;
+        }
+      } catch (err: any) {
+        console.warn('[PAYWALL] On-demand order creation failed:', err?.message || err);
+      }
+    }
+
+    if (!targetUrl) {
+      setLaunchingGateway(false);
+      Alert.alert(
+        isHinglish ? 'Payment Server Connect Nahi Hua' : 'Payment Server Unavailable',
+        isHinglish
+          ? 'Payment gateway se connect karne me dikkat aa rahi hai. Kripya apna internet connection check karein aur dobara koshish karein.'
+          : 'Unable to connect to the payment gateway. Please check your internet connection and try again.'
+      );
+      return;
+    }
+
     try {
       await Linking.openURL(targetUrl);
     } catch (err) {
@@ -215,7 +252,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
           : 'Please verify that Chrome or your default browser is available.'
       );
     } finally {
-      setTimeout(() => setLaunchingGateway(false), 1000);
+      setTimeout(() => setLaunchingGateway(false), 1200);
     }
   };
 

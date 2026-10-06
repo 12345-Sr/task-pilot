@@ -206,6 +206,7 @@ router.post('/create-order', requireUser, async (req, res) => {
     // Resilient fallback: Try creating a Razorpay hosted Payment Link (https://rzp.io)
     // rzp.io links NEVER get blocked by Razorpay's "website does not match registered website" check.
     let paymentLinkUrl = null;
+    const rzpClient = rzp;
     if (rzpClient && rzpClient.paymentLink && typeof rzpClient.paymentLink.create === 'function') {
       try {
         const pLink = await rzpClient.paymentLink.create({
