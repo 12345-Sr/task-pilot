@@ -203,7 +203,41 @@ router.post('/create-order', requireUser, async (req, res) => {
     const checkoutBase = (process.env.FRONTEND_CHECKOUT_BASE || defaultCheckoutBase).replace(/\/$/, '');
 
     const backendBase = `${protocol}://${host}`;
-    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
+    let checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
+
+    // Resilient fallback: Try creating a Razorpay hosted Payment Link (https://rzp.io)
+    // rzp.io links NEVER get blocked by Razorpay's "website does not match registered website" check.
+    let paymentLinkUrl = null;
+    if (rzpClient && rzpClient.paymentLink && typeof rzpClient.paymentLink.create === 'function') {
+      try {
+        const pLink = await rzpClient.paymentLink.create({
+          amount: amountPaise,
+          currency: 'INR',
+          description: 'TaskAlert Pro Plan',
+          customer: {
+            name: userNameForCheckout,
+            email: userEmailForCheckout || undefined,
+            contact: userPhoneForCheckout || undefined,
+          },
+          notify: { sms: false, email: false },
+          callback_url: `TaskAlert://payment-success?user_id=${encodeURIComponent(req.userId)}&order_id=${encodeURIComponent(order.id)}`,
+          callback_method: 'get',
+          notes: {
+            userId: String(req.userId),
+            orderId: order.id,
+          },
+        });
+        if (pLink && pLink.short_url) {
+          paymentLinkUrl = pLink.short_url;
+          // If FRONTEND_CHECKOUT_BASE is not explicitly customized, use rzp.io directly to prevent website block
+          if (!process.env.FRONTEND_CHECKOUT_BASE) {
+            checkoutUrl = pLink.short_url;
+          }
+        }
+      } catch (plErr) {
+        console.log('[PAYMENT-LINK] Payment link optional fallback not created:', plErr?.message);
+      }
+    }
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'TaskAlert.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
@@ -230,6 +264,7 @@ router.post('/create-order', requireUser, async (req, res) => {
       amountPaise,
       currency: 'INR',
       checkoutUrl,
+      paymentLinkUrl,
       upiUrl,
       qrImageUrl,
       merchantVpa,

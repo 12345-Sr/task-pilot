@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskAlert Pro — Checkout</title>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background:#0B0A08; color:#F4EFE4; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:24px; }
+  .card { max-width: 380px; width:100%; text-align:center; }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  p { color:#B8AE9A; font-size:14px; margin-bottom: 24px; }
+  button { width:100%; padding:16px; border:none; border-radius:12px; background:#C5A059; color:#1A1710; font-weight:700; font-size:15px; cursor:pointer; }
+  button:disabled { opacity:0.6; }
+  #error-banner { display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; margin-top:16px; text-align:left; line-height:1.5; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>TaskAlert <span style="color:#C5A059">PRO</span></h1>
+    <p id="amount-label">Loading order…</p>
+    <button id="pay-btn" disabled>Please wait…</button>
+    <div id="error-banner"></div>
+  </div>
+
+  <script>
+    function qp(name) {
+      return new URLSearchParams(window.location.search).get(name) || '';
+    }
+
+    var orderId = qp('order_id');
+    var userId = qp('user_id');
+    var keyId = qp('key_id');
+    var amountPaise = parseInt(qp('amount') || '100', 10);
+    var currency = qp('currency') || 'INR';
+    var userName = qp('name') || 'TaskAlert User';
+    var userEmail = qp('email') || '';
+    var userPhone = qp('phone') || '';
+    var apiBase = qp('api_base') || window.location.origin;
+
+    var btn = document.getElementById('pay-btn');
+    var label = document.getElementById('amount-label');
+
+    function showError(msg) {
+      var b = document.getElementById('error-banner');
+      b.style.display = 'block';
+      b.innerHTML = '⚠️ ' + msg;
+    }
+
+    if (!orderId || !keyId) {
+      showError('Missing payment details in the link. Please go back to the app and try again.');
+    } else {
+      label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
+      btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+      btn.disabled = false;
+    }
+
+    function returnToApp(path, params) {
+      var qs = Object.keys(params).map(function (k) {
+        return k + '=' + encodeURIComponent(params[k] || '');
+      }).join('&');
+      var intentUrl = 'intent://' + path + '?' + qs + '#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
+      var customScheme = 'TaskAlert://' + path + '?' + qs;
+      try { window.location.href = intentUrl; } catch (e) {}
+      setTimeout(function () {
+        try { window.location.href = customScheme; } catch (e) {}
+      }, 300);
+    }
+
+    function launch() {
+      if (typeof Razorpay === 'undefined') {
+        showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
+        return;
+      }
+      btn.disabled = true;
+      btn.innerText = 'Opening Razorpay… ⏳';
+
+      var options = {
+        key: keyId,
+        amount: amountPaise,
+        currency: currency,
+        order_id: orderId,
+        name: 'TaskAlert Pro',
+        description: '30-Day Pro Subscription',
+        prefill: { name: userName, email: userEmail, contact: userPhone },
+        theme: { color: '#C5A059' },
+        // Surfaces GPay/PhonePe app icons (Intent flow, auto-redirects) ahead of
+        // the "enter UPI ID" box (Collect flow, which never redirects anywhere).
+        config: {
+          display: {
+            blocks: {
+              upi_intent_block: { name: 'Pay using UPI apps', instruments: [{ method: 'upi', flows: ['intent'] }] },
+              other_methods_block: { name: 'Other payment methods', instruments: [{ method: 'upi', flows: ['collect', 'qr'] }, { method: 'card' }, { method: 'netbanking' }, { method: 'wallet' }] }
+            },
+            sequence: ['block.upi_intent_block', 'block.other_methods_block'],
+            preferences: { show_default_blocks: false }
+          }
+        },
+        handler: function (response) {
+          btn.innerText = 'Activating Pro… ⏳';
+          var payload = {
+            razorpay_payment_id: response.razorpay_payment_id || '',
+            razorpay_order_id: response.razorpay_order_id || orderId,
+            razorpay_signature: response.razorpay_signature || '',
+            user_id: userId
+          };
+
+          // Immediately notify backend to activate subscription in DB
+          var targetEndpoint = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-confirm';
+          fetch(targetEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(function(err) {
+            console.warn('Backend confirmation warning:', err);
+          }).finally(function() {
+            returnToApp('payment-success', payload);
+          });
+        },
+        modal: {
+          ondismiss: function () {
+            btn.disabled = false;
+            btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+          }
+        }
+      };
+
+      try {
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          btn.disabled = false;
+          btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+          var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
+          showError(reason);
+        });
+        rzp.open();
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+        showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + ').');
+      }
+    }
+
+    btn.addEventListener('click', launch);
+  </script>
+</body>
+</html>
