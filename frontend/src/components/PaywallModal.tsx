@@ -191,7 +191,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
   };
 
   const handleOpenRazorpayCheckout = async () => {
-    const targetUrl = orderData?.paymentLinkUrl || orderData?.checkoutUrl;
+    const targetUrl = orderData?.checkoutUrl || orderData?.paymentLinkUrl;
     if (!targetUrl) {
       // No real order was created (backend order creation failed) — retry instead of
       // opening a checkout page with no key_id/order_id, which can never succeed.

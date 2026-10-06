@@ -10,8 +10,8 @@
   .card { max-width: 380px; width:100%; text-align:center; }
   h1 { font-size: 22px; margin-bottom: 6px; }
   p { color:#B8AE9A; font-size:14px; margin-bottom: 24px; }
-  button { width:100%; padding:16px; border:none; border-radius:12px; background:#C5A059; color:#1A1710; font-weight:700; font-size:15px; cursor:pointer; transition: opacity 0.2s; }
-  button:disabled { opacity:0.6; cursor:not-allowed; }
+  button { width:100%; padding:16px; border:none; border-radius:12px; background:#C5A059; color:#1A1710; font-weight:700; font-size:15px; cursor:pointer; }
+  button:disabled { opacity:0.6; }
   #error-banner { display:none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #FCA5A5; border-radius: 12px; padding: 12px; font-size: 12.5px; margin-top:16px; text-align:left; line-height:1.5; }
 </style>
 </head>
@@ -35,9 +35,7 @@
     var currency = qp('currency') || 'INR';
     var userName = qp('name') || 'TaskAlert User';
     var userEmail = qp('email') || '';
-    var userPhone = qp('phone') || '';
-
-    var apiBase = qp('api_base') || window.location.origin;
+    var apiBase = qp('api_base') || (window.location.origin.indexOf('taskalert.in') !== -1 ? 'https://api-task-pilot.deificglobal.tech' : window.location.origin);
 
     var btn = document.getElementById('pay-btn');
     var label = document.getElementById('amount-label');
@@ -143,8 +141,6 @@
     }
 
     btn.addEventListener('click', launch);
-    // Intentionally NOT auto-launching on page load — redirecting into a UPI app
-    // needs to trace back to a real tap, or some Android browsers block it silently.
   </script>
 </body>
 </html>

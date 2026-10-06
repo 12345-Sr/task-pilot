@@ -197,12 +197,10 @@ router.post('/create-order', requireUser, async (req, res) => {
 
     // The checkout page URL is loaded from FRONTEND_CHECKOUT_BASE (e.g. https://taskalert.in/checkout.html)
     // or falls back cleanly to the hosted checkout page on the current server domain.
-    const host = req.get('host') || 'api-task-pilot.deificglobal.tech';
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('deificglobal.tech') || host.includes('onrender.com') ? 'https' : 'http';
-    const defaultCheckoutBase = `${protocol}://${host}/checkout.html`;
+    const defaultCheckoutBase = 'https://taskalert.in/checkout.html';
     const checkoutBase = (process.env.FRONTEND_CHECKOUT_BASE || defaultCheckoutBase).replace(/\/$/, '');
 
-    const backendBase = `${protocol}://${host}`;
+    const backendBase = 'https://api-task-pilot.deificglobal.tech';
     let checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
 
     // Resilient fallback: Try creating a Razorpay hosted Payment Link (https://rzp.io)
@@ -229,10 +227,6 @@ router.post('/create-order', requireUser, async (req, res) => {
         });
         if (pLink && pLink.short_url) {
           paymentLinkUrl = pLink.short_url;
-          // If FRONTEND_CHECKOUT_BASE is not explicitly customized, use rzp.io directly to prevent website block
-          if (!process.env.FRONTEND_CHECKOUT_BASE) {
-            checkoutUrl = pLink.short_url;
-          }
         }
       } catch (plErr) {
         console.log('[PAYMENT-LINK] Payment link optional fallback not created:', plErr?.message);

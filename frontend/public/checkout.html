@@ -35,8 +35,7 @@
     var currency = qp('currency') || 'INR';
     var userName = qp('name') || 'TaskAlert User';
     var userEmail = qp('email') || '';
-    var userPhone = qp('phone') || '';
-    var apiBase = qp('api_base') || window.location.origin;
+    var apiBase = qp('api_base') || (window.location.origin.indexOf('taskalert.in') !== -1 ? 'https://api-task-pilot.deificglobal.tech' : window.location.origin);
 
     var btn = document.getElementById('pay-btn');
     var label = document.getElementById('amount-label');
@@ -84,6 +83,8 @@
         description: '30-Day Pro Subscription',
         prefill: { name: userName, email: userEmail, contact: userPhone },
         theme: { color: '#C5A059' },
+        // Surfaces GPay/PhonePe app icons (Intent flow, auto-redirects) ahead of
+        // the "enter UPI ID" box (Collect flow, which never redirects anywhere).
         config: {
           display: {
             blocks: {
@@ -103,6 +104,7 @@
             user_id: userId
           };
 
+          // Immediately notify backend to activate subscription in DB
           var targetEndpoint = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-confirm';
           fetch(targetEndpoint, {
             method: 'POST',
