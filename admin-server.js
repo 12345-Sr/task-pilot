@@ -36,6 +36,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
+    filePath = filePath + '.html';
+  }
+
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     filePath = path.join(ADMIN_DIR, 'index.html');
   }

@@ -181,9 +181,29 @@ router.post('/create-order', requireUser, async (req, res) => {
       });
     }
 
-    const host = req.get('host') || 'task-pilot-api.onrender.com';
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('onrender.com') ? 'https' : 'http';
-    const checkoutUrl = `${protocol}://${host}/api/subscription/checkout?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&real_order=1`;
+    // The static frontend checkout page makes no backend call of its own, so the
+    // user's prefill details are fetched here and passed through the URL instead.
+    let userNameForCheckout = 'TaskAlert User';
+    let userEmailForCheckout = '';
+    let userPhoneForCheckout = '';
+    try {
+      const uRes = await db.query('SELECT name, email, phone FROM users WHERE id = $1', [req.userId]);
+      if (uRes.rows[0]) {
+        userNameForCheckout = uRes.rows[0].name || userNameForCheckout;
+        userEmailForCheckout = uRes.rows[0].email || '';
+        userPhoneForCheckout = uRes.rows[0].phone || '';
+      }
+    } catch (e) { }
+
+    // The checkout page URL is loaded from FRONTEND_CHECKOUT_BASE (e.g. https://taskalert.in/checkout.html)
+    // or falls back cleanly to the hosted checkout page on the current server domain.
+    const host = req.get('host') || 'api-task-pilot.deificglobal.tech';
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' || host.includes('deificglobal.tech') || host.includes('onrender.com') ? 'https' : 'http';
+    const defaultCheckoutBase = `${protocol}://${host}/checkout.html`;
+    const checkoutBase = (process.env.FRONTEND_CHECKOUT_BASE || defaultCheckoutBase).replace(/\/$/, '');
+
+    const backendBase = `${protocol}://${host}`;
+    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
 
     const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'TaskAlert.rzp@icici';
     const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
@@ -223,496 +243,6 @@ router.post('/create-order', requireUser, async (req, res) => {
   }
 });
 
-// GET /api/subscription/checkout
-// Renders the official Razorpay Standard Checkout modal with all payment methods (Cards, UPI, Netbanking, Wallets)
-router.get('/checkout', async (req, res) => {
-  try {
-    const { order_id, user_id } = req.query;
-    // SECURITY: never trust a key_id from the query string on this public,
-    // unauthenticated route — always use the server's own configured key,
-    // otherwise anyone could point the checkout page at an arbitrary key.
-    const keyId = getCleanKeyId();
-    if (!keyId) {
-      return res.status(500).send('Razorpay Key ID is not configured. Please set RAZORPAY_KEY_ID in .env.');
-    }
-    // Subscription fee: configured via SUBSCRIPTION_PRICE_PAISE (default 100 paise = ₹1.00 for testing production Razorpay keys)
-    const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10);
-    const planPriceInr = Math.max(1, Math.round(amountPaise / 100));
-
-    let userName = 'TaskAlert User';
-    let userEmail = 'user@taskalert.app';
-    let userPhone = '';
-
-    if (user_id) {
-      try {
-        const uRes = await db.query('SELECT name, email, phone FROM users WHERE id = $1', [user_id]);
-        if (uRes.rows[0]) {
-          userName = uRes.rows[0].name || userName;
-          userEmail = uRes.rows[0].email || userEmail;
-          userPhone = uRes.rows[0].phone || '';
-        }
-      } catch (e) { }
-    }
-
-    const isTestMode = String(keyId).startsWith('rzp_test_');
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TaskAlert Pro — Razorpay Checkout</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-    .card { background: #FFFFFF; border-radius: 24px; padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
-    .badge-top { display: inline-flex; align-items: center; gap: 6px; background: #FFF9F0; color: #92400E; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 12px; border: 1px solid #FDE68A; }
-    h1 { font-size: 24px; font-weight: 900; color: #0F172A; margin-bottom: 4px; letter-spacing: -0.5px; }
-    h1 span { color: #C5A059; }
-    p.sub { font-size: 13px; color: #64748B; margin-bottom: 18px; line-height: 1.5; }
-    .price-box { background: linear-gradient(135deg, #FFF9F0 0%, #FEF3C7 100%); border-radius: 16px; padding: 16px; border: 1.5px solid #FDE68A; margin-bottom: 18px; }
-    .price-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
-    .currency { font-size: 26px; font-weight: 900; color: #C5A059; }
-    .price { font-size: 42px; font-weight: 900; color: #0F172A; letter-spacing: -1px; }
-    .period { font-size: 14px; font-weight: 600; color: #64748B; margin-left: 4px; }
-    .validity { font-size: 12px; color: #78350F; margin-top: 6px; font-weight: 600; }
-    .methods-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
-    .method-item { display: flex; align-items: center; gap: 10px; background: #F8FAFC; padding: 11px 13px; border-radius: 12px; border: 1px solid #E2E8F0; font-size: 12.5px; color: #334155; }
-    .method-item b { color: #0F172A; font-weight: 700; }
-    .btn-pay { background: #C5A059; color: #FFFFFF; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); margin-bottom: 12px; }
-    .btn-pay:hover { background: #B38E46; }
-    .btn-pay:active { transform: scale(0.98); }
-    .test-guide { background: #FFFBEB; border: 1px dashed #F59E0B; border-radius: 14px; padding: 12px 14px; text-align: left; font-size: 12px; color: #78350F; margin-bottom: 16px; line-height: 1.5; }
-    .test-guide-title { color: #B45309; font-weight: 800; font-size: 12.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-    .security-note { margin-top: 10px; font-size: 11.5px; color: #64748B; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; }
-  </style>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-</head>
-<body>
-  <div class="card">
-    <div class="badge-top">🛡️ Razorpay Official Checkout</div>
-    <h1>TaskAlert <span>PRO</span></h1>
-    <p class="sub">Sabhi payment options enabled hain (UPI, Cards, NetBanking)</p>
-
-    <div class="price-box">
-      <div class="price-row">
-        <span class="currency">₹</span>
-        <span class="price">${planPriceInr}</span>
-        <span class="period">/ month</span>
-      </div>
-      <div class="validity">30 dino ke liye unlimited tasks aur proactive alerts access</div>
-    </div>
-
-    ${isTestMode ? `
-    <div class="test-guide">
-      <div class="test-guide-title">🧪 Razorpay Test Mode</div>
-      <div>Test Mode active hai. UPI ID me <code>success@razorpay</code> use karein.</div>
-    </div>
-    ` : ''}
-
-    <div class="methods-list">
-      <div class="method-item">📱 <span><b>UPI Apps</b> (Google Pay, PhonePe, Paytm, Any UPI)</span></div>
-      <div class="method-item">💳 <span><b>Cards</b> (Visa, Mastercard, RuPay Debit/Credit)</span></div>
-      <div class="method-item">🏦 <span><b>Net Banking</b> (SBI, HDFC, ICICI, Axis & 50+ Banks)</span></div>
-      <div class="method-item">👛 <span><b>Wallets</b> (Paytm, Mobikwik)</span></div>
-    </div>
-
-    <button id="rzp-button" class="btn-pay">Pay ₹${planPriceInr} with Razorpay</button>
-
-    <div id="error-banner" style="display:none; background: #FEF2F2; border: 1px solid #FCA5A5; color: #DC2626; border-radius: 12px; padding: 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; line-height: 1.5;"></div>
-
-    <div class="security-note">
-      🔒 256-Bit SSL Secured by Razorpay India
-    </div>
-  </div>
-
-  <script>
-    var currentUserId = ${JSON.stringify(user_id || '')};
-    var currentOrderId = ${JSON.stringify(order_id || '')};
-
-    function showError(msg) {
-      var banner = document.getElementById('error-banner');
-      if (banner) {
-        banner.style.display = 'block';
-        banner.innerHTML = '⚠️ ' + msg;
-      }
-    }
-    function clearError() {
-      var banner = document.getElementById('error-banner');
-      if (banner) banner.style.display = 'none';
-    }
-
-    var isLaunching = false;
-    function launchRazorpay() {
-      if (isLaunching) return;
-      isLaunching = true;
-      clearError();
-      var btn = document.getElementById('rzp-button');
-      if (btn) btn.innerText = 'Opening Razorpay... ⏳';
-
-      if (typeof Razorpay === 'undefined') {
-        isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
-        showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
-        return;
-      }
-
-      var options = {
-        key: ${JSON.stringify(keyId)},
-        amount: ${amountPaise},
-        currency: 'INR',
-        name: 'TaskAlert Pro',
-        description: '30-Day Pro Subscription (Unlimited Tasks & Alerts)',
-        retry: {
-          enabled: true,
-          max_count: 3
-        },
-        prefill: {
-          name: ${JSON.stringify(userName)},
-          email: ${JSON.stringify(userEmail)},
-          contact: ${JSON.stringify(userPhone)}
-        },
-        theme: {
-          color: '#C5A059'
-        },
-        handler: function (response) {
-          isLaunching = false;
-          window.location.href = '/api/subscription/payment-callback?razorpay_payment_id=' + encodeURIComponent(response.razorpay_payment_id || '') +
-            '&razorpay_order_id=' + encodeURIComponent(response.razorpay_order_id || currentOrderId) +
-            '&razorpay_signature=' + encodeURIComponent(response.razorpay_signature || '') +
-            '&user_id=' + encodeURIComponent(currentUserId);
-        },
-        modal: {
-          ondismiss: function() {
-            isLaunching = false;
-            if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
-            console.log('Razorpay modal closed');
-          }
-        }
-      };
-
-      if (currentOrderId && currentOrderId.startsWith('order_')) {
-        options.order_id = currentOrderId;
-      }
-
-      try {
-        var rzp1 = new Razorpay(options);
-        rzp1.on('payment.failed', function (response){
-          isLaunching = false;
-          if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
-          var reason = (response && response.error && response.error.description) ? response.error.description : 'Payment cancelled or failed. Please try again.';
-          showError(reason);
-          console.warn('[RAZORPAY] Payment failed:', reason);
-        });
-        rzp1.open();
-      } catch (e) {
-        isLaunching = false;
-        if (btn) btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
-        showError('Could not open the payment window (' + (e && e.message ? e.message : 'unknown error') + '). Please try again.');
-        console.error('[RAZORPAY] Error opening modal:', e);
-      }
-
-      setTimeout(function() {
-        isLaunching = false;
-        if (btn && btn.innerText.indexOf('Opening') !== -1) {
-          btn.innerText = 'Pay ₹' + ${planPriceInr} + ' with Razorpay';
-        }
-      }, 4000);
-    }
-
-    document.getElementById('rzp-button').onclick = launchRazorpay;
-    // NOTE: we intentionally do NOT auto-open the modal on page load anymore.
-    // Opening it (and any subsequent redirect into a UPI app like GPay/PhonePe)
-    // needs to happen inside a real, direct user tap. Mobile Chrome/Android can
-    // silently block app-switch redirects that trace back to a programmatic
-    // page-load trigger instead of a genuine click — which looks exactly like
-    // "it never redirects to GPay" with no visible error.
-  </script>
-</body>
-</html>`;
-
-    res.send(html);
-  } catch (err) {
-    console.error('Checkout error:', err);
-    res.status(500).send('Unable to load checkout page. Please try again.');
-  }
-});
-
-// GET /api/subscription/payment-callback
-// Verifies signature or payment status with Razorpay, then activates subscription.
-// SECURITY: user_id is resolved from (1) query param, (2) order stored in DB. Never guesses.
-router.get('/payment-callback', async (req, res) => {
-  try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user_id } = req.query;
-    const targetOrderId = razorpay_order_id;
-
-    let isVerified = false;
-
-    // 1. Verify cryptographic signature (Razorpay Standard Checkout provides this)
-    if (razorpay_signature && targetOrderId && razorpay_payment_id) {
-      if (verifySignature(targetOrderId, razorpay_payment_id, razorpay_signature)) {
-        isVerified = true;
-      }
-    }
-
-    // 2. If signature missing/failed, verify payment status directly with Razorpay API (.env credentials)
-    const rzpClient = getRzpInstance();
-    if (!isVerified && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
-      try {
-        const p = await rzpClient.payments.fetch(razorpay_payment_id);
-        if (p && (p.status === 'captured' || p.status === 'authorized')) {
-          if (p.status === 'authorized') {
-            try { await rzpClient.payments.capture(p.id, 100, 'INR'); } catch (e) { }
-          }
-          isVerified = true;
-        }
-      } catch (e) { }
-    }
-
-    // 3. If still not verified, check if order itself is paid
-    if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
-      try {
-        const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
-        if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 100))) {
-          isVerified = true;
-        }
-      } catch (e) { }
-
-      if (!isVerified) {
-        try {
-          const payments = await rzpClient.orders.fetchPayments(targetOrderId);
-          if (payments && payments.items && payments.items.length > 0) {
-            const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
-            if (cap) {
-              if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 100, 'INR'); } catch (e) { }
-              }
-              isVerified = true;
-            }
-          }
-        } catch (e) { }
-      }
-    }
-
-    if (!isVerified) {
-      return res.status(400).send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Not Verified — TaskAlert</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
-    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FCA5A5; box-shadow: 0 20px 45px -12px rgba(239, 68, 68, 0.15), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
-    .icon { font-size: 52px; margin-bottom: 12px; }
-    h1 { color: #DC2626; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
-    p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
-    .btn { display: block; width: 100%; background: #DC2626; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 20px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35); font-family: inherit; }
-    .btn:active { opacity: 0.9; }
-    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">⚠️</div>
-    <h1>Payment Not Verified</h1>
-    <p>Razorpay se payment confirm nahi ho saka. Agar aapke account se amount deduct hua hai toh woh automatically refund ho jayega.</p>
-    <p>Kripya TaskAlert app me wapas jaake dobara try karein.</p>
-    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-      <button type="button" onclick="returnFailed()" class="btn">👉 Return to TaskAlert App</button>
-      <button type="button" onclick="window.close()" class="btn-sec">✕ Close Tab</button>
-    </div>
-  </div>
-  <script>
-    function returnFailed() {
-      try { window.location.href = 'intent://payment-failed#Intent;scheme=TaskAlert;package=com.taskalert.app;end'; } catch(e) {}
-      setTimeout(function() {
-        try { window.location.href = 'TaskAlert://payment-failed'; } catch(e) {}
-      }, 300);
-      setTimeout(function() {
-        try { window.close(); } catch(e) {}
-      }, 800);
-    }
-  </script>
-</body>
-</html>`);
-    }
-
-    // SECURITY: Resolve user_id from (1) query param, (2) order stored in DB during create-order.
-    // Never fall back to "latest user" — that would attribute payment to the wrong person.
-    let resolvedUserId = user_id;
-    if (!resolvedUserId && targetOrderId) {
-      const subRow = await db.query(
-        'SELECT user_id FROM subscriptions WHERE provider_subscription_id = $1 LIMIT 1',
-        [targetOrderId]
-      );
-      resolvedUserId = subRow.rows[0]?.user_id;
-    }
-
-    if (!resolvedUserId) {
-      console.error('[PAYMENT-CALLBACK] Could not resolve user_id for order:', targetOrderId, 'payment:', razorpay_payment_id);
-      return res.status(400).send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account Not Linked — TaskAlert</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
-    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
-    .icon { font-size: 52px; margin-bottom: 12px; }
-    h1 { color: #B45309; font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
-    p { color: #64748B; font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; }
-    .ref-box { background: #F8FAFC; border-radius: 12px; padding: 12px; border: 1px solid #E2E8F0; font-size: 12px; color: #475569; margin-bottom: 20px; word-break: break-all; text-align: left; }
-    .btn { display: block; width: 100%; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 20px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); font-family: inherit; }
-    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">⚠️</div>
-    <h1>Payment Received — Account Not Linked</h1>
-    <p>Payment Razorpay se confirm ho gaya hai, lekin aapka account identify nahi ho saka. Kripya app me wapas jaake "Verify Payment" button dabayein — woh aapke logged-in account se Pro activate karega.</p>
-    <div class="ref-box">
-      <div><b>Payment ID:</b> ${razorpay_payment_id || 'N/A'}</div>
-      <div><b>Order ID:</b> ${targetOrderId || 'N/A'}</div>
-    </div>
-    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-      <button type="button" onclick="returnSuccess()" class="btn">👉 Return to App & Verify</button>
-      <button type="button" onclick="window.close()" class="btn-sec">✕ Close Tab</button>
-    </div>
-  </div>
-  <script>
-    function returnSuccess() {
-      try { window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end'; } catch(e) {}
-      setTimeout(function() {
-        try { window.location.href = 'TaskAlert://payment-success'; } catch(e) {}
-      }, 300);
-      setTimeout(function() {
-        try { window.close(); } catch(e) {}
-      }, 800);
-    }
-  </script>
-</body>
-</html>`);
-    }
-
-    // Activate Pro for the resolved user
-    const periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + 30);
-    await db.query(
-      `INSERT INTO subscriptions (
-         user_id, status, plan_price, currency, payment_provider,
-         provider_subscription_id, provider_customer_id,
-         current_period_start, current_period_end, updated_at
-       )
-       VALUES ($1, 'active', ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
-       ON CONFLICT (user_id) DO UPDATE SET
-         status = 'active',
-         plan_price = ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00,
-         payment_provider = 'razorpay',
-         provider_subscription_id = EXCLUDED.provider_subscription_id,
-         provider_customer_id = EXCLUDED.provider_customer_id,
-         current_period_start = now(),
-         current_period_end = EXCLUDED.current_period_end,
-         cancelled_at = NULL,
-         updated_at = now()`,
-      [resolvedUserId, targetOrderId, razorpay_payment_id, periodEnd]
-    );
-
-    console.log(`[PAYMENT-CALLBACK] Pro activated for user ${resolvedUserId}, payment ${razorpay_payment_id}, order ${targetOrderId}`);
-
-    return res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Successful — TaskAlert Pro</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #EDF2F4; color: #0F172A; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
-    .card { background: #FFFFFF; border-radius: 24px; padding: 36px 24px; max-width: 420px; width: 100%; border: 1.5px solid #FDE68A; box-shadow: 0 20px 45px -12px rgba(197, 160, 89, 0.25), 0 8px 16px -4px rgba(15, 23, 42, 0.05); }
-    .icon { font-size: 56px; margin-bottom: 12px; }
-    h1 { color: #0F172A; font-size: 24px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; }
-    h1 span { color: #C5A059; }
-    p { color: #64748B; font-size: 13.5px; margin-bottom: 20px; line-height: 1.6; }
-    .ref-box { background: linear-gradient(135deg, #FFF9F0 0%, #FEF3C7 100%); border-radius: 14px; padding: 14px; border: 1.5px solid #FDE68A; font-size: 12.5px; color: #78350F; margin-bottom: 20px; text-align: left; }
-    .ref-box div { margin-bottom: 4px; }
-    .ref-box div:last-child { margin-bottom: 0; }
-    .note { color: #475569; font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
-    .btn { display: block; width: 100%; background: #C5A059; color: #FFFFFF; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 20px; border-radius: 14px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4); transition: background-color 0.2s; font-family: inherit; }
-    .btn:hover { background: #B38E46; }
-    .btn-sec { display: block; width: 100%; background: #F8FAFC; color: #64748B; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; cursor: pointer; font-family: inherit; }
-    .btn-sec:hover { background: #F1F5F9; }
-    .tip-box { margin-top: 18px; background: #FFF9F0; border: 1px solid #FDE68A; border-radius: 14px; padding: 12px 14px; font-size: 12px; color: #78350F; line-height: 1.5; text-align: left; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">🎉</div>
-    <h1>TaskAlert <span>PRO</span> Active!</h1>
-    <p>Aapka payment safalta-poorvak verify ho gaya hai. TaskAlert Pro Plan agle 30 dino ke liye activate ho chuka hai!</p>
-    <div class="ref-box">
-      <div><b>Payment ID:</b> ${razorpay_payment_id || 'Captured'}</div>
-      <div><b>Amount:</b> ₹${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00</div>
-      <div><b>Validity:</b> 30 Days Unlimited Access</div>
-    </div>
-    <div class="note">
-      ✓ Aap ab app me wapas jaa sakte hain. Pro features unlock hain!
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <button type="button" id="btn-return" onclick="returnToApp()" class="btn">👉 Return to TaskAlert App</button>
-      <button type="button" onclick="closeTab()" class="btn-sec">✕ Close Tab (App Already Unlocked)</button>
-    </div>
-    <div class="tip-box">
-      ✨ <b>Tip:</b> Aapka Pro Plan pehle se activate ho chuka hai! Agar button se app na khule, toh aap is browser tab ko close karke ya Recent Apps se <b>TaskAlert</b> app par switch karein.
-    </div>
-  </div>
-  <script>
-    function returnToApp() {
-      var btn = document.getElementById('btn-return');
-      if (btn) btn.innerText = 'Opening App... ⏳';
-
-      // Strategy 1: Android Intent URI format with package name (standard for modern Android Chrome to open app directly)
-      var intentUrl = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
-      // Strategy 2: Custom URI scheme
-      var customScheme = 'TaskAlert://payment-success';
-
-      try {
-        window.location.href = intentUrl;
-      } catch (e) {}
-
-      setTimeout(function() {
-        try { window.location.href = customScheme; } catch (e) {}
-      }, 350);
-
-      setTimeout(function() {
-        try { window.close(); } catch (e) {}
-        if (btn) btn.innerText = '👉 Return to TaskAlert App';
-      }, 1000);
-    }
-
-    function closeTab() {
-      try { window.close(); } catch(e) {}
-      alert('Pro Plan is active! Please switch back to the TaskAlert app.');
-    }
-
-    // Auto-attempt return after 1.2s
-    setTimeout(function() {
-      try {
-        window.location.href = 'intent://payment-success#Intent;scheme=TaskAlert;package=com.taskalert.app;end';
-      } catch(e) {}
-    }, 1200);
-  </script>
-</body>
-</html>`);
-  } catch (err) {
-    console.error('Payment callback error:', err);
-    res.status(500).send('Payment callback error.');
-  }
-});
 
 // POST /api/subscription/verify-payment
 // Called from the mobile app after user returns from Chrome checkout.
@@ -897,6 +427,82 @@ router.post('/cancel', requireUser, async (req, res) => {
     [req.userId]
   );
   res.json({ subscription: result.rows[0], isPremium: false });
+});
+
+// POST /api/subscription/public-confirm
+// Called by checkout.html right after Razorpay payment succeeds.
+// Verifies signature or payment status and activates Pro in subscriptions table.
+router.post('/public-confirm', async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id } = req.body;
+    if (!user_id || !razorpay_payment_id) {
+      return res.status(400).json({ error: 'Missing payment confirmation parameters' });
+    }
+
+    let isVerified = false;
+    if (razorpay_signature && razorpay_order_id) {
+      isVerified = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    }
+
+    const rzpClient = getRzpInstance();
+    if (!isVerified && rzpClient && razorpay_payment_id.startsWith('pay_')) {
+      try {
+        const p = await rzpClient.payments.fetch(razorpay_payment_id);
+        if (p && (p.status === 'captured' || p.status === 'authorized')) {
+          isVerified = true;
+        }
+      } catch (e) { }
+    }
+
+    if (!isVerified) {
+      return res.status(400).json({ error: 'Signature verification failed' });
+    }
+
+    const periodEnd = new Date();
+    periodEnd.setDate(periodEnd.getDate() + 30);
+    const planPrice = Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100));
+
+    await db.query(
+      `INSERT INTO subscriptions (
+         user_id, status, plan_price, currency, payment_provider,
+         provider_subscription_id, provider_customer_id,
+         current_period_start, current_period_end, updated_at
+       )
+       VALUES ($1, 'active', ${planPrice}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       ON CONFLICT (user_id) DO UPDATE SET
+         status = 'active',
+         plan_price = ${planPrice}.00,
+         payment_provider = 'razorpay',
+         provider_subscription_id = EXCLUDED.provider_subscription_id,
+         provider_customer_id = EXCLUDED.provider_customer_id,
+         current_period_start = now(),
+         current_period_end = EXCLUDED.current_period_end,
+         cancelled_at = NULL,
+         updated_at = now()`,
+      [user_id, razorpay_order_id || `ord_${Date.now()}`, razorpay_payment_id, periodEnd]
+    );
+
+    console.log(`[PUBLIC-CONFIRM] Pro activated for user ${user_id}, payment ${razorpay_payment_id}`);
+
+    db.query('SELECT push_token, language FROM users WHERE id = $1', [user_id])
+      .then((uR) => {
+        const token = uR.rows[0]?.push_token;
+        const lang = uR.rows[0]?.language || 'en';
+        if (token) {
+          const { sendPush } = require('../scheduler');
+          const title = lang === 'hi' ? '🎉 Pro Plan Activate Ho Gaya!' : '🎉 Pro Plan Activated!';
+          const body = lang === 'hi'
+            ? 'Aapka TaskAlert Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
+            : 'Your TaskAlert Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
+          sendPush(token, title, body, { type: 'SUBSCRIPTION_ACTIVE' }).catch(() => {});
+        }
+      }).catch(() => {});
+
+    return res.json({ ok: true, isPremium: true });
+  } catch (err) {
+    console.error('[PUBLIC-CONFIRM] Error confirming subscription:', err);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
 });
 
 module.exports = router;

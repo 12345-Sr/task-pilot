@@ -129,6 +129,12 @@ const adminDir = require('fs').existsSync(path.join(__dirname, '../admin'))
   ? path.join(__dirname, '../admin')
   : path.join(__dirname, '../admin-panel');
 app.use('/admin', express.static(adminDir, { dotfiles: 'allow' }));
+app.get('/checkout.html', (req, res) => {
+  res.sendFile(path.join(adminDir, 'checkout.html'));
+});
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(adminDir, 'checkout.html'));
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
