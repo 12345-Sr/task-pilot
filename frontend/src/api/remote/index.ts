@@ -544,6 +544,18 @@ export class RemoteUserRepository implements UserRepository {
     useAppStore.getState().setUser(updatedUser);
     return updatedUser;
   }
+
+  async deleteAccount(): Promise<void> {
+    const token = useAppStore.getState().token;
+    if (token) {
+      try {
+        await apiClient.delete('/auth/delete-account');
+      } catch (err) {
+        // Fallback to POST if server / reverse proxy intercepts DELETE
+        await apiClient.post('/auth/delete-account', {});
+      }
+    }
+  }
 }
 
 export class RemoteSubscriptionRepository implements SubscriptionRepository {

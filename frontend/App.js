@@ -24,7 +24,15 @@ export default function App() {
   const { activeAlarm, setActiveAlarm, dismissActiveAlarm } = useAppStore();
 
   useEffect(() => {
-    NotificationService.init().catch(() => {});
+    NotificationService.init().then(() => {
+      const state = useAppStore.getState();
+      if (state.morningReminderEnabled !== false) {
+        NotificationService.scheduleMorningBriefing().catch(() => {});
+      }
+      if (state.eveningReminderEnabled !== false) {
+        NotificationService.scheduleEveningReview().catch(() => {});
+      }
+    }).catch(() => {});
 
     // Listen for custom in-app alarm trigger events
     const unsubTrigger = NotificationService.onAlarmTriggered((data) => {

@@ -230,7 +230,7 @@ async function checkAlerts() {
   }
 }
 
-// Runs once a day at 07:00 server time — sends morning briefing
+// Runs once a day at 09:00 (9:00 AM) — sends morning briefing of today's tasks
 async function sendMorningBriefings() {
   try {
     const { rows: users } = await db.query(
@@ -244,11 +244,65 @@ async function sendMorningBriefings() {
         [user.id]
       );
       if (!todaysTasks.length) continue;
-      const summary = `Aaj aapke ${todaysTasks.length} zaroori kaam hain — Pehla: ${todaysTasks[0].title}`;
-      await sendPush(user.push_token, '🌅 Subah Ki Briefing', summary, { type: 'briefing' });
+      const isEn = user.language === 'en';
+      const count = todaysTasks.length;
+      const first = todaysTasks[0];
+      const title = isEn ? '🌅 Morning Reminder: Today\'s Tasks' : '🌅 Subah Ki Briefing';
+      const body = isEn
+        ? `You have ${count} task${count > 1 ? 's' : ''} scheduled today — First: "${first.title}" at ${first.task_time}`
+        : `Aaj aapke ${count} zaroori kaam hain — Pehla: "${first.title}" (${first.task_time})`;
+      await sendPush(user.push_token, title, body, { type: 'briefing', count });
     }
   } catch (err) {
     console.error('Error sending morning briefings:', err);
+  }
+}
+
+// Runs once a day at 20:00 (8:00 PM) — sends evening review of today & preview of tomorrow's tasks
+async function sendEveningReviews() {
+  try {
+    const { rows: users } = await db.query(
+      `SELECT id, push_token, language, name FROM users WHERE push_token IS NOT NULL`
+    );
+    for (const user of users) {
+      // 1. Check tasks scheduled for tomorrow
+      const { rows: tomorrowTasks } = await db.query(
+        `SELECT title, task_time, priority FROM tasks
+         WHERE user_id = $1 AND task_date = (CURRENT_DATE + INTERVAL '1 day') AND (deleted_at IS NULL)
+         ORDER BY task_time ASC`,
+        [user.id]
+      );
+
+      // 2. Check today's pending tasks
+      const { rows: todayPending } = await db.query(
+        `SELECT title FROM tasks
+         WHERE user_id = $1 AND task_date = CURRENT_DATE AND status IS NULL AND (deleted_at IS NULL)`,
+        [user.id]
+      );
+
+      const isEn = user.language === 'en';
+      let title = isEn ? '🌙 Evening Review' : '🌙 Sham Ka Review';
+      let body = '';
+
+      if (tomorrowTasks.length > 0) {
+        title = isEn ? '🌙 Evening Review & Tomorrow\'s Schedule' : '🌙 Sham Ka Review: Kal Ki Tayari';
+        body = isEn
+          ? `You have ${tomorrowTasks.length} task${tomorrowTasks.length > 1 ? 's' : ''} scheduled for tomorrow — First: "${tomorrowTasks[0].title}"`
+          : `Kal ke liye aapke ${tomorrowTasks.length} tasks scheduled hain — Tayar rahein: "${tomorrowTasks[0].title}"`;
+      } else if (todayPending.length > 0) {
+        body = isEn
+          ? `You have ${todayPending.length} pending task(s) from today. Review and reschedule them!`
+          : `Aaj ke ${todayPending.length} tasks abhi baaki hain. Review karein aur apna din poora karein!`;
+      } else {
+        body = isEn
+          ? `Great job today! Check your tasks and plan tomorrow's goals.`
+          : `Shaabash! Aaj ka din shandaar raha. Kal ke goals tayar karein!`;
+      }
+
+      await sendPush(user.push_token, title, body, { type: 'evening_review', tomorrowCount: tomorrowTasks.length });
+    }
+  } catch (err) {
+    console.error('Error sending evening reviews:', err);
   }
 }
 
@@ -293,10 +347,27 @@ function start() {
     checkAlerts().catch((e) => console.error('checkAlerts failed', e));
   });
 
-  // Every day at 07:00: morning briefing
-  cron.schedule('0 7 * * *', () => {
-    sendMorningBriefings().catch((e) => console.error('sendMorningBriefings failed', e));
-  });
+  // Every day at 09:00 AM (Asia/Kolkata / 03:30 UTC): morning briefing
+  try {
+    cron.schedule('0 9 * * *', () => {
+      sendMorningBriefings().catch((e) => console.error('sendMorningBriefings failed', e));
+    }, { timezone: 'Asia/Kolkata' });
+  } catch (_) {
+    cron.schedule('30 3 * * *', () => {
+      sendMorningBriefings().catch((e) => console.error('sendMorningBriefings failed', e));
+    });
+  }
+
+  // Every day at 20:00 (8:00 PM) (Asia/Kolkata / 14:30 UTC): evening review
+  try {
+    cron.schedule('0 20 * * *', () => {
+      sendEveningReviews().catch((e) => console.error('sendEveningReviews failed', e));
+    }, { timezone: 'Asia/Kolkata' });
+  } catch (_) {
+    cron.schedule('30 14 * * *', () => {
+      sendEveningReviews().catch((e) => console.error('sendEveningReviews failed', e));
+    });
+  }
 
   // Every 5 minutes: check expired subscriptions
   cron.schedule('*/5 * * * *', () => {
@@ -306,7 +377,8 @@ function start() {
   // Run on startup
   checkExpiredSubscriptions().catch(() => {});
 
-  console.log('Scheduler running: alerts checked every minute, morning briefing at 07:00 daily.');
+  console.log('Scheduler running: alerts checked every minute, morning briefing at 09:00 AM, evening review at 08:00 PM.');
 }
 
-module.exports = { start, sendPush, checkAlerts, checkExpiredSubscriptions };
+module.exports = { start, sendPush, checkAlerts, sendMorningBriefings, sendEveningReviews, checkExpiredSubscriptions };
+

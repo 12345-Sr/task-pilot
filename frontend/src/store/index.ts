@@ -35,6 +35,9 @@ export interface AppState {
   selectedAlarmSound: AlarmSoundId;
   taskAlarmSounds: Record<string, AlarmSoundId>;
   activeAlarm: ActiveAlarmData | null;
+  morningReminderEnabled: boolean;
+  eveningReminderEnabled: boolean;
+  soundVibrationEnabled: boolean;
 
   // Actions
   setUser: (user: User | null) => void;
@@ -57,6 +60,9 @@ export interface AppState {
   setTaskAlarmSound: (taskId: string, sound: AlarmSoundId) => void;
   setActiveAlarm: (alarm: ActiveAlarmData | null) => void;
   dismissActiveAlarm: () => void;
+  setMorningReminderEnabled: (enabled: boolean) => void;
+  setEveningReminderEnabled: (enabled: boolean) => void;
+  setSoundVibrationEnabled: (enabled: boolean) => void;
   recordTaskCreation: (dateStr?: string) => void;
   recordTaskDeletion: (dateStr?: string) => void;
   getFreeUsage: (dateStr?: string, activeCount?: number) => { used: number; total: number; remaining: number };
@@ -87,6 +93,9 @@ export const useAppStore = create<AppState>()(
       selectedAlarmSound: 'classic_bell',
       taskAlarmSounds: {},
       activeAlarm: null,
+      morningReminderEnabled: true,
+      eveningReminderEnabled: true,
+      soundVibrationEnabled: true,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => {
@@ -175,6 +184,9 @@ export const useAppStore = create<AppState>()(
         })),
       setActiveAlarm: (alarm) => set({ activeAlarm: alarm }),
       dismissActiveAlarm: () => set({ activeAlarm: null }),
+      setMorningReminderEnabled: (morningReminderEnabled) => set({ morningReminderEnabled }),
+      setEveningReminderEnabled: (eveningReminderEnabled) => set({ eveningReminderEnabled }),
+      setSoundVibrationEnabled: (soundVibrationEnabled) => set({ soundVibrationEnabled }),
       setTaskDescription: (key, description) =>
         set((state) => ({
           taskDescriptions: {
@@ -258,6 +270,9 @@ export const useAppStore = create<AppState>()(
         freeLifetimeCreated: state.freeLifetimeCreated,
         selectedAlarmSound: state.selectedAlarmSound,
         taskAlarmSounds: state.taskAlarmSounds,
+        morningReminderEnabled: state.morningReminderEnabled,
+        eveningReminderEnabled: state.eveningReminderEnabled,
+        soundVibrationEnabled: state.soundVibrationEnabled,
       }),
     }
   )

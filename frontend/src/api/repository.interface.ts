@@ -28,6 +28,7 @@ export interface UserRepository {
   getMe(): Promise<User>;
   updateLanguage(language: string): Promise<void>;
   updateProfile(name: string, email: string): Promise<User>;
+  deleteAccount(): Promise<void>;
 }
 
 export interface SubscriptionRepository {

@@ -666,4 +666,27 @@ const handleProfileUpdate = async (req, res) => {
 router.patch('/profile', requireUser, handleProfileUpdate);
 router.put('/profile', requireUser, handleProfileUpdate);
 
+// DELETE & POST /api/auth/delete-account — Google Play compliant account deletion
+const handleDeleteAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    // 1. Delete user's support tickets if any
+    await db.query('DELETE FROM support_tickets WHERE user_id = $1', [userId]).catch(() => {});
+    // 2. Delete user (cascades to tasks, subscriptions, task_history, notification_log)
+    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING id, email', [userId]);
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+    console.log(`[DELETE ACCOUNT] Successfully deleted user ${userId} (${result.rows[0].email})`);
+    res.json({ ok: true, message: 'Account and all associated personal data deleted successfully.' });
+  } catch (err) {
+    console.error('Failed to delete account:', err);
+    res.status(500).json({ error: 'Failed to delete account. Please try again later.' });
+  }
+};
+
+router.delete('/delete-account', requireUser, handleDeleteAccount);
+router.post('/delete-account', requireUser, handleDeleteAccount);
+
 module.exports = router;
+

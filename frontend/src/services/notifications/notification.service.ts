@@ -15,6 +15,7 @@ let AlarmType: any = {
   SET_EXACT_AND_ALLOW_WHILE_IDLE: 3,
   SET_ALARM_CLOCK: 4,
 };
+let RepeatFrequency: any = { NONE: -1, DAILY: 0, HOURLY: 1, WEEKLY: 2 };
 
 try {
   const notifeeModule = require('@notifee/react-native');
@@ -24,6 +25,7 @@ try {
   if (notifeeModule.AndroidVisibility) AndroidVisibility = notifeeModule.AndroidVisibility;
   if (notifeeModule.TriggerType) TriggerType = notifeeModule.TriggerType;
   if (notifeeModule.AlarmType) AlarmType = notifeeModule.AlarmType;
+  if (notifeeModule.RepeatFrequency) RepeatFrequency = notifeeModule.RepeatFrequency;
 } catch (e) {
   console.log('[NOTIFEE] Running in Expo Go without Notifee native module. Using Expo Notifications.');
 }
@@ -506,6 +508,225 @@ export class NotificationService {
       console.log(`[ALARM CANCELLED] For task ${cleanId}`);
     } catch (e) {
       console.warn('Error cancelling task alert:', e);
+    }
+  }
+
+  /**
+   * Schedules Morning Reminder (Every day at 9:00 AM)
+   * Delivers daily briefing and tasks scheduled for today.
+   */
+  static async scheduleMorningBriefing(taskPreview?: string): Promise<boolean> {
+    if (Platform.OS === 'web') return false;
+    try {
+      await this.init();
+      const notifId = 'daily_morning_briefing';
+
+      // Cancel previous if any
+      await this.cancelMorningBriefing();
+
+      const title = '🌅 Subah Ki Briefing / Morning Reminder';
+      const body = taskPreview
+        ? `Aaj ke scheduled kaam: ${taskPreview}`
+        : 'Good morning! Aaj ke sabhi zaroori tasks check karein aur din productive banayein.';
+
+      let notifeeScheduled = false;
+      if (notifee) {
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskAlert Reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'morning_alarm',
+            vibration: true,
+          });
+
+          const now = new Date();
+          const target = new Date();
+          target.setHours(9, 0, 0, 0);
+          if (now.getTime() >= target.getTime()) {
+            target.setDate(target.getDate() + 1);
+          }
+
+          await notifee.createTriggerNotification(
+            {
+              id: notifId,
+              title,
+              body,
+              android: {
+                channelId: 'task-reminders',
+                importance: AndroidImportance.HIGH,
+                sound: 'morning_alarm',
+                pressAction: { id: 'default', launchActivity: 'default' },
+              },
+              data: { type: 'MORNING_BRIEFING' },
+            },
+            {
+              type: TriggerType.TIMESTAMP,
+              timestamp: target.getTime(),
+              repeatFrequency: RepeatFrequency.DAILY,
+              alarmManager: { type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE },
+            }
+          );
+          notifeeScheduled = true;
+          console.log(`[MORNING BRIEFING] Notifee scheduled for 9:00 AM daily (next: ${target.toISOString()})`);
+        } catch (nErr) {
+          console.warn('[MORNING BRIEFING] Notifee schedule notice, falling back to Expo:', nErr);
+        }
+      }
+
+      if (!notifeeScheduled) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: notifId,
+          content: {
+            title,
+            body,
+            sound: 'morning_alarm',
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            data: { type: 'MORNING_BRIEFING' },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: 9,
+            minute: 0,
+          } as any,
+        });
+        console.log('[MORNING BRIEFING] Expo notification scheduled for 9:00 AM daily');
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('Error scheduling morning briefing:', err);
+      return false;
+    }
+  }
+
+  static async cancelMorningBriefing(): Promise<void> {
+    try {
+      const notifId = 'daily_morning_briefing';
+      if (notifee) {
+        await notifee.cancelNotification(notifId).catch(() => {});
+      }
+      await Notifications.cancelScheduledNotificationAsync(notifId).catch(() => {});
+      console.log('[MORNING BRIEFING] Cancelled');
+    } catch (e) {
+      console.warn('Error cancelling morning briefing:', e);
+    }
+  }
+
+  /**
+   * Schedules Evening Review (Every day at 8:00 PM / 20:00)
+   * Delivers daily review of completed tasks and preview of tasks scheduled for tomorrow.
+   */
+  static async scheduleEveningReview(taskPreview?: string): Promise<boolean> {
+    if (Platform.OS === 'web') return false;
+    try {
+      await this.init();
+      const notifId = 'daily_evening_review';
+
+      // Cancel previous if any
+      await this.cancelEveningReview();
+
+      const title = '🌙 Sham Ka Review / Evening Review';
+      const body = taskPreview
+        ? taskPreview
+        : 'Aaj ke tasks review karein aur kal aane wale kaamo ki tayari shuru karein!';
+
+      let notifeeScheduled = false;
+      if (notifee) {
+        try {
+          await notifee.createChannel({
+            id: 'task-reminders',
+            name: 'TaskAlert Reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibration: true,
+          });
+
+          const now = new Date();
+          const target = new Date();
+          target.setHours(20, 0, 0, 0);
+          if (now.getTime() >= target.getTime()) {
+            target.setDate(target.getDate() + 1);
+          }
+
+          await notifee.createTriggerNotification(
+            {
+              id: notifId,
+              title,
+              body,
+              android: {
+                channelId: 'task-reminders',
+                importance: AndroidImportance.HIGH,
+                sound: 'default',
+                pressAction: { id: 'default', launchActivity: 'default' },
+              },
+              data: { type: 'EVENING_REVIEW' },
+            },
+            {
+              type: TriggerType.TIMESTAMP,
+              timestamp: target.getTime(),
+              repeatFrequency: RepeatFrequency.DAILY,
+              alarmManager: { type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE },
+            }
+          );
+          notifeeScheduled = true;
+          console.log(`[EVENING REVIEW] Notifee scheduled for 8:00 PM daily (next: ${target.toISOString()})`);
+        } catch (nErr) {
+          console.warn('[EVENING REVIEW] Notifee schedule notice, falling back to Expo:', nErr);
+        }
+      }
+
+      if (!notifeeScheduled) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: notifId,
+          content: {
+            title,
+            body,
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            data: { type: 'EVENING_REVIEW' },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: 20,
+            minute: 0,
+          } as any,
+        });
+        console.log('[EVENING REVIEW] Expo notification scheduled for 8:00 PM daily');
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('Error scheduling evening review:', err);
+      return false;
+    }
+  }
+
+  static async cancelEveningReview(): Promise<void> {
+    try {
+      const notifId = 'daily_evening_review';
+      if (notifee) {
+        await notifee.cancelNotification(notifId).catch(() => {});
+      }
+      await Notifications.cancelScheduledNotificationAsync(notifId).catch(() => {});
+      console.log('[EVENING REVIEW] Cancelled');
+    } catch (e) {
+      console.warn('Error cancelling evening review:', e);
+    }
+  }
+
+  /**
+   * Cancels all scheduled alarms and notifications (used on account deletion / reset)
+   */
+  static async cancelAllAlarms(): Promise<void> {
+    try {
+      if (notifee) {
+        await notifee.cancelAllNotifications().catch(() => {});
+      }
+      await Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+      console.log('[NOTIF] All scheduled notifications and alarms cleared.');
+    } catch (e) {
+      console.warn('Error cancelling all notifications:', e);
     }
   }
 

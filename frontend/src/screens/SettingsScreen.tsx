@@ -21,6 +21,7 @@ import BrandLogo from '../components/BrandLogo';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { NotificationService } from '../services/notifications/notification.service';
 import { userRepository } from '../api';
+import { taskHistoryService } from '../services/history/taskHistory.service';
 import { SupportedLanguage } from '../types';
 import { LanguageModal } from '../components/LanguageModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
@@ -46,6 +47,12 @@ export const SettingsScreen: React.FC = () => {
     isGuest,
     selectedAlarmSound,
     setSelectedAlarmSound,
+    morningReminderEnabled,
+    eveningReminderEnabled,
+    soundVibrationEnabled,
+    setMorningReminderEnabled,
+    setEveningReminderEnabled,
+    setSoundVibrationEnabled,
   } = useAppStore();
   const isHindi = language === 'hi';
   const { data: user } = useUserProfile();
@@ -60,11 +67,10 @@ export const SettingsScreen: React.FC = () => {
     : (isHindi ? '30 Din Active' : '30 Days Active');
 
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [morningNotification, setMorningNotification] = useState(true);
-  const [eveningNotification, setEveningNotification] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [alarmSoundModalVisible, setAlarmSoundModalVisible] = useState(false);
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const [deleteAccountDialogVisible, setDeleteAccountDialogVisible] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
@@ -78,6 +84,82 @@ export const SettingsScreen: React.FC = () => {
       } catch (err) {
         console.warn('Failed to update language on backend', err);
       }
+    }
+  };
+
+  const handleToggleMorningReminder = async (val: boolean) => {
+    setMorningReminderEnabled(val);
+    if (val) {
+      await NotificationService.scheduleMorningBriefing();
+      Alert.alert(
+        isHindi ? '🌅 सुबह का रिमाइंडर चालू' : '🌅 Morning Reminder Active',
+        isHindi
+          ? 'हर सुबह 9:00 AM पर आपको आज के तयशुदा कामों का रिमाइंडर मिलेगा।'
+          : 'You will receive reminders for scheduled tasks every day at 9:00 AM.'
+      );
+    } else {
+      await NotificationService.cancelMorningBriefing();
+      Alert.alert(
+        isHindi ? 'सुबह का रिमाइंडर बंद' : 'Morning Reminder Disabled',
+        isHindi
+          ? 'सुबह 9:00 AM का रिमाइंडर बंद कर दिया गया है।'
+          : 'Morning briefing reminder at 9:00 AM has been turned off.'
+      );
+    }
+  };
+
+  const handleToggleEveningReview = async (val: boolean) => {
+    setEveningReminderEnabled(val);
+    if (val) {
+      await NotificationService.scheduleEveningReview();
+      Alert.alert(
+        isHindi ? '🌙 शाम का रिव्यू चालू' : '🌙 Evening Review Active',
+        isHindi
+          ? 'हर शाम 8:00 PM पर आपको आज के कामों का रिव्यू और कल के टास्क का रिमाइंडर मिलेगा।'
+          : 'You will receive a daily review and upcoming tasks reminder every day at 8:00 PM.'
+      );
+    } else {
+      await NotificationService.cancelEveningReview();
+      Alert.alert(
+        isHindi ? 'शाम का रिव्यू बंद' : 'Evening Review Disabled',
+        isHindi
+          ? 'शाम 8:00 PM का रिव्यू रिमाइंडर बंद कर दिया गया है।'
+          : 'Evening review reminder at 8:00 PM has been turned off.'
+      );
+    }
+  };
+
+  const handleToggleSound = (val: boolean) => {
+    setSoundVibrationEnabled(val);
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteAccountDialogVisible(false);
+    try {
+      setIsDeletingAccount(true);
+      if (isAuthenticated) {
+        await userRepository.deleteAccount().catch((e) => console.warn('Backend delete error:', e));
+      }
+      await NotificationService.cancelAllAlarms();
+      await taskHistoryService.clearHistory(user?.id);
+      logout();
+      Alert.alert(
+        isHindi ? 'अकाउंट डिलीट हो गया' : 'Account Deleted',
+        isHindi
+          ? 'आपका अकाउंट और सभी डेटा हमेशा के लिए हटा दिया गया है।'
+          : 'Your account and all associated data have been permanently deleted.'
+      );
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Language' }],
+      });
+    } catch (err: any) {
+      Alert.alert(
+        isHindi ? 'त्रुटि' : 'Error',
+        err?.message || (isHindi ? 'अकाउंट डिलीट करने में विफल।' : 'Failed to delete account. Please try again.')
+      );
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -311,8 +393,8 @@ export const SettingsScreen: React.FC = () => {
               </View>
             </View>
             <Switch
-              value={morningNotification}
-              onValueChange={setMorningNotification}
+              value={morningReminderEnabled}
+              onValueChange={handleToggleMorningReminder}
               trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
               thumbColor={colors.surface}
             />
@@ -328,8 +410,8 @@ export const SettingsScreen: React.FC = () => {
               </View>
             </View>
             <Switch
-              value={eveningNotification}
-              onValueChange={setEveningNotification}
+              value={eveningReminderEnabled}
+              onValueChange={handleToggleEveningReview}
               trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
               thumbColor={colors.surface}
             />
@@ -347,15 +429,15 @@ export const SettingsScreen: React.FC = () => {
               </View>
             </View>
             <Switch
-              value={soundEnabled}
-              onValueChange={setSoundEnabled}
+              value={soundVibrationEnabled}
+              onValueChange={handleToggleSound}
               trackColor={{ false: '#E2E8F0', true: '#0D5C3A' }}
               thumbColor={colors.surface}
             />
           </View>
 
           {/* Alarm Ringtone & Sound Tab Row (Opens Alarm App style Sound Modal) */}
-          {soundEnabled && (
+          {soundVibrationEnabled && (
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
@@ -450,6 +532,38 @@ export const SettingsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Account & Security Section (Mandatory Google Play In-App Account Deletion Requirement) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>{isHindi ? 'Account aur Security' : 'Account & Security'}</Text>
+
+          {/* Delete Account */}
+          <TouchableOpacity
+            style={[styles.settingRow, styles.deleteAccountRow]}
+            activeOpacity={0.7}
+            onPress={() => setDeleteAccountDialogVisible(true)}
+            disabled={isDeletingAccount}
+            accessibilityRole="button"
+            accessibilityLabel="Delete Account"
+          >
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>🗑️</Text>
+              <View style={styles.settingTextWrap}>
+                <Text style={[styles.settingLabel, styles.deleteAccountLabel]}>
+                  {isHindi ? 'Delete Account' : 'Delete Account'}
+                </Text>
+                <Text style={styles.settingSubLabel}>
+                  {isHindi
+                    ? 'Apna account aur saara data hamesha ke liye mitayein'
+                    : 'Permanently delete your account and all stored data'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.chevron, { color: '#DC2626' }]}>›</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* App Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>{t(language, 'app_info_title')}</Text>
@@ -485,6 +599,22 @@ export const SettingsScreen: React.FC = () => {
         confirmColor={colors.urgentRed}
         onConfirm={handleLogout}
         onCancel={() => setLogoutDialogVisible(false)}
+      />
+
+      {/* Delete Account Confirmation Dialog (Google Play Compliant) */}
+      <ConfirmDialog
+        visible={deleteAccountDialogVisible}
+        title={isHindi ? 'Account Delete Karein?' : 'Delete Account?'}
+        message={
+          isHindi
+            ? 'Kya aap sach mein apna account delete karna chahte hain? Aapke sabhi tasks, itihaas aur subscription ka saara data hamesha ke liye delete ho jayega. Yeh action waapas nahi liya ja sakta.'
+            : 'Are you sure you want to permanently delete your account? All your tasks, reminders history, and subscription data will be permanently wiped and cannot be recovered.'
+        }
+        confirmText={isHindi ? 'Haan, Delete Karein' : 'Yes, Delete Account'}
+        cancelText={t(language, 'cancel')}
+        confirmColor="#DC2626"
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setDeleteAccountDialogVisible(false)}
       />
 
       {/* Shared Language Selection Modal */}
@@ -1059,6 +1189,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '900',
+  },
+  deleteAccountRow: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#EF4444',
+  },
+  deleteAccountLabel: {
+    color: '#DC2626',
+    fontWeight: '700',
   },
 });
 
