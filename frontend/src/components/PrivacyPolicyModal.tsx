@@ -229,13 +229,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>10. Account Deletion</Text>
                     <Text style={styles.paragraph}>
-                      Currently, app ke andar automatic self-service deletion option available nahi hai.
+                      Aap directly app ke andar Settings → Account & Security → Delete Account par jakar apna account aur data hamesha ke liye delete kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Agar aap apna account ya personal details delete karwana chahte hain, toh aap in-app Support ticket ya <Text style={styles.linkText}>support@taskalert.com</Text> par request send kar sakte hain.
+                      Aap in-app Support ticket ya hamare support email <Text style={styles.linkText}>support@taskalert.in</Text> par bhi account deletion request send kar sakte hain.
                     </Text>
                     <Text style={styles.paragraph}>
-                      Valid deletion request receive hone aur identity verify karne ke baad hum legal guidelines ke mutabiq account delete kar dete hain.
+                      Deletion confirm hote hi aapka account, tasks, history aur personal data database se permanently delete kar diya jata hai.
                     </Text>
                   </View>
 
@@ -303,7 +303,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      Agar is Privacy Policy ya apne data handling ke regarding aapka koi sawaal ya complaint hai, toh humse in-app support/tickets ya direct email <Text style={styles.linkText}>support@taskalert.com</Text> par contact karein.
+                      Agar is Privacy Policy ya apne data handling ke regarding aapka koi sawaal ya complaint hai, toh humse in-app support/tickets ya direct email <Text style={styles.linkText}>support@taskalert.in</Text> par contact karein.
                     </Text>
                   </View>
                 </>
@@ -490,16 +490,13 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>10. Account Deletion</Text>
                     <Text style={styles.paragraph}>
-                      At present, TaskAlert does not provide a self-service account deletion option directly within the application.
+                      You can delete your account and personal data at any time directly within the application by navigating to Settings → Account & Security → Delete Account.
                     </Text>
                     <Text style={styles.paragraph}>
-                      If you want to request deletion of your account or personal information, you may contact TaskAlert through the available support/contact channel.
+                      Alternatively, you may request deletion by raising an in-app Support ticket or contacting our team at <Text style={styles.linkText}>support@taskalert.in</Text>.
                     </Text>
                     <Text style={styles.paragraph}>
-                      After receiving a valid deletion request, we may verify the request and process the deletion in accordance with applicable law and our legitimate operational and legal requirements.
-                    </Text>
-                    <Text style={styles.paragraph}>
-                      Some information may need to be retained for a limited period where required or permitted by law.
+                      Upon confirming deletion, your account, tasks, history, and personal data are permanently wiped from our systems in accordance with applicable laws.
                     </Text>
                   </View>
 
@@ -579,7 +576,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>16. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      If you have questions, concerns, complaints, or requests relating to this Privacy Policy or the handling of your information, please contact us through the support/contact options provided by TaskAlert or directly via <Text style={styles.linkText}>support@taskalert.com</Text>.
+                      If you have questions, concerns, complaints, or requests relating to this Privacy Policy or the handling of your information, please contact us through the support/contact options provided by TaskAlert or directly via <Text style={styles.linkText}>support@taskalert.in</Text>.
                     </Text>
                   </View>
                 </>

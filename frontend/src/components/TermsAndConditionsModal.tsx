@@ -399,7 +399,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>20. Contact Us (Sampark Karein)</Text>
                     <Text style={styles.paragraph}>
-                      Agar in Terms ya TaskAlert ke regarding aapke koi questions, concerns, complaints ya support requests hain, toh aap in-app support/tickets ya hamare support email <Text style={styles.linkText}>support@taskalert.com</Text> par contact kar sakte hain.
+                      Agar in Terms ya TaskAlert ke regarding aapke koi questions, concerns, complaints ya support requests hain, toh aap in-app support/tickets ya hamare support email <Text style={styles.linkText}>support@taskalert.in</Text> par contact kar sakte hain.
                     </Text>
                   </View>
                 </>
@@ -764,7 +764,7 @@ export const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = (
                   <View style={styles.section}>
                     <Text style={styles.sectionHeading}>20. Contact Us</Text>
                     <Text style={styles.paragraph}>
-                      If you have questions, concerns, complaints, or support requests regarding these Terms or TaskAlert, you may contact us through the support/contact options provided within the application or through our designated support contact at <Text style={styles.linkText}>support@taskalert.com</Text>.
+                      If you have questions, concerns, complaints, or support requests regarding these Terms or TaskAlert, you may contact us through the support/contact options provided within the application or through our designated support contact at <Text style={styles.linkText}>support@taskalert.in</Text>.
                     </Text>
                   </View>
                 </>
