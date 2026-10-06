@@ -313,6 +313,20 @@ router.post('/create-web-order', async (req, res) => {
   }
 });
 
+// GET /api/subscription/public-key
+// Returns public key_id configured in .env (never secret)
+router.get('/public-key', (req, res) => {
+  const activeKeyId = getCleanKeyId();
+  const amountPaise = parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '39900', 10);
+  res.json({
+    ok: !!activeKeyId,
+    keyId: activeKeyId || '',
+    amountPaise,
+    amount: Math.max(1, Math.round(amountPaise / 100)),
+    currency: 'INR',
+  });
+});
+
 
 // POST /api/subscription/verify-payment
 // Called from the mobile app after user returns from Chrome checkout.

@@ -30,7 +30,7 @@
 
     var orderId = qp('order_id');
     var userId = qp('user_id');
-    var keyId = qp('key_id') || 'rzp_test_TZW0dzD6BHG8kK';
+    var keyId = qp('key_id'); // Loaded dynamically from URL or server .env
     var amountPaise = parseInt(qp('amount') || '39900', 10);
     var currency = qp('currency') || 'INR';
     var userName = qp('name') || 'TaskAlert User';
@@ -51,16 +51,40 @@
     }
 
     function setReadyState() {
-      label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
-      btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
-      btn.disabled = false;
+      if (keyId) {
+        label.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' to activate Pro';
+        btn.innerText = 'Pay ₹' + (amountPaise / 100).toFixed(0) + ' with Razorpay';
+        btn.disabled = false;
+      } else {
+        label.innerText = 'Fetching payment details… ⏳';
+        btn.innerText = 'Please wait…';
+        btn.disabled = true;
+      }
     }
 
-    // Always ensure button is ready immediately
     setReadyState();
 
-    // If orderId is not provided in URL, attempt background order creation from server
-    if (!orderId) {
+    function fetchPublicKey() {
+      if (keyId) return;
+      var pubKeyUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-key';
+      fetch(pubKeyUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.keyId) {
+            keyId = data.keyId;
+            if (data.amountPaise) amountPaise = data.amountPaise;
+            setReadyState();
+          } else {
+            showError('Payment gateway key is not configured in backend .env.');
+          }
+        })
+        .catch(function() {
+          showError('Could not reach backend payment server. Please verify your connection.');
+        });
+    }
+
+    // If keyId or orderId is not provided in URL, retrieve dynamically from backend .env
+    if (!keyId || !orderId) {
       var webOrderUrl = (apiBase.replace(/\/$/, '')) + '/api/subscription/create-web-order';
       fetch(webOrderUrl, {
         method: 'POST',
@@ -68,16 +92,17 @@
       })
       .then(function(res) { return res.json(); })
       .then(function(data) {
-        if (data && data.orderId) {
-          orderId = data.orderId;
+        if (data && (data.keyId || data.orderId)) {
           if (data.keyId) keyId = data.keyId;
+          if (data.orderId) orderId = data.orderId;
           if (data.amountPaise) amountPaise = data.amountPaise;
           setReadyState();
+        } else {
+          fetchPublicKey();
         }
       })
-      .catch(function(err) {
-        // Graceful fallback - keep standard checkout ready
-        console.warn('Backend order generation fallback:', err);
+      .catch(function() {
+        fetchPublicKey();
       });
     }
 
@@ -98,6 +123,10 @@
         showError('Payment gateway script failed to load. Please check your internet connection and reopen this page.');
         return;
       }
+      if (!keyId) {
+        showError('Razorpay key is not configured on the server. Please set RAZORPAY_KEY_ID in .env.');
+        return;
+      }
       btn.disabled = true;
       btn.innerText = 'Opening Razorpay… ⏳';
 
@@ -109,8 +138,6 @@
         description: '30-Day Pro Subscription',
         prefill: { name: userName, email: userEmail, contact: userPhone },
         theme: { color: '#C5A059' },
-        // Surfaces GPay/PhonePe app icons (Intent flow, auto-redirects) ahead of
-        // the "enter UPI ID" box (Collect flow, which never redirects anywhere).
         config: {
           display: {
             blocks: {
@@ -130,7 +157,6 @@
             user_id: userId
           };
 
-          // Immediately notify backend to activate subscription in DB
           var targetEndpoint = (apiBase.replace(/\/$/, '')) + '/api/subscription/public-confirm';
           fetch(targetEndpoint, {
             method: 'POST',
