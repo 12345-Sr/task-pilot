@@ -338,8 +338,21 @@
 
   <script>
     var API = 'https://api-task-pilot.deificglobal.tech';
-    var code = '';
-    try { code = new URLSearchParams(window.location.search).get('c') || ''; } catch (e) { }
+    var qp = {};
+    try {
+      var search = new URLSearchParams(window.location.search);
+      search.forEach(function (v, k) { qp[k] = v; });
+    } catch (e) { }
+
+    var code = qp.c || '';
+    var userId = qp.user_id || '';
+    var queryOrderId = qp.order_id || '';
+    var queryKeyId = qp.key_id || '';
+    var queryAmount = parseInt(qp.amount || '100', 10);
+    var queryCurrency = qp.currency || 'INR';
+    var queryName = qp.name || 'TaskAlert User';
+    var queryEmail = qp.email || '';
+    var queryPhone = qp.phone || '';
 
     var session = null;   // { keyId, orderId, amountPaise, currency, name, email, phone }
 
@@ -354,36 +367,106 @@
     function clearError() { errorBanner.style.display = 'none'; errorBanner.innerHTML = ''; }
 
     function setReady() {
+      clearError();
       var rupees = (session.amountPaise / 100).toFixed(0);
       displayAmount.innerText = '₹' + rupees;
       btn.innerHTML = '<span>Pay ₹' + rupees + ' with Razorpay</span>';
       btn.disabled = false;
     }
 
-    // Load the order the app created. No key/secret/user data is ever read from the URL,
-    // and no anonymous fallback order is created any more.
+    // Load or generate order dynamically so the button is always active and clickable
     function init() {
-      if (!code) {
-        btn.innerHTML = '<span>Open from the app</span>';
-        showError('Please open the TaskAlert app and tap <b>Upgrade to Pro</b> to start payment.');
+      // 1. Order details already passed in query parameters
+      if (queryKeyId && queryOrderId) {
+        session = {
+          keyId: queryKeyId,
+          orderId: queryOrderId,
+          amountPaise: queryAmount,
+          currency: queryCurrency,
+          name: queryName,
+          email: queryEmail,
+          phone: queryPhone
+        };
+        setReady();
         return;
       }
-      fetch(API + '/api/subscription/checkout-session?c=' + encodeURIComponent(code))
+
+      // 2. Session code provided
+      if (code) {
+        fetch(API + '/api/subscription/checkout-session?c=' + encodeURIComponent(code))
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (x) {
+            if (x.ok && x.d.orderId && x.d.keyId) {
+              session = x.d;
+              setReady();
+            } else {
+              createWebOrderFallback();
+            }
+          })
+          .catch(function () {
+            createWebOrderFallback();
+          });
+        return;
+      }
+
+      // 3. User ID or direct visit: create a live order on the backend
+      createWebOrderFallback();
+    }
+
+    function createWebOrderFallback() {
+      fetch(API + '/api/subscription/create-web-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      })
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (x) {
-          if (!x.ok || !x.d.orderId || !x.d.keyId) {
-            btn.innerHTML = '<span>Unavailable</span>';
-            showError(x.d.error || 'Could not load your order. Please retry from the app.');
-            return;
+          if (x.ok && x.d.orderId && x.d.keyId) {
+            session = {
+              keyId: x.d.keyId,
+              orderId: x.d.orderId,
+              amountPaise: x.d.amountPaise || 100,
+              currency: x.d.currency || 'INR',
+              name: queryName,
+              email: queryEmail,
+              phone: queryPhone
+            };
+            setReady();
+          } else {
+            fetchPublicKeyFallback();
           }
-          session = x.d;
-          setReady();
         })
         .catch(function () {
-          btn.innerHTML = '<span>Unavailable</span>';
-          showError('Could not connect to the server. Check your internet and reload.');
+          fetchPublicKeyFallback();
         });
     }
+
+    function fetchPublicKeyFallback() {
+      fetch(API + '/api/subscription/public-key')
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) {
+          if (x.ok && x.d.keyId) {
+            session = {
+              keyId: x.d.keyId,
+              orderId: queryOrderId || '',
+              amountPaise: x.d.amountPaise || 100,
+              currency: x.d.currency || 'INR',
+              name: queryName,
+              email: queryEmail,
+              phone: queryPhone
+            };
+            setReady();
+          } else {
+            btn.innerHTML = '<span>Service Unavailable</span>';
+            showError('Payment gateway is being configured. Please try again shortly.');
+          }
+        })
+        .catch(function () {
+          btn.innerHTML = '<span>Connection Error</span>';
+          showError('Could not connect to the payment server. Please check your internet connection.');
+        });
+    }
+
     init();
 
     function returnToApp(path, params) {
@@ -412,7 +495,8 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: code,
+          code: code || '',
+          user_id: userId || '',
           razorpay_order_id: payload.razorpay_order_id,
           razorpay_payment_id: payload.razorpay_payment_id,
           razorpay_signature: payload.razorpay_signature
@@ -435,15 +519,14 @@
     function launch() {
       clearError();
       if (typeof Razorpay === 'undefined') { showError('Payment gateway script failed to load. Check your internet connection.'); return; }
-      if (!session) { showError('Order not loaded. Please reopen checkout from the app.'); return; }
+      if (!session || !session.keyId) { showError('Order not loaded yet. Please wait a second and retry.'); return; }
 
       btn.disabled = true;
       btn.innerHTML = '<span>Opening Razorpay… ⏳</span>';
 
       var options = {
         key: session.keyId,
-        order_id: session.orderId,     // amount is taken from the order
-        currency: session.currency,
+        currency: session.currency || 'INR',
         name: 'TaskAlert Pro',
         description: '30-Day Pro Subscription',
         prefill: { name: session.name, email: session.email, contact: session.phone },
@@ -468,13 +551,18 @@
           btn.innerHTML = '<span>Activating Pro Plan… ⏳</span>';
           confirmPayment({
             razorpay_payment_id: response.razorpay_payment_id || '',
-            razorpay_order_id: response.razorpay_order_id || session.orderId,
+            razorpay_order_id: response.razorpay_order_id || session.orderId || '',
             razorpay_signature: response.razorpay_signature || ''
           }, 1);
         },
         modal: { ondismiss: function () { setReady(); } }
       };
 
+      if (session.orderId) {
+        options.order_id = session.orderId;
+      } else {
+        options.amount = session.amountPaise || 100;
+      }
       try {
         var rzp = new Razorpay(options);
         rzp.on('payment.failed', function (resp) {
