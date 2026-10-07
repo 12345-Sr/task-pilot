@@ -11,6 +11,26 @@ const { FREE_DAILY_LIMIT } = require('./tasks');
 
 const router = express.Router();
 
+// Short-lived, single-purpose checkout codes. The Chrome URL only carries this random code
+// (https://taskalert.in/checkout.html?c=XXXX) -- never the Razorpay key, user id, name, email or amount.
+let checkoutTableReady = null;
+function ensureCheckoutSessions() {
+  if (!checkoutTableReady) {
+    checkoutTableReady = db.query(
+      `CREATE TABLE IF NOT EXISTS checkout_sessions (
+         code         TEXT PRIMARY KEY,
+         user_id      UUID NOT NULL,
+         order_id     TEXT NOT NULL,
+         amount_paise INTEGER NOT NULL,
+         used_at      TIMESTAMPTZ,
+         expires_at   TIMESTAMPTZ NOT NULL,
+         created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+       )`
+    ).catch((e) => { checkoutTableReady = null; throw e; });
+  }
+  return checkoutTableReady;
+}
+
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
   if (!raw || !String(raw).trim()) return '';
@@ -181,25 +201,16 @@ router.post('/create-order', requireUser, async (req, res) => {
       });
     }
 
-    // The static frontend checkout page makes no backend call of its own, so the
-    // user's prefill details are fetched here and passed through the URL instead.
-    let userNameForCheckout = 'TaskAlert User';
-    let userEmailForCheckout = '';
-    let userPhoneForCheckout = '';
-    try {
-      const uRes = await db.query('SELECT name, email, phone FROM users WHERE id = $1', [req.userId]);
-      if (uRes.rows[0]) {
-        userNameForCheckout = uRes.rows[0].name || userNameForCheckout;
-        userEmailForCheckout = uRes.rows[0].email || '';
-        userPhoneForCheckout = uRes.rows[0].phone || '';
-      }
-    } catch (e) { }
-
-    // The checkout page URL is strictly hosted on the frontend at https://taskalert.in/checkout.html
-    const checkoutBase = 'https://taskalert.in/checkout.html';
-    const backendBase = 'https://api-task-pilot.deificglobal.tech';
-    const checkoutUrl = `${checkoutBase}?order_id=${encodeURIComponent(order.id)}&user_id=${encodeURIComponent(req.userId)}&key_id=${encodeURIComponent(activeKeyId)}&amount=${amountPaise}&plan_amount=399&currency=INR&name=${encodeURIComponent(userNameForCheckout)}&email=${encodeURIComponent(userEmailForCheckout)}&phone=${encodeURIComponent(userPhoneForCheckout)}&real_order=1&api_base=${encodeURIComponent(backendBase)}`;
-
+    // Store the order server-side and give Chrome only a random one-time code.
+    await ensureCheckoutSessions();
+    const checkoutCode = crypto.randomBytes(9).toString('base64url');
+    await db.query(
+      `INSERT INTO checkout_sessions (code, user_id, order_id, amount_paise, expires_at)
+       VALUES ($1, $2, $3, $4, now() + interval '30 minutes')`,
+      [checkoutCode, req.userId, order.id, amountPaise]
+    );
+    const checkoutBase = process.env.FRONTEND_CHECKOUT_BASE || 'https://taskalert.in/checkout.html';
+    const checkoutUrl = `${checkoutBase}?c=${encodeURIComponent(checkoutCode)}`;
     const paymentLinkUrl = checkoutUrl;
 
 
@@ -349,6 +360,8 @@ router.post('/verify-payment', requireUser, async (req, res) => {
       }
     } else if (!rzpClient) {
       return res.status(500).json({ error: 'Razorpay is not configured on the server.' });
+    } else {
+      return res.status(400).json({ error: 'Missing order id.' });
     }
 
     // Retry check up to 3 times with 1.2s delay to catch fast webhook/bank settlement delays
@@ -365,7 +378,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
       if (!isVerified && rzpClient && targetOrderId && targetOrderId.startsWith('order_')) {
         try {
           const rzpOrder = await rzpClient.orders.fetch(targetOrderId);
-          if (rzpOrder && (rzpOrder.status === 'paid' || (rzpOrder.amount_paid && rzpOrder.amount_paid >= 100))) {
+          if (rzpOrder && rzpOrder.status === 'paid') {
             isVerified = true;
             break;
           }
@@ -377,7 +390,7 @@ router.post('/verify-payment', requireUser, async (req, res) => {
             const cap = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
             if (cap) {
               if (cap.status === 'authorized') {
-                try { await rzpClient.payments.capture(cap.id, 100, 'INR'); } catch (e) { }
+                try { await rzpClient.payments.capture(cap.id, cap.amount, 'INR'); } catch (e) { }
               }
               isVerified = true;
               break;
@@ -390,9 +403,9 @@ router.post('/verify-payment', requireUser, async (req, res) => {
       if (!isVerified && rzpClient && razorpay_payment_id && razorpay_payment_id.startsWith('pay_')) {
         try {
           const rzpPayment = await rzpClient.payments.fetch(razorpay_payment_id);
-          if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
+          if (rzpPayment && rzpPayment.order_id === resolvedOrderId && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
             if (rzpPayment.status === 'authorized') {
-              try { await rzpClient.payments.capture(rzpPayment.id, 100, 'INR'); } catch (e) { }
+              try { await rzpClient.payments.capture(rzpPayment.id, rzpPayment.amount, 'INR'); } catch (e) { }
             }
             isVerified = true;
             break;
@@ -486,67 +499,112 @@ router.post('/cancel', requireUser, async (req, res) => {
   res.json({ subscription: result.rows[0], isPremium: false });
 });
 
+// GET /api/subscription/checkout-session?c=CODE
+// Called by https://taskalert.in/checkout.html to load the order created by the app.
+router.get('/checkout-session', async (req, res) => {
+  try {
+    await ensureCheckoutSessions();
+    const code = String(req.query.c || '').trim();
+    if (!/^[A-Za-z0-9_-]{8,64}$/.test(code)) {
+      return res.status(400).json({ error: 'Invalid payment link. Please tap Upgrade in the TaskAlert app again.' });
+    }
+    const r = await db.query(
+      `SELECT s.*, u.name, u.email, u.phone
+         FROM checkout_sessions s JOIN users u ON u.id = s.user_id
+        WHERE s.code = $1`, [code]);
+    const row = r.rows[0];
+    if (!row || new Date(row.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Payment link expired. Please tap Upgrade in the TaskAlert app again.' });
+    }
+    if (row.used_at) {
+      return res.status(409).json({ error: 'This payment is already completed. Open the TaskAlert app.', alreadyPaid: true });
+    }
+    res.json({
+      ok: true,
+      keyId: getCleanKeyId(),          // public key only, fetched over HTTPS (never in the URL)
+      orderId: row.order_id,
+      amountPaise: row.amount_paise,
+      currency: 'INR',
+      name: row.name || '',
+      email: row.email || '',
+      phone: row.phone || '',
+    });
+  } catch (err) {
+    console.error('[CHECKOUT-SESSION]', err.message);
+    res.status(500).json({ error: 'Could not load checkout. Please try again.' });
+  }
+});
+
 // POST /api/subscription/public-confirm
-// Called by checkout.html right after Razorpay payment succeeds.
-// Verifies signature or payment status and activates Pro in subscriptions table.
+// Called by checkout.html after Razorpay succeeds. User is identified ONLY by the server-side
+// checkout code (never by a client-supplied user_id) and the payment is verified with Razorpay.
 router.post('/public-confirm', async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id } = req.body;
-    if (!razorpay_payment_id) {
+    await ensureCheckoutSessions();
+    const { code, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+    if (!code || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ error: 'Missing payment confirmation parameters' });
     }
 
-    let isVerified = false;
-    if (razorpay_signature && razorpay_order_id) {
-      isVerified = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
-    }
+    const sr = await db.query('SELECT * FROM checkout_sessions WHERE code = $1', [String(code)]);
+    const sess = sr.rows[0];
+    if (!sess) return res.status(400).json({ error: 'Unknown checkout session' });
+    if (sess.order_id !== razorpay_order_id) return res.status(400).json({ error: 'Order mismatch' });
 
-    const rzpClient = getRzpInstance();
-    if (!isVerified && rzpClient && razorpay_payment_id.startsWith('pay_')) {
-      try {
-        const p = await rzpClient.payments.fetch(razorpay_payment_id);
-        if (p && (p.status === 'captured' || p.status === 'authorized')) {
-          isVerified = true;
-        }
-      } catch (e) { }
-    }
+    // Already activated by an earlier call (e.g. a retry) -> idempotent success
+    const already = await db.query(
+      `SELECT 1 FROM subscriptions WHERE user_id = $1 AND provider_customer_id = $2 AND status = 'active'`,
+      [sess.user_id, razorpay_payment_id]);
+    if (already.rows.length) return res.json({ ok: true, isPremium: true });
 
-    if (!isVerified) {
+    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
       return res.status(400).json({ error: 'Signature verification failed' });
     }
 
-    const periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + 30);
-    const planPrice = Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100));
+    const rzpClient = getRzpInstance();
+    if (!rzpClient) return res.status(500).json({ error: 'Razorpay is not configured on the server.' });
 
-    if (user_id) {
-      await db.query(
-        `INSERT INTO subscriptions (
-           user_id, status, plan_price, currency, payment_provider,
-           provider_subscription_id, provider_customer_id,
-           current_period_start, current_period_end, updated_at
-         )
-         VALUES ($1, 'active', ${planPrice}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
-         ON CONFLICT (user_id) DO UPDATE SET
-           status = 'active',
-           plan_price = ${planPrice}.00,
-           payment_provider = 'razorpay',
-           provider_subscription_id = EXCLUDED.provider_subscription_id,
-           provider_customer_id = EXCLUDED.provider_customer_id,
-           current_period_start = now(),
-           current_period_end = EXCLUDED.current_period_end,
-           cancelled_at = NULL,
-           updated_at = now()`,
-        [user_id, razorpay_order_id || `ord_${Date.now()}`, razorpay_payment_id, periodEnd]
-      );
-
-      console.log(`[PUBLIC-CONFIRM] Pro activated for user ${user_id}, payment ${razorpay_payment_id}`);
-    } else {
-      console.log(`[PUBLIC-CONFIRM] Web guest payment verified ${razorpay_payment_id}`);
+    const order = await rzpClient.orders.fetch(razorpay_order_id);
+    if (String(order.notes && order.notes.userId) !== String(sess.user_id)) {
+      return res.status(403).json({ error: 'Order does not belong to this user' });
+    }
+    if (order.status !== 'paid' || order.amount_paid < order.amount) {
+      return res.status(400).json({ error: 'Payment not completed yet' });
     }
 
+    const reused = await db.query(
+      'SELECT 1 FROM subscriptions WHERE provider_customer_id = $1 AND user_id <> $2',
+      [razorpay_payment_id, sess.user_id]);
+    if (reused.rows.length) return res.status(409).json({ error: 'Payment already used' });
 
-    db.query('SELECT push_token, language FROM users WHERE id = $1', [user_id])
+    const periodEnd = new Date();
+    periodEnd.setDate(periodEnd.getDate() + 30);
+    const planPrice = (order.amount / 100).toFixed(2);
+
+    await db.query(
+      `INSERT INTO subscriptions (
+         user_id, status, plan_price, currency, payment_provider,
+         provider_subscription_id, provider_customer_id,
+         current_period_start, current_period_end, updated_at
+       )
+       VALUES ($1, 'active', $2, 'INR', 'razorpay', $3, $4, now(), $5, now())
+       ON CONFLICT (user_id) DO UPDATE SET
+         status = 'active',
+         plan_price = EXCLUDED.plan_price,
+         payment_provider = 'razorpay',
+         provider_subscription_id = EXCLUDED.provider_subscription_id,
+         provider_customer_id = EXCLUDED.provider_customer_id,
+         current_period_start = now(),
+         current_period_end = EXCLUDED.current_period_end,
+         cancelled_at = NULL,
+         updated_at = now()`,
+      [sess.user_id, planPrice, razorpay_order_id, razorpay_payment_id, periodEnd]
+    );
+    await db.query('UPDATE checkout_sessions SET used_at = now() WHERE code = $1', [sess.code]);
+
+    console.log(`[PUBLIC-CONFIRM] Pro activated for user ${sess.user_id}, order ${razorpay_order_id}, payment ${razorpay_payment_id}`);
+
+    db.query('SELECT push_token, language FROM users WHERE id = $1', [sess.user_id])
       .then((uR) => {
         const token = uR.rows[0]?.push_token;
         const lang = uR.rows[0]?.language || 'en';
@@ -556,13 +614,13 @@ router.post('/public-confirm', async (req, res) => {
           const body = lang === 'hi'
             ? 'Aapka TaskAlert Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
             : 'Your TaskAlert Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
-          sendPush(token, title, body, { type: 'SUBSCRIPTION_ACTIVE' }).catch(() => {});
+          sendPush(token, title, body, { type: 'SUBSCRIPTION_ACTIVE' }).catch(() => { });
         }
-      }).catch(() => {});
+      }).catch(() => { });
 
     return res.json({ ok: true, isPremium: true });
   } catch (err) {
-    console.error('[PUBLIC-CONFIRM] Error confirming subscription:', err);
+    console.error('[PUBLIC-CONFIRM] Error:', err.error?.description || err.message);
     res.status(500).json({ error: 'Failed to confirm payment' });
   }
 });
