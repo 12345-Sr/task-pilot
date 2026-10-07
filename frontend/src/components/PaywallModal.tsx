@@ -216,36 +216,15 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
     setLaunchingGateway(true);
 
-    let activeOrderData = orderData;
-    // 2. If order or secure session checkoutUrl is not ready yet, create order on-demand right now
-    if (!activeOrderData?.orderId || !activeOrderData?.checkoutUrl) {
-      try {
-        const res: any = await apiClient.post('/subscription/create-order');
-        if (res?.ok && res?.orderId && res?.checkoutUrl) {
-          activeOrderData = res;
-          setOrderData(res);
-          startPaymentPolling(res.orderId);
-        }
-      } catch (err: any) {
-        console.warn('[PAYWALL] On-demand order creation failed:', err?.message || err);
-      }
-    }
-
-    // Secure checkout URL with short-lived session code only (never exposing key_id, user_id, or email in URL)
-    const targetUrl = activeOrderData?.checkoutUrl || activeOrderData?.paymentLinkUrl || '';
-    if (!targetUrl) {
-      Alert.alert(
-        isHinglish ? 'Payment Shuru Nahi Ho Saka' : 'Could Not Start Payment',
-        isHinglish
-          ? 'Server se secure payment session banane me dikkat aa rahi hai. Kripya thodi der baad dobara koshish karein.'
-          : 'Could not create a secure checkout session. Please check your connection and try again.'
-      );
-      setLaunchingGateway(false);
-      return;
-    }
+    const userId = user?.id || '';
+    // Strictly open the clean checkout page link (never exposing key_id, order_id, email, or credentials in URL)
+    const targetUrl = userId
+      ? `https://taskalert.in/checkout.html?user_id=${encodeURIComponent(userId)}`
+      : 'https://taskalert.in/checkout.html';
 
 
 
+    startPaymentPolling('web_checkout');
     try {
       await Linking.openURL(targetUrl);
     } catch (err) {
