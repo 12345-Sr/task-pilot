@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
   BackHandler,
+  AppState,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -111,6 +112,35 @@ export const PaymentCheckoutScreen: React.FC = () => {
       initializeOrder();
     }
   }, []);
+
+  // Listen for app returning to foreground when user returns from GPay, PhonePe, or other UPI apps
+  useEffect(() => {
+    const handleAppStateChange = async (nextState: string) => {
+      if (nextState === 'active' && order?.orderId && screenState !== 'success') {
+        try {
+          const statusRes: any = await apiClient.get('/subscription/status');
+          if (statusRes?.isPremium || statusRes?.status === 'active') {
+            onActivationSuccess('upi_auto_detected', order.orderId);
+            return;
+          }
+          const verifyRes: any = await apiClient.post('/subscription/verify-payment', {
+            order_id: order.orderId,
+            razorpay_order_id: order.orderId,
+          });
+          if (verifyRes?.ok || verifyRes?.isPremium) {
+            onActivationSuccess(verifyRes?.subscription?.provider_customer_id || 'upi_verified', order.orderId);
+          }
+        } catch (e) {
+          // Silently wait for manual verify or polling
+        }
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      sub.remove();
+    };
+  }, [order, screenState]);
 
   const initializeOrder = async () => {
     setScreenState('loading_order');
@@ -741,6 +771,14 @@ export const PaymentCheckoutScreen: React.FC = () => {
             mixedContentMode="always"
             javaScriptCanOpenWindowsAutomatically={true}
             setSupportMultipleWindows={false}
+            onError={(syntheticEvent) => {
+              const { nativeEvent } = syntheticEvent;
+              // Ignore ERR_UNKNOWN_URL_SCHEME since Linking already handles external UPI apps
+              if (nativeEvent.description && nativeEvent.description.includes('net::ERR_UNKNOWN_URL_SCHEME')) {
+                return;
+              }
+              console.warn('[INAPP_PAYMENT] WebView error:', nativeEvent);
+            }}
             onShouldStartLoadWithRequest={(request) => {
               const url = request.url;
               // Allow standard HTTPS / HTTP inside the in-app webview
@@ -753,7 +791,7 @@ export const PaymentCheckoutScreen: React.FC = () => {
                 return true;
               }
 
-              // Deep links for UPI payment apps (PhonePe, GPay, Paytm, etc.)
+              // ANY custom scheme is a native app deep link (gpay://, upi://, phonepe://, paytmmp://, intent://, etc.)
               let targetDeepLink = url;
               if (url.startsWith('intent://')) {
                 const upiMatch = url.match(/#Intent;scheme=([^;]+);/);
@@ -764,22 +802,24 @@ export const PaymentCheckoutScreen: React.FC = () => {
                 }
               }
 
-              if (
-                targetDeepLink.startsWith('upi://') ||
-                targetDeepLink.startsWith('tez://') ||
-                targetDeepLink.startsWith('phonepe://') ||
-                targetDeepLink.startsWith('paytmmp://')
-              ) {
-                Linking.canOpenURL(targetDeepLink)
-                  .then((supported) => {
-                    if (supported) {
-                      Linking.openURL(targetDeepLink);
-                    }
-                  })
-                  .catch(() => { });
-                return false;
-              }
-              return true;
+              Linking.canOpenURL(targetDeepLink)
+                .then((supported) => {
+                  if (supported) {
+                    return Linking.openURL(targetDeepLink);
+                  }
+                  // Fallback: If specific scheme like gpay:// isn't directly registered, try generic upi://
+                  if (targetDeepLink.includes('://upi/pay') || targetDeepLink.includes('pay?')) {
+                    const genericUpi = targetDeepLink.replace(/^[a-zA-Z0-9_-]+:\/\//, 'upi://');
+                    return Linking.openURL(genericUpi);
+                  }
+                })
+                .catch(() => {
+                  const genericUpi = targetDeepLink.replace(/^[a-zA-Z0-9_-]+:\/\//, 'upi://');
+                  Linking.openURL(genericUpi).catch(() => {});
+                });
+
+              // CRITICAL: Always return false for non-http URLs so WebView NEVER throws ERR_UNKNOWN_URL_SCHEME!
+              return false;
             }}
             onMessage={handleWebViewMessage}
             style={styles.webView}
