@@ -61,7 +61,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [verifying, setVerifying] = useState(false);
-  const [launchingGateway, setLaunchingGateway] = useState(false);
   const pollTimerRef = useRef<any>(null);
 
   const handleClose = () => {
@@ -181,12 +180,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       return;
     }
 
-    setLaunchingGateway(true);
     handleClose();
-    setTimeout(() => {
-      setLaunchingGateway(false);
-    }, 400);
-
     navigation.navigate('PaymentCheckout', {
       orderData: orderData || undefined,
       planPrice: 399,
@@ -370,10 +364,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
             {/* Direct Razorpay Checkout Action */}
             <TouchableOpacity
-              style={[styles.primaryPayBtn, launchingGateway && styles.btnDisabled]}
+              style={styles.primaryPayBtn}
               activeOpacity={0.88}
               onPress={handleOpenRazorpayCheckout}
-              disabled={launchingGateway}
             >
               <LinearGradient
                 colors={['#0D5C3A', '#15803D']}
@@ -381,18 +374,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 end={{ x: 1, y: 0 }}
                 style={styles.primaryPayBtnGradient}
               >
-                {launchingGateway ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                    <Text style={styles.primaryPayBtnText}>
-                      {isHinglish ? 'Razorpay Khul Raha Hai...' : 'Opening Checkout...'}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.primaryPayBtnText}>
-                    {isHinglish ? '💳 Pay ₹399 with Razorpay' : '💳 Pay ₹399 with Razorpay'}
-                  </Text>
-                )}
+                <Text style={styles.primaryPayBtnText}>
+                  {isHinglish ? '💳 Pay ₹399 with Razorpay' : '💳 Pay ₹399 with Razorpay'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
 

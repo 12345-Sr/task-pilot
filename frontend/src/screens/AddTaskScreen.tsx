@@ -378,7 +378,7 @@ export const AddTaskScreen: React.FC = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Task Creation Success Popup in Brand Theme Scheme */}
+      {/* Task Creation Success Popup in Exact TaskAlert App Design Scheme */}
       <Modal
         visible={successModalVisible}
         transparent
@@ -394,14 +394,19 @@ export const AddTaskScreen: React.FC = () => {
       >
         <View style={styles.successModalOverlay}>
           <View style={styles.successModalCard}>
-            {/* Header Success Badge */}
+            {/* Top Brand Success Header */}
             <View style={styles.successBadgeOuter}>
               <LinearGradient
                 colors={['#0D5C3A', '#15803D']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={styles.successBadgeInner}
               >
                 <Text style={styles.successBadgeCheck}>✓</Text>
               </LinearGradient>
+              <View style={styles.successBadgeSparkle}>
+                <Text style={{ fontSize: 13 }}>🎉</Text>
+              </View>
             </View>
 
             {/* Success Heading */}
@@ -412,65 +417,41 @@ export const AddTaskScreen: React.FC = () => {
               {t(language, 'task_added_msg')}
             </Text>
 
-            {/* Task Info Summary Box in Brand Green Tint */}
+            {/* Task Preview Card matching App's TaskCard Design Scheme */}
             {createdTaskSummary && (
-              <View style={styles.taskSummaryCard}>
-                <View style={styles.taskSummaryHeader}>
-                  <Text style={styles.taskSummaryTitle} numberOfLines={2}>
-                    {createdTaskSummary.title}
-                  </Text>
-                  <View
-                    style={[
-                      styles.summaryPriorityBadge,
-                      (createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high') && styles.priorityBadgeUrgent,
-                      (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium') && styles.priorityBadgeMedium,
-                      (createdTaskSummary.priority === 'NORMAL' || createdTaskSummary.priority === 'low') && styles.priorityBadgeNormal,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.summaryPriorityText,
-                        (createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high') && styles.priorityTextUrgent,
-                        (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium') && styles.priorityTextMedium,
-                        (createdTaskSummary.priority === 'NORMAL' || createdTaskSummary.priority === 'low') && styles.priorityTextNormal,
-                      ]}
-                    >
-                      {(createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high')
-                        ? (language === 'hi' ? '🔴 Zaroori' : '🔴 Urgent')
-                        : (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium')
-                        ? (language === 'hi' ? '🟡 Medium' : '🟡 Medium')
-                        : (language === 'hi' ? '🟢 Normal' : '🟢 Normal')}
+              <View style={styles.appTaskPreviewCard}>
+                <View style={styles.previewTopRow}>
+                  {/* TaskAlert Checkbox */}
+                  <View style={styles.previewCheckbox}>
+                    <Text style={styles.previewCheckIcon}>✓</Text>
+                  </View>
+
+                  <View style={styles.previewContent}>
+                    <Text style={styles.previewTaskTitle} numberOfLines={2}>
+                      {createdTaskSummary.title}
                     </Text>
+
+                    {/* Metadata Badges exactly matching TaskCard */}
+                    <View style={styles.previewBadgesRow}>
+                      <Text style={styles.previewDateBadge}>
+                        📅 {createdTaskSummary.date === getTodayStr() ? (language === 'hi' ? 'Aaj (Today)' : 'Today') : createdTaskSummary.date}
+                      </Text>
+                      <Text style={styles.previewTimeBadge}>
+                        ⏰ {createdTaskSummary.time}
+                      </Text>
+                      <PriorityChip priority={createdTaskSummary.priority} size="sm" />
+                    </View>
                   </View>
                 </View>
 
-                <View style={styles.taskSummaryMetaRow}>
-                  <View style={styles.taskSummaryMetaItem}>
-                    <Text style={styles.taskSummaryMetaIcon}>📅</Text>
-                    <Text style={styles.taskSummaryMetaText}>
-                      {createdTaskSummary.date === getTodayStr()
-                        ? (language === 'hi' ? 'Aaj (Today)' : 'Today')
-                        : createdTaskSummary.date}
-                    </Text>
-                  </View>
-
-                  <View style={styles.taskSummaryMetaDivider} />
-
-                  <View style={styles.taskSummaryMetaItem}>
-                    <Text style={styles.taskSummaryMetaIcon}>⏰</Text>
-                    <Text style={styles.taskSummaryMetaText}>
-                      {createdTaskSummary.time}
-                    </Text>
-                  </View>
-                </View>
-
+                {/* Scheduled Alert Notice matching App's pill */}
                 {createdTaskSummary.hasReminder && (
-                  <View style={styles.taskReminderStatusRow}>
-                    <Text style={styles.taskReminderStatusIcon}>🔔</Text>
-                    <Text style={styles.taskReminderStatusText}>
+                  <View style={styles.previewAlertBanner}>
+                    <Text style={{ fontSize: 13 }}>🔔</Text>
+                    <Text style={styles.previewAlertText}>
                       {language === 'hi'
-                        ? 'Alarm aur notification schedule ho gaya hai'
-                        : 'Alarm and notification scheduled'}
+                        ? 'Alarm aur notification schedule ho gaya'
+                        : 'Alarm & reminder notification set'}
                     </Text>
                   </View>
                 )}
@@ -492,8 +473,8 @@ export const AddTaskScreen: React.FC = () => {
             >
               <LinearGradient
                 colors={['#0D5C3A', '#15803D']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
                 style={styles.successDoneBtnGradient}
               >
                 <Text style={styles.successDoneBtnText}>
@@ -1060,30 +1041,31 @@ const styles = StyleSheet.create({
     color: '#047857',
     fontWeight: '700',
   },
-  /* Task Creation Success Modal in App Color Scheme */
+  /* Task Creation Success Modal in Exact TaskAlert App Design Scheme */
   successModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   successModalCard: {
     width: '100%',
     maxWidth: 360,
     backgroundColor: colors.surface,
     borderRadius: 24,
-    padding: spacing.lg,
+    padding: 22,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#DCFCE7',
-    shadowColor: colors.primary,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 20,
-    elevation: 12,
+    elevation: 10,
   },
   successBadgeOuter: {
+    position: 'relative',
     width: 72,
     height: 72,
     borderRadius: 36,
@@ -1107,6 +1089,16 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     lineHeight: 30,
   },
+  successBadgeSparkle: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
   successModalTitle: {
     fontSize: 20,
     fontWeight: '800',
@@ -1115,111 +1107,91 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   successModalSub: {
-    fontSize: 13.5,
+    fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 19,
+    marginTop: 4,
+    lineHeight: 18,
     paddingHorizontal: 8,
   },
-  taskSummaryCard: {
+  appTaskPreviewCard: {
     width: '100%',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F8FAF8',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#E2E8F0',
     padding: 14,
-    marginTop: 18,
+    marginTop: 16,
     marginBottom: 20,
   },
-  taskSummaryHeader: {
+  previewTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  taskSummaryTitle: {
+  previewCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#0D5C3A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  previewCheckIcon: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  previewContent: {
     flex: 1,
+    minWidth: 0,
+  },
+  previewTaskTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: 6,
   },
-  summaryPriorityBadge: {
-    paddingHorizontal: 8,
+  previewBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  previewDateBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2563EB',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#BFDBFE',
   },
-  priorityBadgeUrgent: {
-    backgroundColor: '#FEE2E2',
-  },
-  priorityTextUrgent: {
-    color: '#DC2626',
+  previewTimeBadge: {
     fontSize: 11,
     fontWeight: '700',
-  },
-  priorityBadgeMedium: {
-    backgroundColor: '#FEF3C7',
-  },
-  priorityTextMedium: {
     color: '#D97706',
-    fontSize: 11,
-    fontWeight: '700',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#FDE68A',
   },
-  priorityBadgeNormal: {
-    backgroundColor: '#DCFCE7',
-  },
-  priorityTextNormal: {
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  summaryPriorityText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  taskSummaryMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#DCFCE7',
-  },
-  taskSummaryMetaItem: {
+  previewAlertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  taskSummaryMetaIcon: {
-    fontSize: 13,
-  },
-  taskSummaryMetaText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  taskSummaryMetaDivider: {
-    width: 1,
-    height: 16,
-    backgroundColor: '#E2E8F0',
-  },
-  taskReminderStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
+    marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#DCFCE7',
+    borderTopColor: '#E2E8F0',
   },
-  taskReminderStatusIcon: {
-    fontSize: 12,
-  },
-  taskReminderStatusText: {
+  previewAlertText: {
     fontSize: 11.5,
     color: '#15803D',
     fontWeight: '600',
@@ -1241,22 +1213,22 @@ const styles = StyleSheet.create({
   },
   successDoneBtnText: {
     color: '#FFFFFF',
-    fontSize: 15.5,
+    fontSize: 15,
     fontWeight: '800',
   },
   successAddMoreBtn: {
     width: '100%',
-    paddingVertical: 11,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
   },
   successAddMoreText: {
-    color: colors.primary,
+    color: '#0D5C3A',
     fontSize: 13.5,
     fontWeight: '700',
   },
