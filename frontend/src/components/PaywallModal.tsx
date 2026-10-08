@@ -59,7 +59,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
   const isVisible = visible !== undefined ? visible : paywallVisible;
 
-  const [loadingOrder, setLoadingOrder] = useState(false);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [launchingGateway, setLaunchingGateway] = useState(false);
@@ -84,11 +83,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       return;
     }
     if (isVisible) {
-      if (!isAuthenticated || isGuest) {
-        setLoadingOrder(false);
-        return;
+      if (isAuthenticated && !isGuest && !orderData) {
+        prefetchOrderSilently();
       }
-      createPaymentOrder();
     } else {
       if (pollTimerRef.current) {
         clearInterval(pollTimerRef.current);
@@ -103,45 +100,15 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
     };
   }, [isVisible, isPremium]);
 
-  const createPaymentOrder = async () => {
-    setLoadingOrder(true);
+  const prefetchOrderSilently = async () => {
     try {
       const res: any = await apiClient.post('/subscription/create-order');
       if (res?.ok && res?.orderId) {
         setOrderData(res);
         startPaymentPolling(res.orderId);
-      } else {
-        throw new Error(res?.error || 'Failed to initialize payment');
       }
     } catch (err: any) {
-      console.log('[PAYWALL] Backend order attempt 1 failed, retrying in 1.5s:', err?.message || err);
-      // Automatic retry
-      try {
-        await new Promise((r) => setTimeout(r, 1500));
-        const retryRes: any = await apiClient.post('/subscription/create-order');
-        if (retryRes?.ok && retryRes?.orderId) {
-          setOrderData(retryRes);
-          startPaymentPolling(retryRes.orderId);
-          return;
-        }
-      } catch (retryErr: any) {
-        console.warn('[PAYWALL] Backend order retry also failed:', retryErr?.message || retryErr);
-      }
-
-      // Do NOT fabricate an order here. A client-made order_id (e.g. `order_${Date.now()}`)
-      // and a hardcoded test key were never real Razorpay orders, so the "Pay" button looked
-      // active but Razorpay checkout would always fail when it actually opened, since it never
-      // matches a real order created server-side against the live key. Surface the real failure
-      // instead so the user (and you, in logs) can see the backend order creation is broken.
-      setOrderData(null);
-      Alert.alert(
-        isHinglish ? 'Payment Shuru Nahi Ho Saka' : 'Could Not Start Payment',
-        isHinglish
-          ? 'Server se payment order banane me dikkat aa rahi hai. Kripya thodi der baad dobara try karein.'
-          : 'We could not create a payment order right now. Please try again in a moment.'
-      );
-    } finally {
-      setLoadingOrder(false);
+      console.log('[PAYWALL] Silent background prefetch notice:', err?.message || err);
     }
   };
 
@@ -214,7 +181,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       return;
     }
 
+    setLaunchingGateway(true);
     handleClose();
+    setTimeout(() => {
+      setLaunchingGateway(false);
+    }, 400);
+
     navigation.navigate('PaymentCheckout', {
       orderData: orderData || undefined,
       planPrice: 399,
@@ -398,10 +370,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
 
             {/* Direct Razorpay Checkout Action */}
             <TouchableOpacity
-              style={[styles.primaryPayBtn, (launchingGateway || loadingOrder) && styles.btnDisabled]}
+              style={[styles.primaryPayBtn, launchingGateway && styles.btnDisabled]}
               activeOpacity={0.88}
               onPress={handleOpenRazorpayCheckout}
-              disabled={launchingGateway || loadingOrder}
+              disabled={launchingGateway}
             >
               <LinearGradient
                 colors={['#0D5C3A', '#15803D']}
@@ -409,7 +381,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
                 end={{ x: 1, y: 0 }}
                 style={styles.primaryPayBtnGradient}
               >
-                {launchingGateway || loadingOrder ? (
+                {launchingGateway ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <ActivityIndicator color="#FFFFFF" size="small" />
                     <Text style={styles.primaryPayBtnText}>

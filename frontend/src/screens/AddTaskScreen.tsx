@@ -60,6 +60,14 @@ export const AddTaskScreen: React.FC = () => {
   const [remindBefore, setRemindBefore] = useState(true);
   const [remindAtTime, setRemindAtTime] = useState(true);
   const [selectedSound, setSelectedSound] = useState<AlarmSoundId>(selectedAlarmSound || 'classic_bell');
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [createdTaskSummary, setCreatedTaskSummary] = useState<{
+    title: string;
+    date: string;
+    time: string;
+    priority: Priority;
+    hasReminder: boolean;
+  } | null>(null);
 
   const handleSaveTask = () => {
     setErrorMsg('');
@@ -141,25 +149,18 @@ export const AddTaskScreen: React.FC = () => {
             );
           }
 
+          // Store task details for brand-styled success popup
+          setCreatedTaskSummary({
+            title: taskTitle,
+            date: selectedDate,
+            time: reminderTime,
+            priority: priority,
+            hasReminder: remindAtTime || remindBefore,
+          });
           setTitle('');
           setDescription('');
           setRepeatMonthly(false);
-          Alert.alert(
-            t(language, 'task_added_success'),
-            t(language, 'task_added_msg'),
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  if (navigation.canGoBack()) {
-                    navigation.goBack();
-                  } else {
-                    navigation.navigate('TodayTab');
-                  }
-                },
-              },
-            ]
-          );
+          setSuccessModalVisible(true);
         },
         onError: (err: any) => {
           const status = err?.response?.status || err?.status;
@@ -376,6 +377,151 @@ export const AddTaskScreen: React.FC = () => {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Task Creation Success Popup in Brand Theme Scheme */}
+      <Modal
+        visible={successModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setSuccessModalVisible(false);
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('TodayTab');
+          }
+        }}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalCard}>
+            {/* Header Success Badge */}
+            <View style={styles.successBadgeOuter}>
+              <LinearGradient
+                colors={['#0D5C3A', '#15803D']}
+                style={styles.successBadgeInner}
+              >
+                <Text style={styles.successBadgeCheck}>✓</Text>
+              </LinearGradient>
+            </View>
+
+            {/* Success Heading */}
+            <Text style={styles.successModalTitle}>
+              {t(language, 'task_added_success')}
+            </Text>
+            <Text style={styles.successModalSub}>
+              {t(language, 'task_added_msg')}
+            </Text>
+
+            {/* Task Info Summary Box in Brand Green Tint */}
+            {createdTaskSummary && (
+              <View style={styles.taskSummaryCard}>
+                <View style={styles.taskSummaryHeader}>
+                  <Text style={styles.taskSummaryTitle} numberOfLines={2}>
+                    {createdTaskSummary.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.summaryPriorityBadge,
+                      (createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high') && styles.priorityBadgeUrgent,
+                      (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium') && styles.priorityBadgeMedium,
+                      (createdTaskSummary.priority === 'NORMAL' || createdTaskSummary.priority === 'low') && styles.priorityBadgeNormal,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.summaryPriorityText,
+                        (createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high') && styles.priorityTextUrgent,
+                        (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium') && styles.priorityTextMedium,
+                        (createdTaskSummary.priority === 'NORMAL' || createdTaskSummary.priority === 'low') && styles.priorityTextNormal,
+                      ]}
+                    >
+                      {(createdTaskSummary.priority === 'ZAROORI' || createdTaskSummary.priority === 'URGENT' || createdTaskSummary.priority === 'high')
+                        ? (language === 'hi' ? '🔴 Zaroori' : '🔴 Urgent')
+                        : (createdTaskSummary.priority === 'MEDIUM' || createdTaskSummary.priority === 'medium')
+                        ? (language === 'hi' ? '🟡 Medium' : '🟡 Medium')
+                        : (language === 'hi' ? '🟢 Normal' : '🟢 Normal')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.taskSummaryMetaRow}>
+                  <View style={styles.taskSummaryMetaItem}>
+                    <Text style={styles.taskSummaryMetaIcon}>📅</Text>
+                    <Text style={styles.taskSummaryMetaText}>
+                      {createdTaskSummary.date === getTodayStr()
+                        ? (language === 'hi' ? 'Aaj (Today)' : 'Today')
+                        : createdTaskSummary.date}
+                    </Text>
+                  </View>
+
+                  <View style={styles.taskSummaryMetaDivider} />
+
+                  <View style={styles.taskSummaryMetaItem}>
+                    <Text style={styles.taskSummaryMetaIcon}>⏰</Text>
+                    <Text style={styles.taskSummaryMetaText}>
+                      {createdTaskSummary.time}
+                    </Text>
+                  </View>
+                </View>
+
+                {createdTaskSummary.hasReminder && (
+                  <View style={styles.taskReminderStatusRow}>
+                    <Text style={styles.taskReminderStatusIcon}>🔔</Text>
+                    <Text style={styles.taskReminderStatusText}>
+                      {language === 'hi'
+                        ? 'Alarm aur notification schedule ho gaya hai'
+                        : 'Alarm and notification scheduled'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Primary Action Button: "Done • View Tasks" */}
+            <TouchableOpacity
+              style={styles.successDoneBtn}
+              activeOpacity={0.88}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('TodayTab');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#0D5C3A', '#15803D']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.successDoneBtnGradient}
+              >
+                <Text style={styles.successDoneBtnText}>
+                  {language === 'hi' ? 'Theek Hai • Tasks Dekhein' : 'Done • View Tasks'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Secondary Action: "+ Add Another Task" */}
+            <TouchableOpacity
+              style={styles.successAddMoreBtn}
+              activeOpacity={0.7}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                const next = getNextValidFutureTime();
+                setReminderTime(`${next.hourStr}:${next.minuteStr} ${next.period}`);
+                setSelectedDate(getTodayStr());
+                setPriority('medium');
+                setErrorMsg('');
+              }}
+            >
+              <Text style={styles.successAddMoreText}>
+                {language === 'hi' ? '+ Ek Aur Task Jodein' : '+ Add Another Task'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <PaywallModal
         visible={paywallVisible}
@@ -912,6 +1058,206 @@ const styles = StyleSheet.create({
   },
   presetChipTextActive: {
     color: '#047857',
+    fontWeight: '700',
+  },
+  /* Task Creation Success Modal in App Color Scheme */
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  successModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#DCFCE7',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  successBadgeOuter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    borderWidth: 4,
+    borderColor: '#F0FDF4',
+  },
+  successBadgeInner: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successBadgeCheck: {
+    fontSize: 26,
+    color: '#FFFFFF',
+    fontWeight: '900',
+    lineHeight: 30,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  successModalSub: {
+    fontSize: 13.5,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 19,
+    paddingHorizontal: 8,
+  },
+  taskSummaryCard: {
+    width: '100%',
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    padding: 14,
+    marginTop: 18,
+    marginBottom: 20,
+  },
+  taskSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 10,
+  },
+  taskSummaryTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  summaryPriorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  priorityBadgeUrgent: {
+    backgroundColor: '#FEE2E2',
+  },
+  priorityTextUrgent: {
+    color: '#DC2626',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  priorityBadgeMedium: {
+    backgroundColor: '#FEF3C7',
+  },
+  priorityTextMedium: {
+    color: '#D97706',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  priorityBadgeNormal: {
+    backgroundColor: '#DCFCE7',
+  },
+  priorityTextNormal: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  summaryPriorityText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  taskSummaryMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  taskSummaryMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  taskSummaryMetaIcon: {
+    fontSize: 13,
+  },
+  taskSummaryMetaText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  taskSummaryMetaDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  taskReminderStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#DCFCE7',
+  },
+  taskReminderStatusIcon: {
+    fontSize: 12,
+  },
+  taskReminderStatusText: {
+    fontSize: 11.5,
+    color: '#15803D',
+    fontWeight: '600',
+  },
+  successDoneBtn: {
+    width: '100%',
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  successDoneBtnGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successDoneBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15.5,
+    fontWeight: '800',
+  },
+  successAddMoreBtn: {
+    width: '100%',
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  successAddMoreText: {
+    color: colors.primary,
+    fontSize: 13.5,
     fontWeight: '700',
   },
 });
