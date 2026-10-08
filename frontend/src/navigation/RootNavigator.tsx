@@ -23,6 +23,7 @@ import ProgressScreen from '../screens/ProgressScreen';
 import PremiumScreen from '../screens/PremiumScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import TaskHistoryScreen from '../screens/TaskHistoryScreen';
+import PaymentCheckoutScreen from '../screens/PaymentCheckoutScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -38,6 +39,11 @@ export type RootStackParamList = {
   Evening: undefined;
   Progress: undefined;
   Premium: undefined;
+  PaymentCheckout: {
+    orderData?: any;
+    planPrice?: number;
+    planTitle?: string;
+  } | undefined;
   Settings: undefined;
 };
 
@@ -217,6 +223,11 @@ export const RootNavigator: React.FC = () => {
           name="Premium"
           component={PremiumScreen}
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="PaymentCheckout"
+          component={PaymentCheckoutScreen}
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>

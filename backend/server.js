@@ -131,12 +131,6 @@ const adminDir = require('fs').existsSync(path.join(__dirname, '../admin'))
 const publicDir = path.join(__dirname, '../public');
 const fs = require('fs');
 
-// Force all checkout requests hitting the backend server to redirect to the official frontend domain
-app.get(['/checkout.html', '/checkout', '/public/checkout.html'], (req, res) => {
-  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-  return res.redirect(301, `https://taskalert.in/checkout.html${query}`);
-});
-
 app.use('/admin', express.static(adminDir, { dotfiles: 'allow' }));
 if (fs.existsSync(publicDir)) {
   app.use('/public', express.static(publicDir));

@@ -83,6 +83,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   language: string;
   pushToken?: string;
   createdAt?: string;

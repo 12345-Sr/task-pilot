@@ -214,29 +214,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ visible, onClose }) 
       return;
     }
 
-    setLaunchingGateway(true);
-
-    const userId = user?.id || '';
-    // Strictly open the clean checkout page link (never exposing key_id, order_id, email, or credentials in URL)
-    const targetUrl = userId
-      ? `https://taskalert.in/checkout.html?user_id=${encodeURIComponent(userId)}`
-      : 'https://taskalert.in/checkout.html';
-
-
-
-    startPaymentPolling('web_checkout');
-    try {
-      await Linking.openURL(targetUrl);
-    } catch (err) {
-      Alert.alert(
-        isHinglish ? 'Browser Nahi Khula' : 'Could Not Open Browser',
-        isHinglish
-          ? 'Kripya apna browser (Chrome) check karein.'
-          : 'Please verify that Chrome or your default browser is available.'
-      );
-    } finally {
-      setTimeout(() => setLaunchingGateway(false), 1200);
-    }
+    handleClose();
+    navigation.navigate('PaymentCheckout', {
+      orderData: orderData || undefined,
+      planPrice: 399,
+      planTitle: 'TaskAlert Pro Plan',
+    });
   };
 
   const handleVerifyPayment = async () => {

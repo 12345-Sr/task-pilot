@@ -11,25 +11,6 @@ const { FREE_DAILY_LIMIT } = require('./tasks');
 
 const router = express.Router();
 
-// Short-lived, single-purpose checkout codes. The Chrome URL only carries this random code
-// (https://taskalert.in/checkout.html?c=XXXX) -- never the Razorpay key, user id, name, email or amount.
-let checkoutTableReady = null;
-function ensureCheckoutSessions() {
-  if (!checkoutTableReady) {
-    checkoutTableReady = db.query(
-      `CREATE TABLE IF NOT EXISTS checkout_sessions (
-         code         TEXT PRIMARY KEY,
-         user_id      UUID NOT NULL,
-         order_id     TEXT NOT NULL,
-         amount_paise INTEGER NOT NULL,
-         used_at      TIMESTAMPTZ,
-         expires_at   TIMESTAMPTZ NOT NULL,
-         created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-       )`
-    ).catch((e) => { checkoutTableReady = null; throw e; });
-  }
-  return checkoutTableReady;
-}
 
 function getCleanKeyId() {
   const raw = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || process.env.RZP_KEY_ID;
@@ -79,7 +60,16 @@ function verifySignature(orderId, paymentId, signature) {
 // any authenticated user who obtains any valid paid order_id/payment_id (their own
 // old one, or a leaked/shared one) could activate Pro on a different account for free.
 async function orderBelongsToUser(rzpClient, orderId, userId) {
-  if (!rzpClient || !orderId || !userId) return false;
+  if (!orderId || !userId) return false;
+  try {
+    const dbCheck = await db.query(
+      `SELECT 1 FROM subscriptions WHERE user_id = $1 AND provider_subscription_id = $2`,
+      [userId, orderId]
+    );
+    if (dbCheck.rows && dbCheck.rows.length > 0) return true;
+  } catch (e) { }
+
+  if (!rzpClient) return false;
   try {
     const order = await rzpClient.orders.fetch(orderId);
     return !!(order && order.notes && String(order.notes.userId) === String(userId));
@@ -201,23 +191,6 @@ router.post('/create-order', requireUser, async (req, res) => {
       });
     }
 
-    // Store the order server-side and give Chrome only a random one-time code.
-    await ensureCheckoutSessions();
-    const checkoutCode = crypto.randomBytes(9).toString('base64url');
-    await db.query(
-      `INSERT INTO checkout_sessions (code, user_id, order_id, amount_paise, expires_at)
-       VALUES ($1, $2, $3, $4, now() + interval '30 minutes')`,
-      [checkoutCode, req.userId, order.id, amountPaise]
-    );
-    const checkoutBase = process.env.FRONTEND_CHECKOUT_BASE || 'https://taskalert.in/checkout.html';
-    const checkoutUrl = `${checkoutBase}?c=${encodeURIComponent(checkoutCode)}`;
-    const paymentLinkUrl = checkoutUrl;
-
-
-    const merchantVpa = process.env.RAZORPAY_MERCHANT_VPA || 'TaskAlert.rzp@icici';
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent('TaskAlert')}&tr=${encodeURIComponent(order.id)}&am=${planPriceInr}.00&cu=INR&tn=${encodeURIComponent('TaskAlert Pro Plan')}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(upiUrl)}&margin=10`;
-
     // Save pending intent in subscriptions table
     await db.query(
       `INSERT INTO subscriptions (
@@ -238,14 +211,8 @@ router.post('/create-order', requireUser, async (req, res) => {
       amount: planPriceInr,
       amountPaise,
       currency: 'INR',
-      checkoutUrl,
-      paymentLinkUrl,
-      upiUrl,
-      qrImageUrl,
-      merchantVpa,
       planTitle: 'TaskAlert Pro Plan',
       validity: '30 Days',
-      acceptedMethods: ['card', 'upi', 'netbanking', 'wallet', 'paylater'],
     });
   } catch (err) {
     console.error('Failed to create Razorpay payment order:', err);
@@ -435,10 +402,10 @@ router.post('/verify-payment', requireUser, async (req, res) => {
          provider_subscription_id, provider_customer_id,
          current_period_start, current_period_end, updated_at
        )
-       VALUES ($1, 'active', ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
+       VALUES ($1, 'active', 399.00, 'INR', 'razorpay', $2, $3, now(), $4, now())
        ON CONFLICT (user_id) DO UPDATE SET
          status = 'active',
-         plan_price = ${Math.max(1, Math.round(parseInt(process.env.SUBSCRIPTION_PRICE_PAISE || '100', 10) / 100))}.00,
+         plan_price = 399.00,
          payment_provider = 'razorpay',
          provider_subscription_id = EXCLUDED.provider_subscription_id,
          provider_customer_id = EXCLUDED.provider_customer_id,
@@ -497,132 +464,6 @@ router.post('/cancel', requireUser, async (req, res) => {
     [req.userId]
   );
   res.json({ subscription: result.rows[0], isPremium: false });
-});
-
-// GET /api/subscription/checkout-session?c=CODE
-// Called by https://taskalert.in/checkout.html to load the order created by the app.
-router.get('/checkout-session', async (req, res) => {
-  try {
-    await ensureCheckoutSessions();
-    const code = String(req.query.c || '').trim();
-    if (!/^[A-Za-z0-9_-]{8,64}$/.test(code)) {
-      return res.status(400).json({ error: 'Invalid payment link. Please tap Upgrade in the TaskAlert app again.' });
-    }
-    const r = await db.query(
-      `SELECT s.*, u.name, u.email, u.phone
-         FROM checkout_sessions s JOIN users u ON u.id = s.user_id
-        WHERE s.code = $1`, [code]);
-    const row = r.rows[0];
-    if (!row || new Date(row.expires_at) < new Date()) {
-      return res.status(400).json({ error: 'Payment link expired. Please tap Upgrade in the TaskAlert app again.' });
-    }
-    if (row.used_at) {
-      return res.status(409).json({ error: 'This payment is already completed. Open the TaskAlert app.', alreadyPaid: true });
-    }
-    res.json({
-      ok: true,
-      keyId: getCleanKeyId(),          // public key only, fetched over HTTPS (never in the URL)
-      orderId: row.order_id,
-      amountPaise: row.amount_paise,
-      currency: 'INR',
-      name: row.name || '',
-      email: row.email || '',
-      phone: row.phone || '',
-    });
-  } catch (err) {
-    console.error('[CHECKOUT-SESSION]', err.message);
-    res.status(500).json({ error: 'Could not load checkout. Please try again.' });
-  }
-});
-
-// POST /api/subscription/public-confirm
-// Called by checkout.html after Razorpay succeeds. User is identified ONLY by the server-side
-// checkout code (never by a client-supplied user_id) and the payment is verified with Razorpay.
-router.post('/public-confirm', async (req, res) => {
-  try {
-    await ensureCheckoutSessions();
-    const { code, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
-    if (!code || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ error: 'Missing payment confirmation parameters' });
-    }
-
-    const sr = await db.query('SELECT * FROM checkout_sessions WHERE code = $1', [String(code)]);
-    const sess = sr.rows[0];
-    if (!sess) return res.status(400).json({ error: 'Unknown checkout session' });
-    if (sess.order_id !== razorpay_order_id) return res.status(400).json({ error: 'Order mismatch' });
-
-    // Already activated by an earlier call (e.g. a retry) -> idempotent success
-    const already = await db.query(
-      `SELECT 1 FROM subscriptions WHERE user_id = $1 AND provider_customer_id = $2 AND status = 'active'`,
-      [sess.user_id, razorpay_payment_id]);
-    if (already.rows.length) return res.json({ ok: true, isPremium: true });
-
-    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
-      return res.status(400).json({ error: 'Signature verification failed' });
-    }
-
-    const rzpClient = getRzpInstance();
-    if (!rzpClient) return res.status(500).json({ error: 'Razorpay is not configured on the server.' });
-
-    const order = await rzpClient.orders.fetch(razorpay_order_id);
-    if (String(order.notes && order.notes.userId) !== String(sess.user_id)) {
-      return res.status(403).json({ error: 'Order does not belong to this user' });
-    }
-    if (order.status !== 'paid' || order.amount_paid < order.amount) {
-      return res.status(400).json({ error: 'Payment not completed yet' });
-    }
-
-    const reused = await db.query(
-      'SELECT 1 FROM subscriptions WHERE provider_customer_id = $1 AND user_id <> $2',
-      [razorpay_payment_id, sess.user_id]);
-    if (reused.rows.length) return res.status(409).json({ error: 'Payment already used' });
-
-    const periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + 30);
-    const planPrice = (order.amount / 100).toFixed(2);
-
-    await db.query(
-      `INSERT INTO subscriptions (
-         user_id, status, plan_price, currency, payment_provider,
-         provider_subscription_id, provider_customer_id,
-         current_period_start, current_period_end, updated_at
-       )
-       VALUES ($1, 'active', $2, 'INR', 'razorpay', $3, $4, now(), $5, now())
-       ON CONFLICT (user_id) DO UPDATE SET
-         status = 'active',
-         plan_price = EXCLUDED.plan_price,
-         payment_provider = 'razorpay',
-         provider_subscription_id = EXCLUDED.provider_subscription_id,
-         provider_customer_id = EXCLUDED.provider_customer_id,
-         current_period_start = now(),
-         current_period_end = EXCLUDED.current_period_end,
-         cancelled_at = NULL,
-         updated_at = now()`,
-      [sess.user_id, planPrice, razorpay_order_id, razorpay_payment_id, periodEnd]
-    );
-    await db.query('UPDATE checkout_sessions SET used_at = now() WHERE code = $1', [sess.code]);
-
-    console.log(`[PUBLIC-CONFIRM] Pro activated for user ${sess.user_id}, order ${razorpay_order_id}, payment ${razorpay_payment_id}`);
-
-    db.query('SELECT push_token, language FROM users WHERE id = $1', [sess.user_id])
-      .then((uR) => {
-        const token = uR.rows[0]?.push_token;
-        const lang = uR.rows[0]?.language || 'en';
-        if (token) {
-          const { sendPush } = require('../scheduler');
-          const title = lang === 'hi' ? '🎉 Pro Plan Activate Ho Gaya!' : '🎉 Pro Plan Activated!';
-          const body = lang === 'hi'
-            ? 'Aapka TaskAlert Pro plan safalta-poorvak shuru ho gaya hai. Unlimited task reminders unlock ho chuke hain!'
-            : 'Your TaskAlert Pro plan is now active! Enjoy unlimited daily reminders and all pro features.';
-          sendPush(token, title, body, { type: 'SUBSCRIPTION_ACTIVE' }).catch(() => { });
-        }
-      }).catch(() => { });
-
-    return res.json({ ok: true, isPremium: true });
-  } catch (err) {
-    console.error('[PUBLIC-CONFIRM] Error:', err.error?.description || err.message);
-    res.status(500).json({ error: 'Failed to confirm payment' });
-  }
 });
 
 module.exports = router;

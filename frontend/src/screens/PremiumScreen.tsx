@@ -21,7 +21,7 @@ import { PremiumStatusModal } from '../components/PremiumStatusModal';
 export const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { language, isPremium, setPaywallVisible, setPremiumStatusVisible } = useAppStore();
+  const { language, isPremium, isAuthenticated, isGuest, setPaywallVisible, setPremiumStatusVisible } = useAppStore();
   const upgradeMutation = useUpgradeSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
@@ -29,9 +29,28 @@ export const PremiumScreen: React.FC = () => {
   const handleSubscribe = () => {
     if (isPremium) {
       setPremiumStatusVisible(true);
-    } else {
-      setPaywallVisible(true);
+      return;
     }
+    if (!isAuthenticated || isGuest) {
+      Alert.alert(
+        language === 'hi' ? 'Account Zaroori Hai' : 'Account Required',
+        language === 'hi'
+          ? 'Pro subscription ke liye kripya pehle apna account banayein ya login karein.'
+          : 'Please sign in or create an account first to upgrade to Pro.',
+        [
+          { text: language === 'hi' ? 'Baad Mein' : 'Cancel', style: 'cancel' },
+          {
+            text: language === 'hi' ? 'Login / Signup Karein' : 'Sign In / Sign Up',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
+      return;
+    }
+    navigation.navigate('PaymentCheckout', {
+      planPrice: 399,
+      planTitle: 'TaskAlert Pro Plan',
+    });
   };
 
   return (
