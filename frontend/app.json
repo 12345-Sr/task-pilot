@@ -3,14 +3,14 @@
     "name": "TaskAlert",
     "slug": "task-alert",
     "scheme": "TaskAlert",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#EDF2F4",
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.taskalert.app",
-      "versionCode": 17,
+      "versionCode": 18,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
