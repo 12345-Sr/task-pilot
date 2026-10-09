@@ -5,11 +5,15 @@ const { sendPush } = require('../scheduler');
 
 const router = express.Router();
 
-// Safe auto-migration for description, notes, lifetime_tasks_created and task_history table
+// Safe auto-migration for deleted_at, description, notes, lifetime_tasks_created and task_history table
 db.query(`
+  ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS notes TEXT;
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS lifetime_tasks_created INT NOT NULL DEFAULT 0;
+
+  CREATE INDEX IF NOT EXISTS idx_tasks_deleted_at ON tasks(deleted_at);
+  CREATE INDEX IF NOT EXISTS idx_tasks_user_deleted ON tasks(user_id, deleted_at);
 
   CREATE TABLE IF NOT EXISTS task_history (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,9 +44,22 @@ const FREE_DAILY_LIMIT = 3;
 // FREE_DAILY_LIMIT (3 tasks lifetime maximum unless subscribed).
 // Deleting a task does NOT restore or decrement the free creation quota.
 async function getAccessStatus(userId) {
-  const r = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
+  let r = await db.query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
   let sub = r.rows[0];
-  if (!sub) return { allowed: false, reason: 'no_subscription' };
+  if (!sub) {
+    try {
+      const ins = await db.query(
+        `INSERT INTO subscriptions (user_id, status, plan_price, currency, lifetime_tasks_created)
+         VALUES ($1, 'free', 399.00, 'INR', 0)
+         ON CONFLICT (user_id) DO UPDATE SET updated_at = now()
+         RETURNING *`,
+        [userId]
+      );
+      sub = ins.rows[0];
+    } catch (e) {
+      sub = { user_id: userId, status: 'free', lifetime_tasks_created: 0 };
+    }
+  }
 
   // Check if Pro subscription has expired
   if (sub.status === 'active' && sub.current_period_end && new Date(sub.current_period_end) < new Date()) {
@@ -71,13 +88,25 @@ async function getAccessStatus(userId) {
 
   if (sub.status === 'active') return { allowed: true, sub };
 
-  // All non-active plans (free, expired, cancelled) redeem to free tier: strictly 3 tasks limit
+  // All non-active plans (free, expired, cancelled) redeem to free tier: strictly 3 tasks lifetime maximum.
+  // CRITICAL: Every task ever created counts permanently. Deleting a task immediately ("turant") does NOT reset quota!
+  const histCountR = await db.query(
+    'SELECT COUNT(*)::int AS c FROM task_history WHERE user_id = $1',
+    [userId]
+  ).catch(() => ({ rows: [{ c: 0 }] }));
+  const histTotal = histCountR.rows[0]?.c || 0;
+
   const countR = await db.query(
     'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
     [userId]
-  );
+  ).catch(() => ({ rows: [{ c: 0 }] }));
   const dbTotal = countR.rows[0]?.c || 0;
-  const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
+
+  const lifetimeUsed = Math.max(
+    Number(sub.lifetime_tasks_created) || 0,
+    histTotal,
+    dbTotal
+  );
   const allowed = lifetimeUsed < FREE_DAILY_LIMIT;
   return {
     allowed,
@@ -237,29 +266,37 @@ router.post('/', requireUser, async (req, res, next) => {
       }
     }
 
-    // Safely increment lifetime_tasks_created count for this user
+    // 1. Save directly to task_history table in database (permanent record of task creation)
+    const createdTask = result.rows[0];
+    if (createdTask && createdTask.id) {
+      try {
+        await db.query(
+          `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'CREATED', $9, now())`,
+          [req.userId, createdTask.id, title, taskDesc, taskDesc, task_date, task_time, isImportant ? 'important' : 'medium', createdTask.created_at || new Date()]
+        );
+      } catch (histErr) {
+        console.log('[DB] task_history record insert error:', histErr.message);
+      }
+    }
+
+    // 2. Safely increment lifetime_tasks_created count for this user
     try {
       await db.query(
         `INSERT INTO subscriptions (user_id, status, lifetime_tasks_created)
          VALUES ($1, 'free', 1)
          ON CONFLICT (user_id)
          DO UPDATE SET
-           lifetime_tasks_created = GREATEST(COALESCE(subscriptions.lifetime_tasks_created, 0) + 1, (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)),
+           lifetime_tasks_created = GREATEST(
+             COALESCE(subscriptions.lifetime_tasks_created, 0) + 1,
+             (SELECT COUNT(*)::int FROM task_history WHERE user_id = $1),
+             (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1)
+           ),
            updated_at = now()`,
         [req.userId]
       );
     } catch (subErr) {
       console.log('[DB] subscriptions lifetime update error:', subErr.message);
-    }
-
-    // Save directly to task_history table in database
-    const createdTask = result.rows[0];
-    if (createdTask && createdTask.id) {
-      db.query(
-        `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'CREATED', $9, now())`,
-        [req.userId, createdTask.id, title, taskDesc, taskDesc, task_date, task_time, isImportant ? 'important' : 'medium', createdTask.created_at || new Date()]
-      ).catch((e) => console.log('[DB] task_history record insert error:', e.message));
     }
 
     let recurringCount = 0;
@@ -466,7 +503,9 @@ router.get('/history', requireUser, async (req, res) => {
     await db.query(`
       INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
       SELECT t.user_id, t.id, t.title, t.description, t.notes, t.task_date, t.task_time, t.priority,
-             COALESCE(LOWER(t.status), 'pending'), 'CREATED', t.created_at, now()
+             CASE WHEN t.deleted_at IS NOT NULL THEN 'deleted' ELSE COALESCE(LOWER(t.status), 'pending') END,
+             CASE WHEN t.deleted_at IS NOT NULL THEN 'DELETED' ELSE 'CREATED' END,
+             t.created_at, now()
       FROM tasks t
       WHERE t.user_id = $1
         AND NOT EXISTS (SELECT 1 FROM task_history th WHERE th.task_id = t.id AND th.user_id = t.user_id)
@@ -502,8 +541,10 @@ router.get('/history', requireUser, async (req, res) => {
         query += ` AND (LOWER(th.status) = 'done' OR LOWER(th.status) = 'completed')`;
       } else if (sLower === 'missed') {
         query += ` AND LOWER(th.status) = 'missed'`;
+      } else if (sLower === 'deleted') {
+        query += ` AND (LOWER(th.status) = 'deleted' OR UPPER(th.action) = 'DELETED')`;
       } else if (sLower === 'pending' || sLower === 'active') {
-        query += ` AND (th.status IS NULL OR LOWER(th.status) = 'pending' OR LOWER(th.status) = 'active')`;
+        query += ` AND (th.status IS NULL OR LOWER(th.status) = 'pending' OR LOWER(th.status) = 'active') AND LOWER(th.status) != 'deleted'`;
       }
     }
 
@@ -672,7 +713,7 @@ const handleTaskUpdate = async (req, res) => {
 router.patch('/:id', requireUser, handleTaskUpdate);
 router.put('/:id', requireUser, handleTaskUpdate);
 
-// DELETE /api/tasks/:id — marks task as deleted while freeing up quota (disallowed if alert arrived)
+// DELETE /api/tasks/:id — marks task as deleted, permanently retaining it in task history & quota count
 router.delete('/:id', requireUser, async (req, res) => {
   const { id } = req.params;
   if (!id || !/^[0-9a-fA-F-]{36}$/.test(id)) {
@@ -680,7 +721,7 @@ router.delete('/:id', requireUser, async (req, res) => {
   }
 
   try {
-    // Prevent deletion if an alert has already fired for this task
+    // 1. Prevent deletion if an alert has already fired for this task
     const alertCheck = await db.query(
       'SELECT id FROM notification_log WHERE task_id = $1 LIMIT 1',
       [id]
@@ -693,42 +734,73 @@ router.delete('/:id', requireUser, async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      'UPDATE tasks SET deleted_at = now() WHERE id = $1 AND user_id = $2 RETURNING id',
+    // 2. Fetch existing task details before deleting
+    const taskR = await db.query(
+      'SELECT * FROM tasks WHERE id = $1 AND user_id = $2',
       [id, req.userId]
     );
-    // Deleting a task does NOT reset or reduce the lifetime created count
-    db.query(
-      `UPDATE subscriptions SET lifetime_tasks_created = GREATEST(COALESCE(lifetime_tasks_created, 0), 1), updated_at = now() WHERE user_id = $1`,
+    const existingTask = taskR.rows[0];
+    if (!existingTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // 3. Mark task as soft-deleted in tasks table
+    try {
+      await db.query(
+        'UPDATE tasks SET deleted_at = now(), updated_at = now() WHERE id = $1 AND user_id = $2',
+        [id, req.userId]
+      );
+    } catch (colErr) {
+      await db.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ').catch(() => {});
+      await db.query(
+        'UPDATE tasks SET deleted_at = now(), updated_at = now() WHERE id = $1 AND user_id = $2',
+        [id, req.userId]
+      ).catch(() => {});
+    }
+
+    // 4. Retain task permanently in task_history table with action = 'DELETED' and status = 'deleted'
+    const histUpd = await db.query(
+      `UPDATE task_history SET action = 'DELETED', status = 'deleted', updated_at = now()
+       WHERE (task_id = $1 OR id = $1) AND user_id = $2 RETURNING id`,
+      [id, req.userId]
+    ).catch(() => ({ rows: [] }));
+
+    if (!histUpd.rows.length) {
+      await db.query(
+        `INSERT INTO task_history (user_id, task_id, title, description, notes, task_date, task_time, priority, status, action, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'deleted', 'DELETED', $9, now())`,
+        [
+          req.userId,
+          existingTask.id,
+          existingTask.title,
+          existingTask.description || existingTask.notes || null,
+          existingTask.description || existingTask.notes || null,
+          existingTask.task_date,
+          existingTask.task_time,
+          existingTask.priority || 'medium',
+          existingTask.created_at || new Date(),
+        ]
+      ).catch(() => {});
+    }
+
+    // 5. Strictly preserve lifetime created count — deleting a task immediately ("turant") NEVER restores free quota
+    await db.query(
+      `UPDATE subscriptions
+       SET lifetime_tasks_created = GREATEST(
+         COALESCE(lifetime_tasks_created, 0),
+         (SELECT COUNT(*)::int FROM task_history WHERE user_id = $1),
+         (SELECT COUNT(*)::int FROM tasks WHERE user_id = $1),
+         1
+       ),
+       updated_at = now()
+       WHERE user_id = $1`,
       [req.userId]
     ).catch(() => {});
 
-    // Retain task history in database with deleted status
-    db.query(
-      `UPDATE task_history SET action = 'DELETED', status = 'deleted', updated_at = now() WHERE task_id = $1 AND user_id = $2`,
-      [id, req.userId]
-    ).catch(() => {});
-
-    if (!result.rows.length) {
-      const hardResult = await db.query(
-        'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, req.userId]
-      );
-      if (!hardResult.rows.length) return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json({ ok: true });
+    res.json({ ok: true, deletedTaskId: id });
   } catch (err) {
-    try {
-      const hardResult = await db.query(
-        'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, req.userId]
-      );
-      if (!hardResult.rows.length) return res.status(404).json({ error: 'Task not found' });
-      res.json({ ok: true });
-    } catch (finalErr) {
-      console.error('Failed to delete task:', finalErr.message);
-      res.status(500).json({ error: 'Failed to delete task' });
-    }
+    console.error('Failed to delete task:', err.message);
+    res.status(500).json({ error: 'Failed to delete task', details: err.message });
   }
 });
 

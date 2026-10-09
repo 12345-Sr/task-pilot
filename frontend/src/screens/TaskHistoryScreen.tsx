@@ -219,14 +219,17 @@ export const TaskHistoryScreen: React.FC = () => {
 
   // Render individual task card in timeline - Unique, Clean, Easy to Understand
   const renderItem = ({ item }: { item: TaskHistoryItem }) => {
-    const isDone = item.completed === true || item.confirmationStatus === 'COMPLETED';
-    const isMissed = item.confirmationStatus === 'MISSED';
+    const isDeleted = (item as any).status === 'deleted' || (item as any).action === 'DELETED' || item.isDeleted || item.deletedFromToday;
+    const isDone = !isDeleted && (item.completed === true || item.confirmationStatus === 'COMPLETED');
+    const isMissed = !isDeleted && item.confirmationStatus === 'MISSED';
 
-    const statusBadgeText = isDone
-      ? (isHinglish ? 'Pura Hua' : 'Completed')
-      : isMissed
-        ? (isHinglish ? 'Chhoot Gaya' : 'Missed')
-        : (isHinglish ? 'Active' : 'In Progress');
+    const statusBadgeText = isDeleted
+      ? (isHinglish ? '🗑️ Hataya Gaya' : '🗑️ Deleted')
+      : isDone
+        ? (isHinglish ? 'Pura Hua' : 'Completed')
+        : isMissed
+          ? (isHinglish ? 'Chhoot Gaya' : 'Missed')
+          : (isHinglish ? 'Active' : 'In Progress');
 
     const createdFormatted = formatTimestamp(item.createdAt);
     const scheduleFormatted = formatScheduleDate(item.date || item.targetDate, item.time || item.deadlineTime);
@@ -236,6 +239,7 @@ export const TaskHistoryScreen: React.FC = () => {
         style={[
           styles.taskCard,
           isDone && styles.taskCardDone,
+          isDeleted && styles.taskCardDeleted,
         ]}
         activeOpacity={0.88}
         onPress={() => setSelectedTask(item)}
@@ -244,23 +248,23 @@ export const TaskHistoryScreen: React.FC = () => {
         <View
           style={[
             styles.statusCircle,
-            isDone ? styles.statusCircleDone : isMissed ? styles.statusCircleMissed : styles.statusCircleActive,
+            isDeleted ? styles.statusCircleDeleted : isDone ? styles.statusCircleDone : isMissed ? styles.statusCircleMissed : styles.statusCircleActive,
           ]}
         >
           <Text
             style={[
               styles.statusCircleText,
-              isDone ? styles.statusCircleTextDone : isMissed ? styles.statusCircleTextMissed : styles.statusCircleTextActive,
+              isDeleted ? styles.statusCircleTextDeleted : isDone ? styles.statusCircleTextDone : isMissed ? styles.statusCircleTextMissed : styles.statusCircleTextActive,
             ]}
           >
-            {isDone ? '✓' : isMissed ? '✕' : '⏳'}
+            {isDeleted ? '🗑' : isDone ? '✓' : isMissed ? '✕' : '⏳'}
           </Text>
         </View>
 
         {/* Task Details */}
         <View style={styles.cardDetails}>
           <View style={styles.cardTopRow}>
-            <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
+            <Text style={[styles.taskTitle, isDone && styles.taskTitleDone, isDeleted && styles.taskTitleDeleted]} numberOfLines={2}>
               {item.title}
             </Text>
             <PriorityChip priority={item.priority} size="sm" />
@@ -276,13 +280,13 @@ export const TaskHistoryScreen: React.FC = () => {
             <View
               style={[
                 styles.statusTag,
-                isDone ? styles.statusTagDone : isMissed ? styles.statusTagMissed : styles.statusTagActive,
+                isDeleted ? styles.statusTagDeleted : isDone ? styles.statusTagDone : isMissed ? styles.statusTagMissed : styles.statusTagActive,
               ]}
             >
               <Text
                 style={[
                   styles.statusTagText,
-                  isDone ? styles.statusTagTextDone : isMissed ? styles.statusTagTextMissed : styles.statusTagTextActive,
+                  isDeleted ? styles.statusTagTextDeleted : isDone ? styles.statusTagTextDone : isMissed ? styles.statusTagTextMissed : styles.statusTagTextActive,
                 ]}
               >
                 {statusBadgeText}
@@ -1353,6 +1357,9 @@ const styles = StyleSheet.create({
   statusCircleActive: {
     backgroundColor: '#FEF3C7',
   },
+  statusCircleDeleted: {
+    backgroundColor: '#F1F5F9',
+  },
   statusCircleText: {
     fontSize: 16,
     fontWeight: '800',
@@ -1365,6 +1372,9 @@ const styles = StyleSheet.create({
   },
   statusCircleTextActive: {
     color: '#D97706',
+  },
+  statusCircleTextDeleted: {
+    color: '#64748B',
   },
   cardDetails: {
     flex: 1,
@@ -1386,6 +1396,15 @@ const styles = StyleSheet.create({
   taskTitleDone: {
     textDecorationLine: 'line-through',
     color: '#94A3B8',
+  },
+  taskTitleDeleted: {
+    textDecorationLine: 'line-through',
+    color: '#64748B',
+  },
+  taskCardDeleted: {
+    opacity: 0.88,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
   },
   taskDescription: {
     fontSize: 12.5,
@@ -1412,6 +1431,9 @@ const styles = StyleSheet.create({
   statusTagActive: {
     backgroundColor: '#FEF3C7',
   },
+  statusTagDeleted: {
+    backgroundColor: '#F1F5F9',
+  },
   statusTagText: {
     fontSize: 10.5,
     fontWeight: '800',
@@ -1424,6 +1446,9 @@ const styles = StyleSheet.create({
   },
   statusTagTextActive: {
     color: '#B45309',
+  },
+  statusTagTextDeleted: {
+    color: '#64748B',
   },
   scheduleMetaText: {
     fontSize: 11,

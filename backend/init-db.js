@@ -53,9 +53,18 @@ async function initDatabase(retries = 5, delayMs = 3000) {
           is_voice      BOOLEAN NOT NULL DEFAULT FALSE,
           priority      VARCHAR(10) NOT NULL DEFAULT 'medium',
           status        VARCHAR(20) NOT NULL DEFAULT 'pending',
+          deleted_at    TIMESTAMPTZ,
           created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
           updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
         );
+
+        -- Safe column migrations for existing tasks and subscriptions tables
+        ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+        ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
+        ALTER TABLE tasks ADD COLUMN IF NOT EXISTS notes TEXT;
+        ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS lifetime_tasks_created INT NOT NULL DEFAULT 0;
+        CREATE INDEX IF NOT EXISTS idx_tasks_deleted_at ON tasks(deleted_at);
+        CREATE INDEX IF NOT EXISTS idx_tasks_user_deleted ON tasks(user_id, deleted_at);
 
         CREATE TABLE IF NOT EXISTS task_history (
           id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

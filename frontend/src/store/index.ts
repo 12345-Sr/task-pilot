@@ -206,17 +206,8 @@ export const useAppStore = create<AppState>()(
           },
         }));
       },
-      recordTaskDeletion: (dateStr) => {
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const key = (dateStr || today).slice(0, 10);
-        set((state) => ({
-          freeLifetimeCreated: Math.max(0, (state.freeLifetimeCreated || 1) - 1),
-          freeUsageByDate: {
-            ...state.freeUsageByDate,
-            [key]: Math.max(0, (state.freeUsageByDate[key] || 1) - 1),
-          },
-        }));
+      recordTaskDeletion: (_dateStr) => {
+        // Deleting a task does NOT restore free quota - each created task counts toward the 3-task limit permanently
       },
       getFreeUsage: (_dateStr, activeCount) => {
         const currentRecorded = get().freeLifetimeCreated || 0;

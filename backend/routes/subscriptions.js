@@ -123,12 +123,19 @@ router.get('/status', requireUser, async (req, res) => {
 
   let dailyUsed = null;
   if (sub.status !== 'active') {
+    const histCountR = await db.query(
+      'SELECT COUNT(*)::int AS c FROM task_history WHERE user_id = $1',
+      [req.userId]
+    ).catch(() => ({ rows: [{ c: 0 }] }));
+    const histTotal = histCountR.rows[0]?.c || 0;
+
     const countR = await db.query(
       'SELECT COUNT(*)::int AS c FROM tasks WHERE user_id = $1',
       [req.userId]
-    );
+    ).catch(() => ({ rows: [{ c: 0 }] }));
     const dbTotal = countR.rows[0]?.c || 0;
-    const lifetimeUsed = Math.max(sub.lifetime_tasks_created || 0, dbTotal);
+
+    const lifetimeUsed = Math.max(Number(sub.lifetime_tasks_created) || 0, dbTotal, histTotal);
     dailyUsed = Math.min(FREE_DAILY_LIMIT, lifetimeUsed);
   }
 
