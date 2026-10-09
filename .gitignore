@@ -49,4 +49,6 @@ frontend/ios-bundle/
 *.zip
 *.aab
 mapping.txt
+mapping-*.txt
+*mapping*.txt
 google-play-release/
